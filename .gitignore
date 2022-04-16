@@ -1,0 +1,8 @@
+**/target
+.vscode/
+project/project/
+**/metals.sbt
+**/.bloop
+.bsp/
+.metals/
+tmp/
