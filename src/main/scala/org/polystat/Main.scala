@@ -18,6 +18,7 @@ import org.polystat.odin.parser.EoParser.sourceCodeEoParser
 
 object Main extends IOApp {
 
+
   def analyze(
       files: Stream[IO, String],
       tmp: Path,
@@ -33,12 +34,13 @@ object Main extends IOApp {
         .drain
       _ <- IO.println(s"Sarif: $sarif")
       _ <- files
-        .evalMap(f => 
+        .evalMap(f =>
           EOOdinAnalyzer.analyzeSourceCode[String, IO](
             advancedMutualRecursionAnalyzer
           )(f)(cats.Monad.apply, sourceCodeEoParser())
         )
-        .evalMap(IO.println)
+        .map(res => SarifOutput(List(res)))
+        .evalMap(so => IO.println(so.json.toString))
         .compile
         .drain
       _ <- IO.println("Include: ")
@@ -67,11 +69,11 @@ object Main extends IOApp {
     .compile
     .toList
 
-  override def run(args: List[String]): IO[ExitCode] =
-    for {
-      confargs <- optsFromConfig
-      _ <- IO.println(confargs)
-      code <- CommandIOApp.run[IO](polystat, confargs ++ args)
-    } yield code
-
+  override def run(args: List[String]): IO[ExitCode] = {
+    optsFromConfig.flatMap(confargs =>
+      IO.println(confargs)
+        .flatMap(_ => CommandIOApp.run[IO](polystat, confargs ++ args))
+        .map(code => code)
+    )
+  }
 }

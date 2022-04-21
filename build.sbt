@@ -6,5 +6,10 @@ libraryDependencies ++= Seq(
   "co.fs2" %% "fs2-core" % "3.2.7",
   "co.fs2" %% "fs2-io" % "3.2.7",
   "org.polystat.odin" %% "analysis" % "0.3.3",
-  "org.polystat.odin" %% "parser" % "0.3.3",
+  "io.circe" %% "circe-core" % "0.14.1",
+  "io.circe" %% "circe-generic" % "0.14.1",
+)
+
+scalacOptions ++= Seq(
+  "-Ymacro-annotations"
 )
