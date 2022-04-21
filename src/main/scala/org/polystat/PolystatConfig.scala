@@ -2,16 +2,16 @@ package org.polystat
 import cats.effect.IO
 import fs2.io.file.Path
 import com.monovore.decline.Opts
-import cats.syntax.apply.*
+import cats.syntax.apply._
 import fs2.Stream
-
+import PolystatOpts._
 
 case class PolystatConfig(
     tmp: IO[Path],
     files: Stream[IO, String],
     sarif: Boolean,
     includes: List[String],
-    excludes: List[String]
+    excludes: List[String],
 )
 
 object PolystatConfig {
