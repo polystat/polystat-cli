@@ -1,17 +1,27 @@
 package org.polystat
 
-import com.monovore.decline.Opts
+import cats.data.NonEmptyList
+import cats.data.Validated._
 import cats.effect.IO
-import java.nio.file.{Path => JPath}
-import fs2.io.file.{Path, Files}
-import fs2.io.stdinUtf8
-import com.monovore.decline.Opts
-import fs2.text.utf8
-import cats.syntax.foldable._
 import cats.syntax.applicative._
+import cats.syntax.apply._
+import com.monovore.decline.Opts
 import fs2.Stream
+import fs2.io.file.Files
+import fs2.io.file.Path
+import fs2.io.stdinUtf8
+import fs2.text.utf8
+
+import java.nio.file.{Path => JPath}
 
 object PolystatOpts {
+
+  sealed trait IncludeExclude
+  object IncludeExclude {
+    case class Include(rules: NonEmptyList[String]) extends IncludeExclude
+    case class Exclude(rules: NonEmptyList[String]) extends IncludeExclude
+    case object Nothing extends IncludeExclude
+  }
 
   def readCodeFromStdin: Stream[IO, String] =
     stdinUtf8[IO](4096).foldMonoid
@@ -27,11 +37,25 @@ object PolystatOpts {
         else Stream.empty
       })
 
-  val include: Opts[List[String]] =
+  private val include: Opts[List[String]] =
     Opts.options[String](long = "include", help = "Rules to exclude").orEmpty
 
-  val exclude: Opts[List[String]] =
+  private val exclude: Opts[List[String]] =
     Opts.options[String](long = "exclude", help = "Rules to include").orEmpty
+
+  val inex: Opts[IncludeExclude] = (include, exclude).tupled.mapValidated {
+    {
+      case (Nil, Nil)     => Valid(IncludeExclude.Nothing)
+      case (i :: is, Nil) => Valid(IncludeExclude.Include(NonEmptyList(i, is)))
+      case (Nil, e :: es) => Valid(IncludeExclude.Exclude(NonEmptyList(e, es)))
+      case (_ :: _, _ :: _) =>
+        Invalid(
+          NonEmptyList.one(
+            """"--include" and "--exclude" options are mutually-exclusive. Please, specify just one."""
+          )
+        )
+    }
+  }
 
   val sarif: Opts[Boolean] = Opts
     .flag(long = "sarif", help = "Should output be in SARIF format?")

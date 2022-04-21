@@ -1,64 +1,90 @@
 package org.polystat
 
-import cats.effect.{IO, IOApp, ExitCode}
-import cats.syntax.apply._
+import cats.effect.ExitCode
+import cats.effect.IO
+import cats.effect.IOApp
 import cats.syntax.foldable._
-import com.monovore.decline.{Opts, Command}
+import cats.syntax.functorFilter._
+import cats.syntax.traverse._
+import com.monovore.decline.Command
 import com.monovore.decline.effect.CommandIOApp
-import fs2.io.file.{Files, Path}
-import fs2.io.stdinUtf8
-import fs2.text.utf8
 import fs2.Stream
+import fs2.io.file.Files
+import fs2.io.file.Path
+import fs2.text.utf8
+import org.polystat.odin.analysis.ASTAnalyzer
 import org.polystat.odin.analysis.EOOdinAnalyzer
+import org.polystat.odin.parser.EoParser.sourceCodeEoParser
+
 import EOOdinAnalyzer.{
   advancedMutualRecursionAnalyzer,
   unjustifiedAssumptionAnalyzer,
 }
-import org.polystat.odin.parser.EoParser.sourceCodeEoParser
+import PolystatOpts.IncludeExclude
+import IncludeExclude._
 
 object Main extends IOApp {
 
+  val analyzers: List[(String, ASTAnalyzer[IO])] =
+    // TODO: In Odin, change analyzer names to shorter ones.
+    List(
+      ("mutualrec", advancedMutualRecursionAnalyzer),
+      ("unjustified", unjustifiedAssumptionAnalyzer),
+    )
+
+  def filterAnalyzers(
+      inex: PolystatOpts.IncludeExclude
+  ): List[ASTAnalyzer[IO]] = {
+    inex match {
+      case Exclude(exclude) =>
+        analyzers.mapFilter { case (id, a) =>
+          Option.when(!exclude.contains_(id))(a)
+        }
+      case Include(include) =>
+        analyzers.mapFilter { case (id, a) =>
+          Option.when(include.contains_(id))(a)
+        }
+      case Nothing => analyzers.map(_._2)
+    }
+  }
 
   def analyze(
+      analyzers: List[ASTAnalyzer[IO]]
+  )(code: String): IO[List[EOOdinAnalyzer.OdinAnalysisResult]] = {
+    analyzers.traverse(a =>
+      EOOdinAnalyzer
+        .analyzeSourceCode(a)(code)(cats.Monad[IO], sourceCodeEoParser[IO]())
+    )
+  }
+
+  def runPolystat(
       files: Stream[IO, String],
       tmp: Path,
       sarif: Boolean,
-      include: List[String],
-      exclude: List[String],
+      filteredAnalyzers: List[ASTAnalyzer[IO]],
   ): IO[Unit] =
     for {
-      _ <- Stream
-        .emits("aboba kek".getBytes)
-        .through(Files[IO].writeAll(tmp / "aboba.txt"))
-        .compile
-        .drain
+      _ <- IO.println(tmp)
       _ <- IO.println(s"Sarif: $sarif")
+      _ <- IO.println(filteredAnalyzers.map(_.name))
       _ <- files
-        .evalMap(f =>
-          EOOdinAnalyzer.analyzeSourceCode[String, IO](
-            advancedMutualRecursionAnalyzer
-          )(f)(cats.Monad.apply, sourceCodeEoParser())
-        )
-        .map(res => SarifOutput(List(res)))
+        .evalMap(analyze(filteredAnalyzers))
+        .map(res => SarifOutput(res))
         .evalMap(so => IO.println(so.json.toString))
         .compile
         .drain
-      _ <- IO.println("Include: ")
-      _ <- include.traverse_(IO.println)
-      _ <- IO.println("Exclude: ")
-      _ <- exclude.traverse_(IO.println)
     } yield ()
 
   val polystat = Command[PolystatConfig](
     name = "polystat",
     header = "Says hello!",
     helpFlag = true,
-  )(PolystatConfig.opts).map {
-    case PolystatConfig(tmp, files, sarif, include, exclude) =>
-      for {
-        tmp <- tmp
-        _ <- analyze(files, tmp, sarif, include, exclude)
-      } yield ExitCode.Success
+  )(PolystatConfig.opts).map { case PolystatConfig(tmp, files, sarif, inex) =>
+    for {
+      tmp <- tmp
+      filtered = filterAnalyzers(inex)
+      _ <- runPolystat(files, tmp, sarif, filtered)
+    } yield ExitCode.Success
   }
 
   val optsFromConfig: IO[List[String]] = Files[IO]

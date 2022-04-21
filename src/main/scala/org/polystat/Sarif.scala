@@ -1,10 +1,11 @@
 package org.polystat
 
-import io.circe.{Json, Encoder}
+import io.circe.Encoder
+import io.circe.Json
 import io.circe.generic.semiauto._
 import io.circe.syntax._
-import io.circe.Printer
 import org.polystat.odin.analysis.EOOdinAnalyzer.OdinAnalysisResult
+
 import OdinAnalysisResult._
 import Sarif._
 
@@ -40,7 +41,7 @@ case class SarifOutput(errors: List[OdinAnalysisResult]) {
           ),
           executionSuccessful = false,
         )
-      case DefectDetected(ruleId, message) =>
+      case DefectDetected(ruleId, _) =>
         SarifInvocation(
           toolExecutionNotifications = Seq(
             SarifNotification(
@@ -74,7 +75,7 @@ case class SarifOutput(errors: List[OdinAnalysisResult]) {
 
   private def sarifResult(error: OdinAnalysisResult): Option[SarifResult] = {
     error match {
-      case AnalyzerFailure(ruleId, reason) => None
+      case AnalyzerFailure(_, _) => None
       case DefectDetected(ruleId, message) =>
         Some(
           SarifResult(

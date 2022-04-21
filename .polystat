@@ -1,5 +1,3 @@
 --files sandbox
 --tmp tmp
 --sarif
---include 1
---include 2
