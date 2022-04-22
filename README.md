@@ -14,6 +14,11 @@ Both can be easily fetched via [coursier](https://get-coursier.io/docs/overview)
 
 If you want to change the command-line arguments, edit the `.polystat` in the repository root.
 
+## Generating the fat JAR
+> `sbt assembly`
+
+The jar can be then found at `target/scala-2.13/polyscat.jar`.
+
 ## Running the tests
 > `sbt test`
 
