@@ -42,10 +42,10 @@ object PolystatOpts {
       })
 
   private val include: Opts[List[String]] =
-    Opts.options[String](long = "include", help = "Rules to exclude").orEmpty
+    Opts.options[String](long = "include", help = "Rules to exclude.").orEmpty
 
   private val exclude: Opts[List[String]] =
-    Opts.options[String](long = "exclude", help = "Rules to include").orEmpty
+    Opts.options[String](long = "exclude", help = "Rules to include.").orEmpty
 
   val inex: Opts[IncludeExclude] = (include, exclude).tupled.mapValidated {
     {
@@ -60,10 +60,6 @@ object PolystatOpts {
         )
     }
   }
-
-  val sarif: Opts[Boolean] = Opts
-    .flag(long = "sarif", help = "Should output be in SARIF format?")
-    .orFalse
 
   val tmp: Opts[IO[Path]] = Opts
     .option[JPath](

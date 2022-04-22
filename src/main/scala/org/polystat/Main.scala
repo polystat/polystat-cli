@@ -70,12 +70,10 @@ object Main extends IOApp {
   def runPolystat(
       files: Stream[IO, (Path, String)],
       tmp: Path,
-      sarif: Boolean,
       filteredAnalyzers: List[ASTAnalyzer[IO]],
   ): IO[Unit] =
     for {
       _ <- IO.println(tmp)
-      _ <- IO.println(s"Sarif: $sarif")
       _ <- IO.println(filteredAnalyzers.map(_.name))
       _ <- files
         .evalMap { case (p, code) =>
@@ -87,7 +85,6 @@ object Main extends IOApp {
             _ <- Stream.emits(sarifJson.getBytes).through(Files[IO].writeAll(tmpPath)).compile.drain
           } yield ()
         }
-        // .evalMap(so => IO.println(so.json.toString))
         .compile
         .drain
     } yield ()
@@ -96,11 +93,11 @@ object Main extends IOApp {
     name = "polystat",
     header = "Says hello!",
     helpFlag = true,
-  )(PolystatConfig.opts).map { case PolystatConfig(tmp, files, sarif, inex) =>
+  )(PolystatConfig.opts).map { case PolystatConfig(tmp, files, inex) =>
     for {
       tmp <- tmp
       filtered = filterAnalyzers(inex)
-      _ <- runPolystat(files, tmp, sarif, filtered)
+      _ <- runPolystat(files, tmp, filtered)
     } yield ExitCode.Success
   }
 
