@@ -10,6 +10,8 @@ libraryDependencies ++= Seq(
   "io.circe" %% "circe-generic" % "0.14.1",
 )
 
+assembly / assemblyJarName := "polystat.jar"
+
 scalacOptions ++= Seq(
   "-Ymacro-annotations",
   "-Wunused",
