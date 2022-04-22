@@ -6,6 +6,7 @@ import cats.effect.IOApp
 import cats.syntax.foldable._
 import cats.syntax.functorFilter._
 import cats.syntax.traverse._
+import cats.syntax.monadError._
 import com.monovore.decline.Command
 import com.monovore.decline.effect.CommandIOApp
 import fs2.Stream
@@ -57,8 +58,17 @@ object Main extends IOApp {
     )
   }
 
+  def transformPath(other: Path): Path = {
+    val dotCount = other.names.map(_.toString).takeWhile(p => p == ".." || p == ".").length
+    val newPath = other.toNioPath.subpath(Math.max(dotCount, 1), other.toNioPath.getNameCount)
+    val sarifJsonPath = Path(newPath.toString.splitAt(newPath.toString.lastIndexOf("."))._1 + ".sarif.json")
+    
+    sarifJsonPath
+  }
+
+
   def runPolystat(
-      files: Stream[IO, String],
+      files: Stream[IO, (Path, String)],
       tmp: Path,
       sarif: Boolean,
       filteredAnalyzers: List[ASTAnalyzer[IO]],
@@ -68,9 +78,16 @@ object Main extends IOApp {
       _ <- IO.println(s"Sarif: $sarif")
       _ <- IO.println(filteredAnalyzers.map(_.name))
       _ <- files
-        .evalMap(analyze(filteredAnalyzers))
-        .map(res => SarifOutput(res))
-        .evalMap(so => IO.println(so.json.toString))
+        .evalMap { case (p, code) =>
+          val tmpPath = tmp / transformPath(p)
+          for {
+            _ <- tmpPath.parent.map(Files[IO].createDirectories).getOrElse(IO.unit)
+            results <- analyze(filteredAnalyzers)(code).adaptError(e => new Exception(p.toString + ": ", e))
+            sarifJson = SarifOutput(results).json.toString
+            _ <- Stream.emits(sarifJson.getBytes).through(Files[IO].writeAll(tmpPath)).compile.drain
+          } yield ()
+        }
+        // .evalMap(so => IO.println(so.json.toString))
         .compile
         .drain
     } yield ()

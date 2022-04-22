@@ -26,15 +26,19 @@ object PolystatOpts {
   def readCodeFromStdin: Stream[IO, String] =
     stdinUtf8[IO](4096).foldMonoid
 
-  def readCodeFromFiles(dir: Path): Stream[IO, String] =
+  def readCodeFromFiles(dir: Path): Stream[IO, (Path, String)] =
     Files[IO]
       .walk(dir)
-      .flatMap(p => {
+      .evalMapFilter(p => {
         if (p.extName == ".eo")
           Files[IO]
             .readAll(p)
             .through(utf8.decode)
-        else Stream.empty
+            .compile
+            .string
+            .map(code => Some((p, code)))
+        else
+          None.pure[IO]
       })
 
   private val include: Opts[List[String]] =
@@ -63,17 +67,17 @@ object PolystatOpts {
 
   val tmp: Opts[IO[Path]] = Opts
     .option[JPath](
-      long = "tmp",
-      help = "The directory where temporary files should be stored.",
+      long = "out",
+      help = "The directory where SARIF files should be stored.",
     )
     .map(p => Path.fromNioPath(p).pure[IO])
     .orElse(Files[IO].createTempDirectory.pure[Opts])
 
-  val files: Opts[Stream[IO, String]] = Opts
+  val files: Opts[Stream[IO, (Path, String)]] = Opts
     .option[JPath](
       long = "files",
       help = "The directory with EO files.",
     )
     .map(p => readCodeFromFiles(Path.fromNioPath(p)))
-    .orElse(readCodeFromStdin.pure[Opts])
+    .orElse(readCodeFromStdin.map(s => (Path("."), s)).pure[Opts])
 }

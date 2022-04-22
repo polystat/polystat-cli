@@ -10,7 +10,7 @@ import PolystatOpts._
 
 case class PolystatConfig(
     tmp: IO[Path],
-    files: Stream[IO, String],
+    files: Stream[IO, (Path, String)],
     sarif: Boolean,
     inex: IncludeExclude,
 )
