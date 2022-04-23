@@ -23,12 +23,13 @@ The jar can be then found at `target/scala-2.13/polyscat.jar`.
 > `sbt test`
 
 ## Running on Hadoop
-First time
 
-```sh
-./test-with-j2eo.sh
-```
+See [prerequisites](https://github.com/br4ch1st0chr0n3/j2eo#usage)
 
-Next time
-1. `sbt`
-2. `run --config .hadoop_config`
+* First time
+  ```sh
+  ./test-with-j2eo.sh
+  ```
+* Next time
+  * `sbt`
+  * `run --config .hadoop_config`
