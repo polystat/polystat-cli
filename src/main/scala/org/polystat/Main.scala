@@ -80,8 +80,8 @@ object Main extends IOApp {
       filteredAnalyzers: List[ASTAnalyzer[IO]],
   ): IO[Unit] =
     for {
-      _ <- IO.println(tmp)
-      _ <- IO.println(filteredAnalyzers.map(_.name))
+      _ <- IO.println(s"Creating: $tmp\n ")
+      _ <- IO.println(s"Using analyzers: ${filteredAnalyzers.map(_.name).mkString(", ")}\n ")
       _ <- files
         .evalMap { case (p, code) =>
           val tmpPath = tmp / transformPath(p)
@@ -125,10 +125,10 @@ object Main extends IOApp {
             IO.println("\n\nPlease, provide some arguments\n\n ").flatMap(_ =>
             CommandIOApp.run[IO](polystat, List[String]("--help"))
             .map(code => code))
-          case _ :: _ => 
-            IO.println(confArgs)
+          case _ :: _ =>
+            IO.println(s"\n\nCalling with arguments:\n${(confArgs ++ args).mkString(" ")}\n ")
             .flatMap(_ => CommandIOApp.run[IO](polystat, confArgs ++ args))
-            .map(code => code)
+            .flatMap(code => for { _ <- IO.println("")} yield code)
           }
       )
   }
