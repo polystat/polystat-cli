@@ -76,4 +76,11 @@ object PolystatOpts {
     )
     .map(p => readCodeFromFiles(Path.fromNioPath(p)))
     .orElse(readCodeFromStdin.map(s => (Path("."), s)).pure[Opts])
+
+  val argsFromConfig: Opts[Option[String]] = Opts
+    .option[String](
+      long = "config",
+      help = "Read CLI arguments from the given configuration file."
+    )
+    .orNone
 }
