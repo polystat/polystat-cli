@@ -106,7 +106,7 @@ object Main extends IOApp {
 
   val polystat = Command[PolystatConfig](
     name = "polystat",
-    header = "Says hello!",
+    header = "",
     helpFlag = true,
   )(PolystatConfig.opts).map { case PolystatConfig(tmp, files, inex, _) =>
     for {
@@ -115,16 +115,26 @@ object Main extends IOApp {
       _ <- runPolystat(files, tmp, filtered)
     } yield ExitCode.Success
   }
+
   override def run(args: List[String]): IO[ExitCode] = {
     ConfigFile
       .getConfigOpts(args)
-      .flatMap(confArgs =>
-        IO.println(confArgs)
-          .flatMap(_ => CommandIOApp.run[IO](polystat, confArgs ++ args))
-          .map(code => code)
+      .flatMap(confArgs => 
+        (confArgs ++ args) match {
+          case List() => 
+            IO.println("\n\nPlease, provide some arguments\n\n ").flatMap(_ =>
+            CommandIOApp.run[IO](polystat, List[String]("--help"))
+            .map(code => code))
+          case _ :: _ => 
+            IO.println(confArgs)
+            .flatMap(_ => CommandIOApp.run[IO](polystat, confArgs ++ args))
+            .map(code => code)
+          }
       )
   }
 }
+
+
 
 object ConfigFile {
   def optsFromConfig(path: Option[Path]): IO[List[String]] =
