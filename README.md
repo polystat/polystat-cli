@@ -22,6 +22,13 @@ The jar can be then found at `target/scala-2.13/polyscat.jar`.
 ## Running the tests
 > `sbt test`
 
+## Running on sandbox
+```sh
+sbt
+run --config configs/sandbox
+```
+The output will appear in `../polystat-data/sandbox-polystat`
+
 ## Running on Hadoop
 
 See [prerequisites](https://github.com/br4ch1st0chr0n3/j2eo#usage)
