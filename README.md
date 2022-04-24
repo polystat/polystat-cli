@@ -28,8 +28,9 @@ See [prerequisites](https://github.com/br4ch1st0chr0n3/j2eo#usage)
 
 * First time
   ```sh
+  chmod +x test-with-j2eo.sh
   ./test-with-j2eo.sh
   ```
 * Next time
   * `sbt`
-  * `run --config .hadoop_config`
+  * `run --config configs/hadoop`
