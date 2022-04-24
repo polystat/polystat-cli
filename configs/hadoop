@@ -1,2 +1,2 @@
---files ../j2eo_hadoop/ 
---out ../polystat_hadoop
+--files ../polystat-data/j2eo-data/hadoop-eo
+--out ../polystat-data/hadoop-polystat

@@ -16,4 +16,4 @@ git checkout introducing_suuport_for_aliases
 sbt publishLocal
 cd ../../polystat-cli
 sbt assembly
-java -jar target/scala-2.13/polystat.jar --files ../polystat-data/j2eo-data/hadoop-eo --out ../polystat-data/hadoop-polystat
+java -jar target/scala-2.13/polystat.jar --config configs/hadoop
