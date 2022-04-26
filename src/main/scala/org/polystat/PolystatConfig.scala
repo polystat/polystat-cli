@@ -12,9 +12,10 @@ case class PolystatConfig(
     tmp: IO[Path],
     files: Stream[IO, (Path, String)],
     inex: IncludeExclude,
+    config: Option[String]
 )
 
 object PolystatConfig {
   def opts: Opts[PolystatConfig] =
-    (tmp, files, inex).mapN(PolystatConfig.apply)
+    (tmp, files, inex, argsFromConfig).mapN(PolystatConfig.apply)
 }

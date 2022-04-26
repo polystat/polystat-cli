@@ -74,6 +74,24 @@ object PolystatOpts {
       long = "files",
       help = "The directory with EO files.",
     )
+    .mapValidated { case p =>
+      val d = p.normalize().toString()
+      if (new java.io.File(d).exists)
+        Valid(p)
+      else
+        Invalid(
+          NonEmptyList.one(
+            s"""--files expects an existing directory.\nDirectory "$d" doesn't exist"""
+          )
+        )
+    }
     .map(p => readCodeFromFiles(Path.fromNioPath(p)))
     .orElse(readCodeFromStdin.map(s => (Path("."), s)).pure[Opts])
+
+  val argsFromConfig: Opts[Option[String]] = Opts
+    .option[String](
+      long = "config",
+      help = "Read CLI arguments from the given configuration file.",
+    )
+    .orNone
 }

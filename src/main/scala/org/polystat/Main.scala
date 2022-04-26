@@ -59,13 +59,20 @@ object Main extends IOApp {
   }
 
   def transformPath(other: Path): Path = {
-    val dotCount = other.names.map(_.toString).takeWhile(p => p == ".." || p == ".").length
-    val newPath = other.toNioPath.subpath(Math.max(dotCount, 1), other.toNioPath.getNameCount)
-    val sarifJsonPath = Path(newPath.toString.splitAt(newPath.toString.lastIndexOf("."))._1 + ".sarif.json")
-    
+    val dotCount =
+      other.names.map(_.toString).takeWhile(p => p == ".." || p == ".").length
+    val newPath = other.toNioPath.subpath(
+      Math.max(dotCount, 1),
+      other.toNioPath.getNameCount,
+    )
+    val sarifJsonPath = Path(
+      newPath.toString
+        .splitAt(newPath.toString.lastIndexOf("."))
+        ._1 + ".sarif.json"
+    )
+
     sarifJsonPath
   }
-
 
   def runPolystat(
       files: Stream[IO, (Path, String)],
@@ -73,16 +80,24 @@ object Main extends IOApp {
       filteredAnalyzers: List[ASTAnalyzer[IO]],
   ): IO[Unit] =
     for {
-      _ <- IO.println(tmp)
-      _ <- IO.println(filteredAnalyzers.map(_.name))
+      _ <- IO.println(s"Creating: $tmp\n ")
+      _ <- IO.println(s"Using analyzers: ${filteredAnalyzers.map(_.name).mkString(", ")}\n ")
       _ <- files
         .evalMap { case (p, code) =>
           val tmpPath = tmp / transformPath(p)
           for {
-            _ <- tmpPath.parent.map(Files[IO].createDirectories).getOrElse(IO.unit)
-            results <- analyze(filteredAnalyzers)(code).adaptError(e => new Exception(p.toString + ": ", e))
+            _ <- tmpPath.parent
+              .map(Files[IO].createDirectories)
+              .getOrElse(IO.unit)
+            results <- analyze(filteredAnalyzers)(code).adaptError(e =>
+              new Exception(p.toString + ": ", e)
+            )
             sarifJson = SarifOutput(results).json.toString
-            _ <- Stream.emits(sarifJson.getBytes).through(Files[IO].writeAll(tmpPath)).compile.drain
+            _ <- Stream
+              .emits(sarifJson.getBytes)
+              .through(Files[IO].writeAll(tmpPath))
+              .compile
+              .drain
           } yield ()
         }
         .compile
@@ -91,9 +106,9 @@ object Main extends IOApp {
 
   val polystat = Command[PolystatConfig](
     name = "polystat",
-    header = "Says hello!",
+    header = "",
     helpFlag = true,
-  )(PolystatConfig.opts).map { case PolystatConfig(tmp, files, inex) =>
+  )(PolystatConfig.opts).map { case PolystatConfig(tmp, files, inex, _) =>
     for {
       tmp <- tmp
       filtered = filterAnalyzers(inex)
@@ -101,19 +116,49 @@ object Main extends IOApp {
     } yield ExitCode.Success
   }
 
-  val optsFromConfig: IO[List[String]] = Files[IO]
-    .readAll(Path(".polystat"))
-    .through(utf8.decode)
-    .flatMap(s => Stream.emits(s.trim.split("\\s+")))
-    .filter(_.nonEmpty)
-    .compile
-    .toList
-
   override def run(args: List[String]): IO[ExitCode] = {
-    optsFromConfig.flatMap(confargs =>
-      IO.println(confargs)
-        .flatMap(_ => CommandIOApp.run[IO](polystat, confargs ++ args))
-        .map(code => code)
-    )
+    ConfigFile
+      .getConfigOpts(args)
+      .flatMap(confArgs => 
+        (confArgs ++ args) match {
+          case List() => 
+            IO.println("\n\nPlease, provide some arguments\n\n ").flatMap(_ =>
+            CommandIOApp.run[IO](polystat, List[String]("--help"))
+            .map(code => code))
+          case _ :: _ =>
+            IO.println(s"\n\nCalling with arguments:\n${(confArgs ++ args).mkString(" ")}\n ")
+            .flatMap(_ => CommandIOApp.run[IO](polystat, confArgs ++ args))
+            .flatMap(code => for { _ <- IO.println("")} yield code)
+          }
+      )
   }
+}
+
+
+
+object ConfigFile {
+  def optsFromConfig(path: Option[Path]): IO[List[String]] =
+    path match {
+      case None => IO.pure(List[String]())
+      case Some(p) =>
+        Files[IO]
+          .readAll(p)
+          .through { utf8.decode }
+          .flatMap(s => Stream.emits(s.trim.split("\\s+")))
+          .filter(_.nonEmpty)
+          .compile
+          .toList
+    }
+
+  def findConfigPath(args: List[String]) =
+    (args.dropWhile(e => e != "--config") match {
+      case _ :: y :: _ => Some(y)
+      case _           => None
+    }) match {
+      case Some(p) => if (new java.io.File(p).exists) Some(Path(p)) else None
+      case None    => None
+    }
+
+  def getConfigOpts(args: List[String]): IO[List[String]] =
+    (findConfigPath _ andThen optsFromConfig)(args)
 }
