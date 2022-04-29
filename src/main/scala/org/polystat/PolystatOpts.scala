@@ -1,10 +1,10 @@
 package org.polystat
 
 import cats.data.NonEmptyList
-import cats.data.Validated._
+import cats.data.Validated.*
 import cats.effect.IO
-import cats.syntax.applicative._
-import cats.syntax.apply._
+import cats.syntax.applicative.*
+import cats.syntax.apply.*
 import com.monovore.decline.Opts
 import fs2.Stream
 import fs2.io.file.Files
@@ -12,7 +12,7 @@ import fs2.io.file.Path
 import fs2.io.stdinUtf8
 import fs2.text.utf8
 
-import java.nio.file.{Path => JPath}
+import java.nio.file.{Path as JPath}
 
 object PolystatOpts {
 
@@ -30,15 +30,14 @@ object PolystatOpts {
     Files[IO]
       .walk(dir)
       .evalMapFilter(p => {
-        if (p.extName == ".eo")
+        if p.extName == ".eo" then
           Files[IO]
             .readAll(p)
             .through(utf8.decode)
             .compile
             .string
             .map(code => Some((p, code)))
-        else
-          None.pure[IO]
+        else None.pure[IO]
       })
 
   private val include: Opts[List[String]] =

@@ -2,12 +2,12 @@ package org.polystat
 
 import io.circe.Encoder
 import io.circe.Json
-import io.circe.generic.semiauto._
-import io.circe.syntax._
+import io.circe.generic.semiauto.*
+import io.circe.syntax.*
 import org.polystat.odin.analysis.EOOdinAnalyzer.OdinAnalysisResult
 
-import OdinAnalysisResult._
-import Sarif._
+import OdinAnalysisResult.*
+import Sarif.*
 
 case class SarifOutput(errors: List[OdinAnalysisResult]) {
   def json: Json = sarif.asJson.deepDropNullValues
