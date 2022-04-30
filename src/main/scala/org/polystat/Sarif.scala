@@ -1,6 +1,6 @@
 package org.polystat
 
-import io.circe.Encoder
+import io.circe.{Encoder, Decoder}
 import io.circe.Json
 import io.circe.generic.semiauto.*
 import io.circe.syntax.*
@@ -93,7 +93,7 @@ final case class SarifOutput(errors: List[OdinAnalysisResult]):
         )
 end SarifOutput
 
-object Sarif:
+object Sarif extends App:
 
   final val SARIF_VERSION = "2.1.0"
   final val SARIF_SCHEMA =
@@ -101,6 +101,7 @@ object Sarif:
   final val POLYSTAT_VERSION = "1.0-SNAPSHOT"
 
   given Encoder[SarifLog] = deriveEncoder[SarifLog]
+  given Decoder[SarifLog] = deriveDecoder[SarifLog]
   final case class SarifLog(
       runs: Seq[SarifRun],
       version: String = SARIF_VERSION,
@@ -108,6 +109,7 @@ object Sarif:
   )
 
   given Encoder[SarifRun] = deriveEncoder[SarifRun]
+  given Decoder[SarifRun] = deriveDecoder[SarifRun]
   final case class SarifRun(
       tool: SarifTool,
       results: Seq[SarifResult],
@@ -115,9 +117,11 @@ object Sarif:
   )
 
   given Encoder[SarifTool] = deriveEncoder[SarifTool]
+  given Decoder[SarifTool] = deriveDecoder[SarifTool]
   final case class SarifTool(driver: SarifDriver)
 
   given Encoder[SarifDriver] = deriveEncoder[SarifDriver]
+  given Decoder[SarifDriver] = deriveDecoder[SarifDriver]
   final case class SarifDriver(
       name: String = "Polystat",
       informationUri: String = "https://www.polystat.org/",
@@ -125,6 +129,7 @@ object Sarif:
   )
 
   given Encoder[SarifResult] = deriveEncoder[SarifResult]
+  given Decoder[SarifResult] = deriveDecoder[SarifResult]
   final case class SarifResult(
       ruleId: String,
       level: SarifLevel,
@@ -141,6 +146,14 @@ object Sarif:
       case SarifLevel.NONE  => Json.fromString("none")
   end given
 
+  given Decoder[SarifLevel] with
+    def apply(c: io.circe.HCursor): Decoder.Result[SarifLevel] =
+      c.get[String]("kind").map {
+        case "error" => SarifLevel.ERROR
+        case "none"  => SarifLevel.NONE
+      }
+  end given
+
   enum SarifKind:
     case FAIL, PASS
 
@@ -150,16 +163,26 @@ object Sarif:
       case SarifKind.FAIL => Json.fromString("fail")
   end given
 
+  given Decoder[SarifKind] with
+    def apply(c: io.circe.HCursor): Decoder.Result[SarifKind] =
+      c.get[String]("kind").map {
+        case "pass" => SarifKind.PASS
+        case "fail" => SarifKind.FAIL
+      }
+  end given
   given Encoder[SarifMessage] = deriveEncoder[SarifMessage]
+  given Decoder[SarifMessage] = deriveDecoder[SarifMessage]
   final case class SarifMessage(text: String)
 
   given Encoder[SarifInvocation] = deriveEncoder[SarifInvocation]
+  given Decoder[SarifInvocation] = deriveDecoder[SarifInvocation]
   final case class SarifInvocation(
       toolExecutionNotifications: Seq[SarifNotification],
       executionSuccessful: Boolean,
   )
 
   given Encoder[SarifNotification] = deriveEncoder[SarifNotification]
+  given Decoder[SarifNotification] = deriveDecoder[SarifNotification]
   final case class SarifNotification(
       level: Option[SarifLevel],
       message: SarifMessage,
@@ -168,10 +191,13 @@ object Sarif:
   )
 
   given Encoder[SarifException] = deriveEncoder[SarifException]
+  given Decoder[SarifException] = deriveDecoder[SarifException]
   final case class SarifException(kind: String, message: String)
 
   given Encoder[SarifReportingDescriptor] =
     deriveEncoder[SarifReportingDescriptor]
+  given Decoder[SarifReportingDescriptor] =
+    deriveDecoder[SarifReportingDescriptor]
   final case class SarifReportingDescriptor(id: String)
 
 end Sarif
