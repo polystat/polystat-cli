@@ -100,36 +100,36 @@ object Sarif extends App:
     "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Documents/CommitteeSpecifications/2.1.0/sarif-schema-2.1.0.json"
   final val POLYSTAT_VERSION = "1.0-SNAPSHOT"
 
-  given Encoder[SarifLog] = deriveEncoder[SarifLog]
-  given Decoder[SarifLog] = deriveDecoder[SarifLog]
+  given Encoder[SarifLog] = deriveEncoder
+  given Decoder[SarifLog] = deriveDecoder
   final case class SarifLog(
       runs: Seq[SarifRun],
       version: String = SARIF_VERSION,
       $schema: String = SARIF_SCHEMA,
   )
 
-  given Encoder[SarifRun] = deriveEncoder[SarifRun]
-  given Decoder[SarifRun] = deriveDecoder[SarifRun]
+  given Encoder[SarifRun] = deriveEncoder
+  given Decoder[SarifRun] = deriveDecoder
   final case class SarifRun(
       tool: SarifTool,
       results: Seq[SarifResult],
       invocations: Seq[SarifInvocation],
   )
 
-  given Encoder[SarifTool] = deriveEncoder[SarifTool]
-  given Decoder[SarifTool] = deriveDecoder[SarifTool]
+  given Encoder[SarifTool] = deriveEncoder
+  given Decoder[SarifTool] = deriveDecoder
   final case class SarifTool(driver: SarifDriver)
 
-  given Encoder[SarifDriver] = deriveEncoder[SarifDriver]
-  given Decoder[SarifDriver] = deriveDecoder[SarifDriver]
+  given Encoder[SarifDriver] = deriveEncoder
+  given Decoder[SarifDriver] = deriveDecoder
   final case class SarifDriver(
       name: String = "Polystat",
       informationUri: String = "https://www.polystat.org/",
       semanticVersion: String = POLYSTAT_VERSION,
   )
 
-  given Encoder[SarifResult] = deriveEncoder[SarifResult]
-  given Decoder[SarifResult] = deriveDecoder[SarifResult]
+  given Encoder[SarifResult] = deriveEncoder
+  given Decoder[SarifResult] = deriveDecoder
   final case class SarifResult(
       ruleId: String,
       level: SarifLevel,
@@ -170,19 +170,20 @@ object Sarif extends App:
         case "fail" => SarifKind.FAIL
       }
   end given
-  given Encoder[SarifMessage] = deriveEncoder[SarifMessage]
-  given Decoder[SarifMessage] = deriveDecoder[SarifMessage]
+
+  given Encoder[SarifMessage] = deriveEncoder
+  given Decoder[SarifMessage] = deriveDecoder
   final case class SarifMessage(text: String)
 
-  given Encoder[SarifInvocation] = deriveEncoder[SarifInvocation]
-  given Decoder[SarifInvocation] = deriveDecoder[SarifInvocation]
+  given Encoder[SarifInvocation] = deriveEncoder
+  given Decoder[SarifInvocation] = deriveDecoder
   final case class SarifInvocation(
       toolExecutionNotifications: Seq[SarifNotification],
       executionSuccessful: Boolean,
   )
 
-  given Encoder[SarifNotification] = deriveEncoder[SarifNotification]
-  given Decoder[SarifNotification] = deriveDecoder[SarifNotification]
+  given Encoder[SarifNotification] = deriveEncoder
+  given Decoder[SarifNotification] = deriveDecoder
   final case class SarifNotification(
       level: Option[SarifLevel],
       message: SarifMessage,
@@ -190,14 +191,12 @@ object Sarif extends App:
       associatedRule: SarifReportingDescriptor,
   )
 
-  given Encoder[SarifException] = deriveEncoder[SarifException]
-  given Decoder[SarifException] = deriveDecoder[SarifException]
+  given Encoder[SarifException] = deriveEncoder
+  given Decoder[SarifException] = deriveDecoder
   final case class SarifException(kind: String, message: String)
 
-  given Encoder[SarifReportingDescriptor] =
-    deriveEncoder[SarifReportingDescriptor]
-  given Decoder[SarifReportingDescriptor] =
-    deriveDecoder[SarifReportingDescriptor]
+  given Encoder[SarifReportingDescriptor] = deriveEncoder
+  given Decoder[SarifReportingDescriptor] = deriveDecoder
   final case class SarifReportingDescriptor(id: String)
 
 end Sarif
