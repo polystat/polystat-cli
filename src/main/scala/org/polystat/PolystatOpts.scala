@@ -14,14 +14,13 @@ import fs2.text.utf8
 
 import java.nio.file.{Path as JPath}
 
-object PolystatOpts {
+object PolystatOpts:
 
-  sealed trait IncludeExclude
-  object IncludeExclude {
-    case class Include(rules: NonEmptyList[String]) extends IncludeExclude
-    case class Exclude(rules: NonEmptyList[String]) extends IncludeExclude
-    case object Nothing extends IncludeExclude
-  }
+  enum IncludeExclude:
+    case Include(rules: NonEmptyList[String])
+    case Exclude(rules: NonEmptyList[String])
+    case Nothing
+  end IncludeExclude
 
   def readCodeFromStdin: Stream[IO, String] =
     stdinUtf8[IO](4096).foldMonoid
@@ -29,7 +28,7 @@ object PolystatOpts {
   def readCodeFromFiles(dir: Path): Stream[IO, (Path, String)] =
     Files[IO]
       .walk(dir)
-      .evalMapFilter(p => {
+      .evalMapFilter(p =>
         if p.extName == ".eo" then
           Files[IO]
             .readAll(p)
@@ -38,7 +37,7 @@ object PolystatOpts {
             .string
             .map(code => Some((p, code)))
         else None.pure[IO]
-      })
+      )
 
   private val include: Opts[List[String]] =
     Opts.options[String](long = "include", help = "Rules to exclude.").orEmpty
@@ -75,4 +74,4 @@ object PolystatOpts {
     )
     .map(p => readCodeFromFiles(Path.fromNioPath(p)))
     .orElse(readCodeFromStdin.map(s => (Path("."), s)).pure[Opts])
-}
+end PolystatOpts

@@ -8,13 +8,13 @@ import fs2.io.file.Path
 
 import PolystatOpts.*
 
-case class PolystatConfig(
+final case class PolystatConfig(
     tmp: IO[Path],
     files: Stream[IO, (Path, String)],
     inex: IncludeExclude,
 )
 
-object PolystatConfig {
+object PolystatConfig:
   def opts: Opts[PolystatConfig] =
     (tmp, files, inex).mapN(PolystatConfig.apply)
-}
+end PolystatConfig
