@@ -7,8 +7,6 @@ import fs2.Stream
 import fs2.io.file.Path
 import cats.data.NonEmptyList
 
-import PolystatConfig.*
-
 object PolystatConfig:
 
   final case class AnalyzerConfig(
