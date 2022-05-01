@@ -148,7 +148,7 @@ object Sarif extends App:
 
   given Decoder[SarifLevel] with
     def apply(c: io.circe.HCursor): Decoder.Result[SarifLevel] =
-      c.get[String]("kind").map {
+      c.get[String]("level").map {
         case "error" => SarifLevel.ERROR
         case "none"  => SarifLevel.NONE
       }
