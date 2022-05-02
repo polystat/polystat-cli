@@ -1,6 +1,7 @@
 scalaVersion := "3.1.2"
 
 libraryDependencies ++= Seq(
+  "org.typelevel" %% "cats-parse" % "0.3.7",
   "com.monovore" %% "decline" % "2.2.0",
   "com.monovore" %% "decline-effect" % "2.2.0",
   "co.fs2" %% "fs2-core" % "3.2.7",
