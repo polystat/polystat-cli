@@ -15,7 +15,7 @@ class HoconConfigTests extends munit.FunSuite:
   private case class ConfigTestCase(
       label: String,
       cfg: String,
-      expected: Either[String, PolystatUsage.Analyze],
+      expected: Option[PolystatUsage.Analyze],
   )
 
   private val testcases = List(
@@ -28,7 +28,7 @@ class HoconConfigTests extends munit.FunSuite:
        |    outputFormats = [sarif]
        |}
     """.stripMargin,
-      expected = Right(
+      expected = Some(
         PolystatUsage.Analyze(
           language = SupportedLanguage.EO,
           config = AnalyzerConfig(
@@ -44,24 +44,19 @@ class HoconConfigTests extends munit.FunSuite:
     ConfigTestCase(
       label = "empty",
       cfg = """""".stripMargin,
-      expected =
-        Left("""|configuration loading failed with the following errors.
-                |
-                |  - Missing polystat.lang.
-                |""".stripMargin),
+      expected = None,
     ),
   )
 
   private def runTestcases(tests: List[ConfigTestCase]) =
     tests.foreach { case ConfigTestCase(label, conf, expected) =>
       configFile(conf).test(label) { file =>
-        val config = HoconConfig(file).config.load.attempt.unsafeRunSync()
-        (config, expected) match
-          case (Right(config), Right(expected)) =>
-            assertEquals(config, expected)
-          case (Left(error), Left(expected)) =>
-            assertNoDiff(error.getMessage, expected)
-          case _ => fail
+        val config = HoconConfig(file).config.load
+        expected match
+          case Some(expected) =>
+            assertEquals(config.unsafeRunSync(), expected)
+          case None =>
+            intercept[ciris.ConfigException](config.unsafeRunSync())
         end match
       }
     }
