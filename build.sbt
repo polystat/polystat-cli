@@ -21,7 +21,12 @@ libraryDependencies ++= Seq(
   "io.circe" %% "circe-core" % "0.14.1",
   "org.scalameta" %% "munit" % "1.0.0-M3" % Test,
 )
+
 assembly / assemblyJarName := "polystat.jar"
+
+enablePlugins(BuildInfoPlugin)
+buildInfoKeys := Seq(version)
+buildInfoPackage := "org.polystat"
 
 scalacOptions ++= Seq(
   "-Wunused:all"

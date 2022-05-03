@@ -30,9 +30,6 @@ object Main extends IOApp:
       )
     yield exitCode
 
-  // TODO: replace this with sbt-buildinfo
-  val POLYSTAT_VERSION = "1.0-SNAPSHOT"
-
   val analyzers: List[(String, ASTAnalyzer[IO])] =
     // TODO: In Odin, change analyzer names to shorter ones.
     List(
@@ -73,7 +70,7 @@ object Main extends IOApp:
     usage match
       case PolystatUsage.List => listAnalyzers
       case PolystatUsage.Misc(version, config) =>
-        if (version) then IO.println(POLYSTAT_VERSION)
+        if (version) then IO.println(BuildInfo.version)
         else
           readConfigFromFile(config.getOrElse(Path(".polystat.conf")))
             .flatMap(execute)

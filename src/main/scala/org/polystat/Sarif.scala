@@ -101,7 +101,6 @@ object Sarif extends App:
   final val SARIF_VERSION = "2.1.0"
   final val SARIF_SCHEMA =
     "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Documents/CommitteeSpecifications/2.1.0/sarif-schema-2.1.0.json"
-  final val POLYSTAT_VERSION = "1.0-SNAPSHOT"
 
   final case class SarifLog(
       runs: Seq[SarifRun],
@@ -120,7 +119,7 @@ object Sarif extends App:
   final case class SarifDriver(
       name: String = "Polystat",
       informationUri: String = "https://www.polystat.org/",
-      semanticVersion: String = POLYSTAT_VERSION,
+      semanticVersion: String = BuildInfo.version,
   ) derives Codec.AsObject
 
   final case class SarifResult(
