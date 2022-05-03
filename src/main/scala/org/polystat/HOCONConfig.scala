@@ -21,7 +21,21 @@ import SupportedLanguage.*
 import IncludeExclude.*
 import InputUtils.toInput
 
-object HoconConfig extends IOApp.Simple:
+case class HoconConfig(path: Path) extends IOApp.Simple:
+
+  override def run: IO[Unit] =
+    for
+      v <- config.load
+      _ <- IO.println(v)
+    yield ()
+
+  extension (v: HoconConfigValue)
+    def toNelString: Option[NonEmptyList[String]] =
+      NonEmptyList.fromList(v.toListString)
+
+    def toListString: List[String] =
+      v.unwrapped.asInstanceOf[java.util.List[String]].asScala.toList
+  end extension
 
   extension (s: String)
     def asSupportedLang: Option[SupportedLanguage] = s match
@@ -35,79 +49,63 @@ object HoconConfig extends IOApp.Simple:
       case _       => None
   end extension
 
-  given ConfigDecoder[String, SupportedLanguage] =
+  private given ConfigDecoder[String, SupportedLanguage] =
     ConfigDecoder[String].mapOption("lang")(_.asSupportedLang)
 
-  given ConfigDecoder[String, Path] = ConfigDecoder[String].map(Path(_))
-  given ConfigDecoder[String, OutputFormat] =
+  private given ConfigDecoder[String, Path] = ConfigDecoder[String].map(Path(_))
+  private given ConfigDecoder[String, OutputFormat] =
     ConfigDecoder[String].mapOption("outputFormat")(_.asOutputFormat)
 
-  given Show[HoconConfigValue] = Show.fromToString
+  private given Show[HoconConfigValue] = Show.fromToString
 
-  extension (v: HoconConfigValue)
-    def toNelString: Option[NonEmptyList[String]] =
-      NonEmptyList.fromList(v.toListString)
-
-    def toListString: List[String] =
-      v.unwrapped.asInstanceOf[java.util.List[String]].asScala.toList
-  end extension
-
-  given ConfigDecoder[HoconConfigValue, Include] =
+  private given ConfigDecoder[HoconConfigValue, Include] =
     ConfigDecoder[HoconConfigValue].mapOption("includeRules")(
       _.toNelString.map(Include(_))
     )
-  given ConfigDecoder[HoconConfigValue, Exclude] =
+  private given ConfigDecoder[HoconConfigValue, Exclude] =
     ConfigDecoder[HoconConfigValue].mapOption("excludeRules")(
       _.toNelString.map(Exclude(_))
     )
 
-  given ConfigDecoder[HoconConfigValue, List[OutputFormat]] =
+  private given ConfigDecoder[HoconConfigValue, List[OutputFormat]] =
     ConfigDecoder[HoconConfigValue].mapOption("outputFormats") {
       _.toListString.traverse(_.asOutputFormat)
     }
 
-  object hocon:
+  private object hocon:
     private val config =
-      IO.blocking(ConfigFactory.parseFile(new java.io.File(".polystat.conf")))
+      IO.blocking(ConfigFactory.parseFile(path.toNioPath.toFile))
     def apply(s: String): ConfigValue[IO, HoconConfigValue] =
       ConfigValue.eval(config.map(c => hoconAt(c)("polystat")(s)))
   end hocon
 
-  val lang = hocon("lang").as[SupportedLanguage]
-  val input = hocon("input").as[Path].evalMap(_.toInput)
-  val tmp = hocon("tempDir").as[Path].option
-  val outputTo = hocon("outputTo").as[Path].option.map {
+  private val lang = hocon("lang").as[SupportedLanguage]
+  private val input = hocon("input").as[Path].evalMap(_.toInput)
+  private val tmp = hocon("tempDir").as[Path].option
+  private val outputTo = hocon("outputTo").as[Path].option.map {
     case Some(path) => Output.ToDirectory(path)
     case None       => Output.ToConsole
   }
-  val outputFormats = hocon("outputFormats").as[List[OutputFormat]]
-  val inex: ConfigValue[IO, Option[IncludeExclude]] =
+  private val outputFormats = hocon("outputFormats").as[List[OutputFormat]]
+  private val inex: ConfigValue[IO, Option[IncludeExclude]] =
     hocon("includeRules")
       .as[Include]
       .widen[IncludeExclude]
       .or(hocon("excludeRules").as[Exclude].widen[IncludeExclude])
       .option
 
-  val config = (inex, input, tmp, outputTo, outputFormats, lang).parMapN {
-    case (inex, input, tmp, outputTo, outputFormats, lang) =>
-      PolystatUsage.Analyze(
-        language = lang,
-        config = AnalyzerConfig(
-          inex = inex,
-          input = input,
-          tmp = tmp,
-          outputFormats = outputFormats,
-          output = outputTo,
-        ),
-      )
-  }
-  override def run: IO[Unit] =
-    for
-      v <- hocon("includeRules")
-        .or(hocon("excludeRules"))
-        .option
-        .load[IO]
-      list <- IO(v)
-      _ <- IO.println(list)
-    yield ()
+  val config: ConfigValue[IO, PolystatUsage.Analyze] =
+    (inex, input, tmp, outputTo, outputFormats, lang).parMapN {
+      case (inex, input, tmp, outputTo, outputFormats, lang) =>
+        PolystatUsage.Analyze(
+          language = lang,
+          config = AnalyzerConfig(
+            inex = inex,
+            input = input,
+            tmp = tmp,
+            outputFormats = outputFormats,
+            output = outputTo,
+          ),
+        )
+    }
 end HoconConfig

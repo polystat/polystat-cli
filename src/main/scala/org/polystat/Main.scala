@@ -23,21 +23,10 @@ import PolystatConfig.*
 import IncludeExclude.*
 import InputUtils.*
 object Main extends IOApp:
-
-  val optsFromConfig: IO[List[String]] = Files[IO]
-    .readAll(Path(".polystat"))
-    .through(utf8.decode)
-    .flatMap(s => Stream.emits(s.trim.split("\\s+")))
-    .filter(_.nonEmpty)
-    .compile
-    .toList
-
   override def run(args: List[String]): IO[ExitCode] =
-    for
-      confargs <- optsFromConfig
-      exitCode <- CommandIOApp.run(
+    for exitCode <- CommandIOApp.run(
         PolystatOpts.polystat.map(a => a.flatMap(execute).as(ExitCode.Success)),
-        args ++ confargs,
+        args,
       )
     yield exitCode
 
@@ -77,9 +66,8 @@ object Main extends IOApp:
     IO.println(name)
   }
 
-  def readConfigFromFile(path: Path): IO[PolystatUsage.Analyze] = IO
-    .println("Cannot read config from file. Not implemented!")
-    .asInstanceOf[IO[PolystatUsage.Analyze]]
+  def readConfigFromFile(path: Path): IO[PolystatUsage.Analyze] =
+    HoconConfig(path).config.load
 
   def execute(usage: PolystatUsage): IO[Unit] =
     usage match
