@@ -21,13 +21,53 @@ import SupportedLanguage.*
 import IncludeExclude.*
 import InputUtils.toInput
 
-case class HoconConfig(path: Path) extends IOApp.Simple:
+case class HoconConfig(path: Path):
 
-  override def run: IO[Unit] =
-    for
-      v <- config.load
-      _ <- IO.println(v)
-    yield ()
+  import HoconConfig.{given, *}
+
+  private object hocon:
+    private val config =
+      IO.blocking(ConfigFactory.parseFile(path.toNioPath.toFile))
+    def apply(s: String): ConfigValue[IO, HoconConfigValue] =
+      ConfigValue.eval(config.map(c => hoconAt(c)("polystat")(s)))
+  end hocon
+
+  private val lang = hocon("lang").as[SupportedLanguage]
+  private val input = hocon("input").as[Path].option.evalMap {
+    case Some(path) => path.toInput
+    case None       => IO.pure(Input.FromStdin)
+  }
+  private val tmp = hocon("tempDir").as[Path].option
+  private val outputTo = hocon("outputTo").as[Path].option.map {
+    case Some(path) => Output.ToDirectory(path)
+    case None       => Output.ToConsole
+  }
+  private val outputFormats =
+    hocon("outputFormats").as[List[OutputFormat]].default(List.empty)
+  private val inex: ConfigValue[IO, Option[IncludeExclude]] =
+    hocon("includeRules")
+      .as[Include]
+      .widen[IncludeExclude]
+      .or(hocon("excludeRules").as[Exclude].widen[IncludeExclude])
+      .option
+
+  val config: ConfigValue[IO, PolystatUsage.Analyze] =
+    (inex, input, tmp, outputTo, outputFormats, lang).parMapN {
+      case (inex, input, tmp, outputTo, outputFormats, lang) =>
+        PolystatUsage.Analyze(
+          language = lang,
+          config = AnalyzerConfig(
+            inex = inex,
+            input = input,
+            tmp = tmp,
+            outputFormats = outputFormats,
+            output = outputTo,
+          ),
+        )
+    }
+end HoconConfig
+
+object HoconConfig:
 
   extension (v: HoconConfigValue)
     def toNelString: Option[NonEmptyList[String]] =
@@ -70,42 +110,5 @@ case class HoconConfig(path: Path) extends IOApp.Simple:
   private given ConfigDecoder[HoconConfigValue, List[OutputFormat]] =
     ConfigDecoder[HoconConfigValue].mapOption("outputFormats") {
       _.toListString.traverse(_.asOutputFormat)
-    }
-
-  private object hocon:
-    private val config =
-      IO.blocking(ConfigFactory.parseFile(path.toNioPath.toFile))
-    def apply(s: String): ConfigValue[IO, HoconConfigValue] =
-      ConfigValue.eval(config.map(c => hoconAt(c)("polystat")(s)))
-  end hocon
-
-  private val lang = hocon("lang").as[SupportedLanguage]
-  private val input = hocon("input").as[Path].evalMap(_.toInput)
-  private val tmp = hocon("tempDir").as[Path].option
-  private val outputTo = hocon("outputTo").as[Path].option.map {
-    case Some(path) => Output.ToDirectory(path)
-    case None       => Output.ToConsole
-  }
-  private val outputFormats = hocon("outputFormats").as[List[OutputFormat]]
-  private val inex: ConfigValue[IO, Option[IncludeExclude]] =
-    hocon("includeRules")
-      .as[Include]
-      .widen[IncludeExclude]
-      .or(hocon("excludeRules").as[Exclude].widen[IncludeExclude])
-      .option
-
-  val config: ConfigValue[IO, PolystatUsage.Analyze] =
-    (inex, input, tmp, outputTo, outputFormats, lang).parMapN {
-      case (inex, input, tmp, outputTo, outputFormats, lang) =>
-        PolystatUsage.Analyze(
-          language = lang,
-          config = AnalyzerConfig(
-            inex = inex,
-            input = input,
-            tmp = tmp,
-            outputFormats = outputFormats,
-            output = outputTo,
-          ),
-        )
     }
 end HoconConfig
