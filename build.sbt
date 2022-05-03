@@ -7,6 +7,8 @@ libraryDependencies ++= Seq(
   "co.fs2" %% "fs2-core" % "3.2.7",
   "co.fs2" %% "fs2-io" % "3.2.7",
   "org.polystat.odin" %% "analysis" % "0.3.3",
+  "is.cir" %% "ciris" % "2.3.2",
+  "lt.dvim.ciris-hocon" %% "ciris-hocon" % "1.0.1",
 ).map(_.cross(CrossVersion.for3Use2_13))
 
 excludeDependencies ++= Seq(
