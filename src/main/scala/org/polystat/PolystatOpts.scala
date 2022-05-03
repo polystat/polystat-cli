@@ -15,6 +15,7 @@ import java.nio.file.Path as JPath
 
 import IncludeExclude.*
 import Validated.*
+import InputUtils.toInput
 
 object PolystatOpts extends IOApp.Simple:
 
@@ -124,24 +125,7 @@ object PolystatOpts extends IOApp.Simple:
       help = "Where input files are. If absent, read code from stdin.",
       metavar = "path",
     )
-    .map(p =>
-      def path = Path.fromNioPath(p)
-      Files[IO]
-        .isDirectory(path)
-        .ifM(
-          ifTrue = Input.FromDirectory(path).pure[IO],
-          ifFalse = Files[IO]
-            .isFile(p)
-            .ifM(
-              ifTrue = Input.FromFile(path).pure[IO],
-              ifFalse = IO.raiseError(
-                new FileNotFoundException(
-                  s"\"$path\" is neither a file, nor a directory!"
-                )
-              ),
-            ),
-        )
-    )
+    .map(p => Path.fromNioPath(p).toInput)
     .orElse(Input.FromStdin.pure[IO].pure[Opts])
 
   private def include: Opts[Include] =
