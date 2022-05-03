@@ -29,26 +29,26 @@ case class HoconConfig(path: Path):
     private val config =
       IO.blocking(ConfigFactory.parseFile(path.toNioPath.toFile))
     def apply(s: String): ConfigValue[IO, HoconConfigValue] =
-      ConfigValue.eval(config.map(c => hoconAt(c)("polystat")(s)))
+      ConfigValue.eval(config.map(c => hoconAt(c)(keys.toplevel)(s)))
   end hocon
 
-  private val lang = hocon("lang").as[SupportedLanguage]
-  private val input = hocon("input").as[Path].option.evalMap {
+  private val lang = hocon(keys.inputLanguage).as[SupportedLanguage]
+  private val input = hocon(keys.input).as[Path].option.evalMap {
     case Some(path) => path.toInput
     case None       => IO.pure(Input.FromStdin)
   }
-  private val tmp = hocon("tempDir").as[Path].option
-  private val outputTo = hocon("outputTo").as[Path].option.map {
+  private val tmp = hocon(keys.tempDir).as[Path].option
+  private val outputTo = hocon(keys.outputTo).as[Path].option.map {
     case Some(path) => Output.ToDirectory(path)
     case None       => Output.ToConsole
   }
   private val outputFormats =
-    hocon("outputFormats").as[List[OutputFormat]].default(List.empty)
+    hocon(keys.outputFormats).as[List[OutputFormat]].default(List.empty)
   private val inex: ConfigValue[IO, Option[IncludeExclude]] =
-    hocon("includeRules")
+    hocon(keys.includeRules)
       .as[Include]
       .widen[IncludeExclude]
-      .or(hocon("excludeRules").as[Exclude].widen[IncludeExclude])
+      .or(hocon(keys.excludeRules).as[Exclude].widen[IncludeExclude])
       .option
 
   val config: ConfigValue[IO, PolystatUsage.Analyze] =
@@ -68,6 +68,17 @@ case class HoconConfig(path: Path):
 end HoconConfig
 
 object HoconConfig:
+
+  object keys:
+    val toplevel = "polystat"
+    val inputLanguage = "lang"
+    val input = "input"
+    val tempDir = "tempDir"
+    val outputTo = "outputTo"
+    val outputFormats = "outputFormats"
+    val includeRules = "includeRules"
+    val excludeRules = "excludeRules"
+  end keys
 
   extension (v: HoconConfigValue)
     def toNelString: Option[NonEmptyList[String]] =
@@ -90,7 +101,7 @@ object HoconConfig:
   end extension
 
   private given ConfigDecoder[String, SupportedLanguage] =
-    ConfigDecoder[String].mapOption("lang")(_.asSupportedLang)
+    ConfigDecoder[String].mapOption(keys.inputLanguage)(_.asSupportedLang)
 
   private given ConfigDecoder[String, Path] = ConfigDecoder[String].map(Path(_))
   private given ConfigDecoder[String, OutputFormat] =
@@ -99,16 +110,16 @@ object HoconConfig:
   private given Show[HoconConfigValue] = Show.fromToString
 
   private given ConfigDecoder[HoconConfigValue, Include] =
-    ConfigDecoder[HoconConfigValue].mapOption("includeRules")(
+    ConfigDecoder[HoconConfigValue].mapOption(keys.includeRules)(
       _.toNelString.map(Include(_))
     )
   private given ConfigDecoder[HoconConfigValue, Exclude] =
-    ConfigDecoder[HoconConfigValue].mapOption("excludeRules")(
+    ConfigDecoder[HoconConfigValue].mapOption(keys.excludeRules)(
       _.toNelString.map(Exclude(_))
     )
 
   private given ConfigDecoder[HoconConfigValue, List[OutputFormat]] =
-    ConfigDecoder[HoconConfigValue].mapOption("outputFormats") {
+    ConfigDecoder[HoconConfigValue].mapOption(keys.outputFormats) {
       _.toListString.traverse(_.asOutputFormat)
     }
 end HoconConfig
