@@ -1,6 +1,7 @@
 package org.polystat
 
-import io.circe.{Encoder, Decoder}
+import io.circe.Decoder
+import io.circe.Encoder
 import io.circe.Json
 import io.circe.generic.semiauto.*
 import io.circe.syntax.*

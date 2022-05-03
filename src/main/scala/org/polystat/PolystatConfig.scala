@@ -1,11 +1,11 @@
 package org.polystat
 
+import cats.data.NonEmptyList
 import cats.effect.IO
 import cats.syntax.apply.*
 import com.monovore.decline.Opts
 import fs2.Stream
 import fs2.io.file.Path
-import cats.data.NonEmptyList
 
 object PolystatConfig:
 

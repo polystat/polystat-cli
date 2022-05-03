@@ -1,6 +1,8 @@
 package org.polystat
 
-import cats.effect.{IOApp, IO, ExitCode}
+import cats.effect.ExitCode
+import cats.effect.IO
+import cats.effect.IOApp
 import cats.syntax.all.*
 import com.monovore.decline.Command
 import com.monovore.decline.effect.CommandIOApp
@@ -10,6 +12,7 @@ import fs2.io.file.Path
 import fs2.text.utf8
 import org.polystat.odin.analysis.ASTAnalyzer
 import org.polystat.odin.analysis.EOOdinAnalyzer
+import org.polystat.odin.analysis.EOOdinAnalyzer.OdinAnalysisResult
 import org.polystat.odin.parser.EoParser.sourceCodeEoParser
 
 import EOOdinAnalyzer.{
@@ -18,8 +21,7 @@ import EOOdinAnalyzer.{
 }
 import PolystatConfig.*
 import IncludeExclude.*
-import org.polystat.odin.analysis.EOOdinAnalyzer.OdinAnalysisResult
-
+import InputUtils.*
 object Main extends IOApp:
 
   val optsFromConfig: IO[List[String]] = Files[IO]
@@ -31,12 +33,13 @@ object Main extends IOApp:
     .toList
 
   override def run(args: List[String]): IO[ExitCode] =
-    optsFromConfig.flatMap(confargs =>
-      CommandIOApp.run(
+    for
+      confargs <- optsFromConfig
+      exitCode <- CommandIOApp.run(
         PolystatOpts.polystat.map(a => a.flatMap(execute).as(ExitCode.Success)),
         args ++ confargs,
       )
-    )
+    yield exitCode
 
   // TODO: replace this with sbt-buildinfo
   val POLYSTAT_VERSION = "1.0-SNAPSHOT"
@@ -108,31 +111,27 @@ object Main extends IOApp:
             val output = out match
               case Output.ToConsole => analyzed.flatMap(IO.println)
               case Output.ToDirectory(out) =>
-                Stream
-                  .emits(fmts)
-                  .evalMap { case OutputFormat.Sarif =>
-                    val outPath =
-                      out / "sarif" / codePath.replaceExt(".sarif.json")
-                    for
-                      _ <- IO.println(codePath)
-                      _ <- IO.println(outPath)
-                      _ <- outPath.parent
-                        .map(Files[IO].createDirectories)
-                        .getOrElse(IO.unit)
-                      _ <- analyzed
-                        .map(SarifOutput(_).json.toString)
-                        .flatMap(sarifJson =>
-                          Stream
-                            .emits(sarifJson.getBytes)
-                            .through(Files[IO].writeAll(outPath))
-                            .compile
-                            .drain
-                        )
-                    yield ()
-                    end for
-                  }
-                  .compile
-                  .drain
+                fmts.traverse_ { case OutputFormat.Sarif =>
+                  val outPath =
+                    out / "sarif" / codePath.replaceExt(".sarif.json")
+                  for
+                    _ <- IO.println(codePath)
+                    _ <- IO.println(outPath)
+                    _ <- outPath.parent
+                      .map(Files[IO].createDirectories)
+                      .getOrElse(IO.unit)
+                    _ <- analyzed
+                      .map(SarifOutput(_).json.toString)
+                      .flatMap(sarifJson =>
+                        Stream
+                          .emits(sarifJson.getBytes)
+                          .through(Files[IO].writeAll(outPath))
+                          .compile
+                          .drain
+                      )
+                  yield ()
+                  end for
+                }
             output
           }
 
