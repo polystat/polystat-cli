@@ -1,15 +1,18 @@
 package org.polystat
 
+import io.circe.Codec
+import io.circe.Decoder
 import io.circe.Encoder
 import io.circe.Json
-import io.circe.generic.semiauto._
-import io.circe.syntax._
+import io.circe.syntax.*
 import org.polystat.odin.analysis.EOOdinAnalyzer.OdinAnalysisResult
 
-import OdinAnalysisResult._
-import Sarif._
+import scala.CanEqual.derived
 
-case class SarifOutput(errors: List[OdinAnalysisResult]) {
+import OdinAnalysisResult.*
+import Sarif.*
+
+final case class SarifOutput(errors: List[OdinAnalysisResult]):
   def json: Json = sarif.asJson.deepDropNullValues
 
   private val sarifRun: SarifRun = SarifRun(
@@ -22,8 +25,8 @@ case class SarifOutput(errors: List[OdinAnalysisResult]) {
 
   private def sarifInvocation(
       error: OdinAnalysisResult
-  ): SarifInvocation = {
-    error match {
+  ): SarifInvocation =
+    error match
       case AnalyzerFailure(ruleId, reason) =>
         SarifInvocation(
           toolExecutionNotifications = Seq(
@@ -69,12 +72,9 @@ case class SarifOutput(errors: List[OdinAnalysisResult]) {
           ),
           executionSuccessful = true,
         )
-    }
 
-  }
-
-  private def sarifResult(error: OdinAnalysisResult): Option[SarifResult] = {
-    error match {
+  private def sarifResult(error: OdinAnalysisResult): Option[SarifResult] =
+    error match
       case AnalyzerFailure(_, _) => None
       case DefectDetected(ruleId, message) =>
         Some(
@@ -94,105 +94,93 @@ case class SarifOutput(errors: List[OdinAnalysisResult]) {
             message = SarifMessage("No errors were found."),
           )
         )
-    }
-  }
-}
+end SarifOutput
 
-object Sarif {
+object Sarif extends App:
 
   final val SARIF_VERSION = "2.1.0"
   final val SARIF_SCHEMA =
     "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Documents/CommitteeSpecifications/2.1.0/sarif-schema-2.1.0.json"
   final val POLYSTAT_VERSION = "1.0-SNAPSHOT"
 
-  implicit val sarifLogEncoder: Encoder[SarifLog] = deriveEncoder[SarifLog]
-  case class SarifLog(
+  final case class SarifLog(
       runs: Seq[SarifRun],
       version: String = SARIF_VERSION,
       $schema: String = SARIF_SCHEMA,
-  )
+  ) derives Codec.AsObject
 
-  implicit val sarifRunEncoder: Encoder[SarifRun] = deriveEncoder[SarifRun]
-  case class SarifRun(
+  final case class SarifRun(
       tool: SarifTool,
       results: Seq[SarifResult],
       invocations: Seq[SarifInvocation],
-  )
+  ) derives Codec.AsObject
 
-  implicit val sarifToolEncoder: Encoder[SarifTool] = deriveEncoder[SarifTool]
-  case class SarifTool(driver: SarifDriver)
+  final case class SarifTool(driver: SarifDriver) derives Codec.AsObject
 
-  implicit val sarifDriverEncoder: Encoder[SarifDriver] =
-    deriveEncoder[SarifDriver]
-  case class SarifDriver(
+  final case class SarifDriver(
       name: String = "Polystat",
       informationUri: String = "https://www.polystat.org/",
       semanticVersion: String = POLYSTAT_VERSION,
-  )
+  ) derives Codec.AsObject
 
-  implicit val sarifResultEncoder: Encoder[SarifResult] =
-    deriveEncoder[SarifResult]
-  case class SarifResult(
+  final case class SarifResult(
       ruleId: String,
       level: SarifLevel,
       kind: SarifKind,
       message: SarifMessage,
-  )
+  ) derives Codec.AsObject
 
-  sealed trait SarifLevel
-  object SarifLevel {
-    case object ERROR extends SarifLevel
-    case object NONE extends SarifLevel
-  }
+  enum SarifLevel:
+    case ERROR, NONE
 
-  implicit val encodeSarifLevel: Encoder[SarifLevel] =
-    new Encoder[SarifLevel] {
-      final def apply(a: SarifLevel): Json = a match {
-        case SarifLevel.ERROR => Json.fromString("error")
-        case SarifLevel.NONE  => Json.fromString("none")
+  given Encoder[SarifLevel] with
+    final def apply(a: SarifLevel): Json = a match
+      case SarifLevel.ERROR => Json.fromString("error")
+      case SarifLevel.NONE  => Json.fromString("none")
+  end given
+
+  given Decoder[SarifLevel] with
+    def apply(c: io.circe.HCursor): Decoder.Result[SarifLevel] =
+      c.get[String]("level").map {
+        case "error" => SarifLevel.ERROR
+        case "none"  => SarifLevel.NONE
       }
-    }
+  end given
 
-  sealed trait SarifKind
-  object SarifKind {
-    case object FAIL extends SarifKind
-    case object PASS extends SarifKind
-  }
-  implicit val encodeSarifKind: Encoder[SarifKind] =
-    new Encoder[SarifKind] {
-      final def apply(a: SarifKind): Json = a match {
-        case SarifKind.PASS => Json.fromString("pass")
-        case SarifKind.FAIL => Json.fromString("fail")
+  enum SarifKind:
+    case FAIL, PASS
+
+  given Encoder[SarifKind] with
+    final def apply(a: SarifKind): Json = a match
+      case SarifKind.PASS => Json.fromString("pass")
+      case SarifKind.FAIL => Json.fromString("fail")
+  end given
+
+  given Decoder[SarifKind] with
+    def apply(c: io.circe.HCursor): Decoder.Result[SarifKind] =
+      c.get[String]("kind").map {
+        case "pass" => SarifKind.PASS
+        case "fail" => SarifKind.FAIL
       }
-    }
+  end given
 
-  implicit val sarifMessageEncoder: Encoder[SarifMessage] =
-    deriveEncoder[SarifMessage]
-  case class SarifMessage(text: String)
+  final case class SarifMessage(text: String) derives Codec.AsObject
 
-  implicit val sarifInvocationEncoder: Encoder[SarifInvocation] =
-    deriveEncoder[SarifInvocation]
-  case class SarifInvocation(
+  final case class SarifInvocation(
       toolExecutionNotifications: Seq[SarifNotification],
       executionSuccessful: Boolean,
-  )
+  ) derives Codec.AsObject
 
-  implicit val sarifNotificationEncoder: Encoder[SarifNotification] =
-    deriveEncoder[SarifNotification]
-  case class SarifNotification(
+  final case class SarifNotification(
       level: Option[SarifLevel],
       message: SarifMessage,
       exception: Option[SarifException],
       associatedRule: SarifReportingDescriptor,
-  )
+  ) derives Codec.AsObject
 
-  implicit val sarifExceptionEncoder: Encoder[SarifException] =
-    deriveEncoder[SarifException]
-  case class SarifException(kind: String, message: String)
+  final case class SarifException(kind: String, message: String)
+      derives Codec.AsObject
 
-  implicit
-  val sarifReportingDescriptorEncoder: Encoder[SarifReportingDescriptor] =
-    deriveEncoder[SarifReportingDescriptor]
-  case class SarifReportingDescriptor(id: String)
+  final case class SarifReportingDescriptor(id: String) derives Codec.AsObject
 
-}
+end Sarif

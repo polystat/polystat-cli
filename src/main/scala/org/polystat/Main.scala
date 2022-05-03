@@ -3,10 +3,7 @@ package org.polystat
 import cats.effect.ExitCode
 import cats.effect.IO
 import cats.effect.IOApp
-import cats.syntax.foldable._
-import cats.syntax.functorFilter._
-import cats.syntax.traverse._
-import cats.syntax.monadError._
+import cats.syntax.all.*
 import com.monovore.decline.Command
 import com.monovore.decline.effect.CommandIOApp
 import fs2.Stream
@@ -15,16 +12,26 @@ import fs2.io.file.Path
 import fs2.text.utf8
 import org.polystat.odin.analysis.ASTAnalyzer
 import org.polystat.odin.analysis.EOOdinAnalyzer
+import org.polystat.odin.analysis.EOOdinAnalyzer.OdinAnalysisResult
 import org.polystat.odin.parser.EoParser.sourceCodeEoParser
 
 import EOOdinAnalyzer.{
   advancedMutualRecursionAnalyzer,
   unjustifiedAssumptionAnalyzer,
 }
-import PolystatOpts.IncludeExclude
-import IncludeExclude._
+import PolystatConfig.*
+import IncludeExclude.*
+import InputUtils.*
+object Main extends IOApp:
+  override def run(args: List[String]): IO[ExitCode] =
+    for exitCode <- CommandIOApp.run(
+        PolystatOpts.polystat.map(a => a.flatMap(execute).as(ExitCode.Success)),
+        args,
+      )
+    yield exitCode
 
-object Main extends IOApp {
+  // TODO: replace this with sbt-buildinfo
+  val POLYSTAT_VERSION = "1.0-SNAPSHOT"
 
   val analyzers: List[(String, ASTAnalyzer[IO])] =
     // TODO: In Odin, change analyzer names to shorter ones.
@@ -34,86 +41,90 @@ object Main extends IOApp {
     )
 
   def filterAnalyzers(
-      inex: PolystatOpts.IncludeExclude
-  ): List[ASTAnalyzer[IO]] = {
-    inex match {
-      case Exclude(exclude) =>
+      inex: Option[IncludeExclude]
+  ): List[ASTAnalyzer[IO]] =
+    inex match
+      case Some(Exclude(exclude)) =>
         analyzers.mapFilter { case (id, a) =>
           Option.when(!exclude.contains_(id))(a)
         }
-      case Include(include) =>
+      case Some(Include(include)) =>
         analyzers.mapFilter { case (id, a) =>
           Option.when(include.contains_(id))(a)
         }
-      case Nothing => analyzers.map(_._2)
-    }
-  }
+      case None => analyzers.map(_._2)
 
   def analyze(
       analyzers: List[ASTAnalyzer[IO]]
-  )(code: String): IO[List[EOOdinAnalyzer.OdinAnalysisResult]] = {
+  )(code: String): IO[List[EOOdinAnalyzer.OdinAnalysisResult]] =
     analyzers.traverse(a =>
       EOOdinAnalyzer
         .analyzeSourceCode(a)(code)(cats.Monad[IO], sourceCodeEoParser[IO]())
     )
+
+  def listAnalyzers: IO[Unit] = analyzers.traverse_ { case (name, _) =>
+    IO.println(name)
   }
 
-  def transformPath(other: Path): Path = {
-    val dotCount = other.names.map(_.toString).takeWhile(p => p == ".." || p == ".").length
-    val newPath = other.toNioPath.subpath(Math.max(dotCount, 1), other.toNioPath.getNameCount)
-    val sarifJsonPath = Path(newPath.toString.splitAt(newPath.toString.lastIndexOf("."))._1 + ".sarif.json")
-    
-    sarifJsonPath
-  }
+  def readConfigFromFile(path: Path): IO[PolystatUsage.Analyze] =
+    HoconConfig(path).config.load
 
+  def execute(usage: PolystatUsage): IO[Unit] =
+    usage match
+      case PolystatUsage.List => listAnalyzers
+      case PolystatUsage.Misc(version, config) =>
+        if (version) then IO.println(POLYSTAT_VERSION)
+        else
+          readConfigFromFile(config.getOrElse(Path(".polystat.conf")))
+            .flatMap(execute)
+      case PolystatUsage.Analyze(
+            lang,
+            AnalyzerConfig(inex, input, tmp, fmts, out),
+          ) =>
+        val filteredAnalyzers = filterAnalyzers(inex)
+        val tempDir: IO[Path] = tmp match
+          case Some(path) => IO.pure(path)
+          case None       => Files[IO].createTempDirectory
+        val inputExt: String = lang match
+          case SupportedLanguage.EO     => ".eo"
+          case SupportedLanguage.Java   => ".java"
+          case SupportedLanguage.Python => ".py"
 
-  def runPolystat(
-      files: Stream[IO, (Path, String)],
-      tmp: Path,
-      filteredAnalyzers: List[ASTAnalyzer[IO]],
-  ): IO[Unit] =
-    for {
-      _ <- IO.println(tmp)
-      _ <- IO.println(filteredAnalyzers.map(_.name))
-      _ <- files
-        .evalMap { case (p, code) =>
-          val tmpPath = tmp / transformPath(p)
-          for {
-            _ <- tmpPath.parent.map(Files[IO].createDirectories).getOrElse(IO.unit)
-            results <- analyze(filteredAnalyzers)(code).adaptError(e => new Exception(p.toString + ": ", e))
-            sarifJson = SarifOutput(results).json.toString
-            _ <- Stream.emits(sarifJson.getBytes).through(Files[IO].writeAll(tmpPath)).compile.drain
-          } yield ()
-        }
-        .compile
-        .drain
-    } yield ()
+        val inputFiles: Stream[IO, (Path, String)] =
+          readCodeFromInput(ext = inputExt, input = input)
 
-  val polystat = Command[PolystatConfig](
-    name = "polystat",
-    header = "Says hello!",
-    helpFlag = true,
-  )(PolystatConfig.opts).map { case PolystatConfig(tmp, files, inex) =>
-    for {
-      tmp <- tmp
-      filtered = filterAnalyzers(inex)
-      _ <- runPolystat(files, tmp, filtered)
-    } yield ExitCode.Success
-  }
+        val analysisResults: Stream[IO, Unit] =
+          inputFiles.evalMap { case (codePath, code) =>
+            val analyzed = analyze(filteredAnalyzers)(code)
+            val output = out match
+              case Output.ToConsole => analyzed.flatMap(IO.println)
+              case Output.ToDirectory(out) =>
+                fmts.traverse_ { case OutputFormat.Sarif =>
+                  val outPath =
+                    out / "sarif" / codePath.replaceExt(".sarif.json")
+                  for
+                    _ <- IO.println(codePath)
+                    _ <- IO.println(outPath)
+                    _ <- outPath.parent
+                      .map(Files[IO].createDirectories)
+                      .getOrElse(IO.unit)
+                    _ <- analyzed
+                      .map(SarifOutput(_).json.toString)
+                      .flatMap(sarifJson =>
+                        Stream
+                          .emits(sarifJson.getBytes)
+                          .through(Files[IO].writeAll(outPath))
+                          .compile
+                          .drain
+                      )
+                  yield ()
+                  end for
+                }
+            output
+          }
 
-  val optsFromConfig: IO[List[String]] = Files[IO]
-    .readAll(Path(".polystat"))
-    .through(utf8.decode)
-    .flatMap(s => Stream.emits(s.trim.split("\\s+")))
-    .filter(_.nonEmpty)
-    .compile
-    .toList
+        analysisResults.compile.drain
+    end match
+  end execute
 
-  override def run(args: List[String]): IO[ExitCode] = {
-    optsFromConfig.flatMap(confargs =>
-      IO.println(confargs)
-        .flatMap(_ => CommandIOApp.run[IO](polystat, confargs ++ args))
-        .map(code => code)
-    )
-  }
-}
+end Main
