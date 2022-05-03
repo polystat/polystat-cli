@@ -7,7 +7,6 @@ The description follows [this guide](https://en.wikipedia.org/wiki/Command-line_
 polystat {eo | java | python} [--tmp <path>] [--in <path>] [{--include <rule...> | --exclude <rule...>}] [--sarif] [--files [path]]
 polystat [--version] [--help] [--config <path>]
 polystat list
-polystat
 ```
 ## Input configuration
 * The subcommand specifies which files should be analyzed (`.eo`, `.java` or `.py`). More languages can be added in the future. 
@@ -19,12 +18,12 @@ polystat
 * `--include` and `--exclude` respectively define which rules should be included/excluded from the analysis run. These options are mutually exclusive, so specifying both should not be valid. If neither option is specified, all the available analyzers will be run. The list of available rule specifiers can be found via `polystat list` command.
 
 ## Output configuration
-* `--sarif` option means that the output of the analysis will be in the [SARIF](https://docs.oasis-open.org/sarif/sarif/v2.1.0/sarif-v2.1.0.html) format. If this option is not specified, only the plain text console output will be produced. By default, this output is printed to console. 
+* `--sarif` option means that the command will produce the output in the [SARIF](https://docs.oasis-open.org/sarif/sarif/v2.1.0/sarif-v2.1.0.html) format in addition to output in other formats (if any). 
 * `--files [path]` option specifies whether the output should be written to the output directory instead of writing it to the console.
 If the path is specified, the command will write the files to the given path. If not, then the command will create a directory called `polystat_out` and write the files there. The path is assumed to be an empty directory. If it is not, its contents will be purged.
     * If an additional output format is specified (e.g. `--sarif`), then the files created by the analyzer will be written in the respective subdirectory. For example, in case of `--sarif`,  the SARIF files will be located in `path/sarif/`. The console output is not written anywhere. Therefore, if none of the output format options (e.g. `--sarif`) are specified, no files are produced. 
     * The output format options (e.g. `--sarif`) also determine the extension of the output files. In case of `--sarif` the extension would be `.sarif.json`.
-    * If `--in` option specifies a directory, the structure of the output files will be similar to the structure of the input directory. 
+    * If `--in` option specifies a directory, the structure of the output directory will be similar to the structure of the input directory. 
     * If `--in` specifies a single file, the file with the analysis output for this file will be written to the output directory. 
     * If `--in` is not specified, the generated file will be called `stdin` + the relevant extension. 
 
