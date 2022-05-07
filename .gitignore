@@ -6,3 +6,5 @@ project/project/
 .bsp/
 .metals/
 tmp/
+polystat_out/
+j2eo.jar
