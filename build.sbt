@@ -9,6 +9,7 @@ libraryDependencies ++= Seq(
   "org.polystat.odin" %% "analysis" % "0.3.3",
   "is.cir" %% "ciris" % "2.3.2",
   "lt.dvim.ciris-hocon" %% "ciris-hocon" % "1.0.1",
+  "org.http4s" %% "http4s-ember-client" % "1.0.0-M32",
 ).map(_.cross(CrossVersion.for3Use2_13))
 
 excludeDependencies ++= Seq(
@@ -20,6 +21,7 @@ excludeDependencies ++= Seq(
 libraryDependencies ++= Seq(
   "io.circe" %% "circe-core" % "0.14.1",
   "org.scalameta" %% "munit" % "1.0.0-M3" % Test,
+  "org.slf4j" % "slf4j-nop" % "1.7.36",
 )
 
 assembly / assemblyJarName := "polystat.jar"

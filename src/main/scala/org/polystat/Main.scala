@@ -66,6 +66,46 @@ object Main extends IOApp:
   def readConfigFromFile(path: Path): IO[PolystatUsage.Analyze] =
     HoconConfig(path).config.load
 
+  def writeOutputTo(path: Path)(output: String): IO[Unit] =
+    for
+      _ <- path.parent
+        .map(Files[IO].createDirectories)
+        .getOrElse(IO.unit)
+      _ <- Stream
+        .emits(output.getBytes)
+        .through(Files[IO].writeAll(path))
+        .compile
+        .drain
+    yield ()
+    end for
+  end writeOutputTo
+
+  def analyzeEO(
+      inputFiles: Stream[IO, (Path, String)],
+      outputFormats: List[OutputFormat],
+      out: Output,
+      filteredAnalyzers: List[ASTAnalyzer[IO]],
+  ): IO[Unit] =
+    inputFiles
+      .evalMap { case (codePath, code) =>
+        for
+          _ <- IO.println(s"Analyzing $codePath...")
+          analyzed <- analyze(filteredAnalyzers)(code)
+          _ <- out match
+            case Output.ToConsole => IO.println(analyzed)
+            case Output.ToDirectory(out) =>
+              outputFormats.traverse_ { case OutputFormat.Sarif =>
+                val outPath =
+                  out / "sarif" / codePath.replaceExt(".sarif.json")
+                val sarifJson = SarifOutput(analyzed).json.toString
+                IO.println(s"Writing results to $outPath") *>
+                  writeOutputTo(outPath)(sarifJson)
+              }
+        yield ()
+      }
+      .compile
+      .drain
+
   def execute(usage: PolystatUsage): IO[Unit] =
     usage match
       case PolystatUsage.List => listAnalyzers
@@ -87,41 +127,38 @@ object Main extends IOApp:
           case SupportedLanguage.Java   => ".java"
           case SupportedLanguage.Python => ".py"
 
-        val inputFiles: Stream[IO, (Path, String)] =
-          readCodeFromInput(ext = inputExt, input = input)
-
-        val analysisResults: Stream[IO, Unit] =
-          inputFiles.evalMap { case (codePath, code) =>
-            val analyzed = analyze(filteredAnalyzers)(code)
-            val output = out match
-              case Output.ToConsole => analyzed.flatMap(IO.println)
-              case Output.ToDirectory(out) =>
-                fmts.traverse_ { case OutputFormat.Sarif =>
-                  val outPath =
-                    out / "sarif" / codePath.replaceExt(".sarif.json")
-                  for
-                    _ <- IO.println(codePath)
-                    _ <- IO.println(outPath)
-                    _ <- outPath.parent
-                      .map(Files[IO].createDirectories)
-                      .getOrElse(IO.unit)
-                    _ <- analyzed
-                      .map(SarifOutput(_).json.toString)
-                      .flatMap(sarifJson =>
-                        Stream
-                          .emits(sarifJson.getBytes)
-                          .through(Files[IO].writeAll(outPath))
-                          .compile
-                          .drain
-                      )
-                  yield ()
-                  end for
-                }
-            output
-          }
-
-        analysisResults.compile.drain
-    end match
+        val analysisResults: IO[Unit] =
+          lang match
+            case SupportedLanguage.EO =>
+              val inputFiles = readCodeFromInput(ext = inputExt, input = input)
+              analyzeEO(
+                inputFiles = inputFiles,
+                outputFormats = fmts,
+                out = out,
+                filteredAnalyzers = filteredAnalyzers,
+              )
+            case SupportedLanguage.Java =>
+              for
+                tmp <- tempDir
+                _ <- input match
+                  case Input.FromStdin      => ???
+                  case Input.FromFile(path) => ???
+                  case Input.FromDirectory(path) =>
+                    J2EO.run(inputDir = path, outputDir = tmp).as(tempDir)
+                inputFiles = readCodeFromInput(
+                  ".eo",
+                  Input.FromDirectory(tmp),
+                )
+                _ <- analyzeEO(
+                  inputFiles = inputFiles,
+                  outputFormats = fmts,
+                  out = out,
+                  filteredAnalyzers = filteredAnalyzers,
+                )
+              yield ()
+            case SupportedLanguage.Python =>
+              IO.println("Analyzing Python is not implemented yet!")
+        analysisResults
   end execute
 
 end Main
