@@ -45,11 +45,11 @@ releaseProcess := Seq[ReleaseStep](
   runClean,
   runTest,
   setReleaseVersion,
-  // commitReleaseVersion,
-  // tagRelease,
+  commitReleaseVersion,
+  tagRelease,
   setNextVersion,
-  // commitNextVersion,
-  // pushChanges,
+  commitNextVersion,
+  pushChanges,
 )
 
 val githubWorkflowScalas = List("3.1.2")

@@ -1,0 +1,45 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_version:
+        description: Release version
+        required: false
+        default: ''
+
+jobs:
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v2
+        with:
+          token: ${{ secrets.GIT_TOKEN }}
+      - name: Setup JDK
+        uses: actions/setup-java@v2
+        with:
+          distribution: 'temurin'
+          java-version: '11'
+      - name: Configure local git
+        run: |
+          git config user.name "${{ secrets.GIT_USERNAME }}"
+          git config user.email "${{ secrets.GIT_USER_EMAIL }}"
+      - name: Release new version
+        if: ${{ github.event.inputs.release_version == '' }}
+        run: |
+          sbt "release with-defaults"
+      - name: Release the specified version
+        if: ${{ github.event.inputs.release_version != '' }}
+        env:
+        run: |
+          sbt "release with-defaults release-version ${{ github.event.inputs.release_version }}"
+      - name: Build
+        run: sbt assembly
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: |
+            target/scala-3.1.2/polystat.jar
