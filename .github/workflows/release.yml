@@ -38,7 +38,6 @@ jobs:
         run: sbt assembly
       - name: Release
         uses: softprops/action-gh-release@v1
-        if: startsWith(github.ref, 'refs/tags/')
         with:
           files: |
             target/scala-3.1.2/polystat.jar
