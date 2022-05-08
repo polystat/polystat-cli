@@ -1,5 +1,5 @@
 # Polystat CLI
-This repository provides an alternative implementation to [Polystat CLI](https://github.com/polystat/polystat).
+This repository provides an alternative implementation to [Polystat](https://github.com/polystat/polystat).
 
 # Basic usage
 > `polystat list -c` 
