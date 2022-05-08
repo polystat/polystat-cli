@@ -1,4 +1,8 @@
+import ReleaseTransformations.*
+
 ThisBuild / scalaVersion := "3.1.2"
+ThisBuild / versionScheme := Some("semver-spec")
+ThisBuild / releaseVersionBump := sbtrelease.Version.Bump.Next
 
 libraryDependencies ++= Seq(
   "org.typelevel" %% "cats-parse" % "0.3.7",
@@ -33,6 +37,19 @@ buildInfoPackage := "org.polystat"
 
 scalacOptions ++= Seq(
   "-Wunused:all"
+)
+
+releaseProcess := Seq[ReleaseStep](
+  checkSnapshotDependencies,
+  inquireVersions,
+  runClean,
+  runTest,
+  setReleaseVersion,
+  // commitReleaseVersion,
+  // tagRelease,
+  setNextVersion,
+  // commitNextVersion,
+  // pushChanges,
 )
 
 val githubWorkflowScalas = List("3.1.2")
