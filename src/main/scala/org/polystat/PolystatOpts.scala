@@ -67,10 +67,20 @@ object PolystatOpts extends IOApp.Simple:
     name = "java",
     help = "Analyze Java files",
   ) {
-    analyzerConfig.map(
-      _.map(conf => PolystatUsage.Analyze(SupportedLanguage.Java, conf))
+    (analyzerConfig, j2eo).mapN((conf, j2eo) =>
+      conf.map(conf =>
+        PolystatUsage.Analyze(SupportedLanguage.Java(j2eo), conf)
+      )
     )
   }
+
+  def j2eo: Opts[Option[Path]] = Opts
+    .option[JPath](
+      long = "j2eo",
+      help = "Path to a j2eo executable.",
+    )
+    .map(Path.fromNioPath)
+    .orNone
 
   def analyzePython: Opts[IO[PolystatUsage.Analyze]] = Opts.subcommand(
     name = "py",

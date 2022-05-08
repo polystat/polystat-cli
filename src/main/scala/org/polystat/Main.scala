@@ -125,9 +125,9 @@ object Main extends IOApp:
           case Some(path) => IO.pure(path)
           case None       => Files[IO].createTempDirectory
         val inputExt: String = lang match
-          case SupportedLanguage.EO     => ".eo"
-          case SupportedLanguage.Java   => ".java"
-          case SupportedLanguage.Python => ".py"
+          case SupportedLanguage.EO      => ".eo"
+          case SupportedLanguage.Java(_) => ".java"
+          case SupportedLanguage.Python  => ".py"
 
         val analysisResults: IO[Unit] =
           lang match
@@ -139,7 +139,7 @@ object Main extends IOApp:
                 out = out,
                 filteredAnalyzers = filteredAnalyzers,
               )
-            case SupportedLanguage.Java =>
+            case SupportedLanguage.Java(j2eo) =>
               for
                 tmp <- tempDir
                 _ <- input match // writing EO files to tempDir
@@ -150,12 +150,12 @@ object Main extends IOApp:
                         path / "stdin.eo"
                       )
                       _ <- writeOutputTo(stdinTmp)(code)
-                      _ <- J2EO.run(inputDir = stdinTmp, outputDir = tmp)
+                      _ <- J2EO.run(j2eo, inputDir = stdinTmp, outputDir = tmp)
                     yield ()
                   case Input.FromFile(path) =>
-                    J2EO.run(inputDir = path, outputDir = tmp)
+                    J2EO.run(j2eo, inputDir = path, outputDir = tmp)
                   case Input.FromDirectory(path) =>
-                    J2EO.run(inputDir = path, outputDir = tmp)
+                    J2EO.run(j2eo, inputDir = path, outputDir = tmp)
                 inputFiles = readCodeFromInput(
                   ".eo",
                   Input.FromDirectory(tmp),

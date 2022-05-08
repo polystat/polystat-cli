@@ -18,7 +18,9 @@ object PolystatConfig:
   )
 
   enum SupportedLanguage:
-    case EO, Java, Python
+    case EO, Python
+    case Java(j2eo: Option[Path])
+  end SupportedLanguage
 
   enum PolystatUsage:
     case Analyze(language: SupportedLanguage, config: AnalyzerConfig)

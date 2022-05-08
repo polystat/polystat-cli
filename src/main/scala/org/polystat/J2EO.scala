@@ -20,7 +20,7 @@ object J2EO:
   private val J2EO_URL =
     "https://search.maven.org/remotecontent?filepath=org/polystat/j2eo/0.4.0/j2eo-0.4.0.jar"
 
-  private def j2eoPath: IO[Path] =
+  private def defaultJ2EO: IO[Path] =
     Files[IO]
       .exists(DEFAULT_J2EO_PATH)
       .ifM(
@@ -53,12 +53,20 @@ object J2EO:
       }
   end downloadJ2EO
 
-  def run(inputDir: Path, outputDir: Path): IO[Unit] =
-    val command = s"java -jar $DEFAULT_J2EO_PATH -o $outputDir $inputDir"
+  def run(j2eo: Option[Path], inputDir: Path, outputDir: Path): IO[Unit] =
+    val command =
+      s"java -jar ${j2eo.getOrElse(DEFAULT_J2EO_PATH)} -o $outputDir $inputDir"
     for
-      j2eo <- j2eoPath
-      _ <- IO.println(s"""Running "$command"...""")
-      _ <- IO.blocking(command.!).void
+      j2eo <- j2eo.map(IO.pure).getOrElse(defaultJ2EO)
+      _ <- Files[IO]
+        .exists(j2eo)
+        .ifM(
+          ifTrue = for
+            _ <- IO.println(s"""Running "$command"...""")
+            _ <- IO.blocking(command.!).void
+          yield (),
+          ifFalse = IO.println(s"""J2EO executable "$j2eo" doesn't exist!"""),
+        )
     yield ()
     end for
   end run
