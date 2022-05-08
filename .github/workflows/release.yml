@@ -32,7 +32,6 @@ jobs:
           sbt "release with-defaults"
       - name: Release the specified version
         if: ${{ github.event.inputs.release_version != '' }}
-        env:
         run: |
           sbt "release with-defaults release-version ${{ github.event.inputs.release_version }}"
       - name: Build
