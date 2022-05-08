@@ -34,3 +34,24 @@ buildInfoPackage := "org.polystat"
 scalacOptions ++= Seq(
   "-Wunused:all"
 )
+
+val githubWorkflowScalas = List("3.1.2")
+
+val checkoutSetupJava = List(WorkflowStep.Checkout) ++
+  WorkflowStep.SetupJava(List(JavaSpec.temurin("11")))
+
+ThisBuild / githubWorkflowPublishTargetBranches := Seq()
+
+ThisBuild / githubWorkflowAddedJobs ++= Seq(
+  WorkflowJob(
+    id = "scalafmt",
+    name = "Format code with scalafmt",
+    scalas = githubWorkflowScalas,
+    steps = checkoutSetupJava ++
+      githubWorkflowGeneratedCacheSteps.value ++
+      List(
+        WorkflowStep.Sbt(List("scalafmtCheckAll")),
+        WorkflowStep.Sbt(List("scalafmtSbtCheck")),
+      ),
+  )
+)
