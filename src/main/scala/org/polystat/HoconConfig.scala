@@ -84,23 +84,30 @@ object HoconConfig:
     val excludeRules = "excludeRules"
     val j2eo = "j2eo"
     val explanation = s"""
-                       |$toplevel.$inputLanguage - the type of input files which will be analyzed. This key must be present.
+                       |$toplevel.$inputLanguage
+                       |    The type of input files which will be analyzed. This key must be present.
                        |    Possible values:
                        |        "java" - only ".java" files will be analyzed.
                        |        "eo" - only ".eo" files will be analyzed.
                        |        "python" - only ".py" files will be analyzed.
-                       |$toplevel.$j2eo - specifies the path to the J2EO executable.
+                       |$toplevel.$j2eo
+                       |    Specifies the path to the J2EO executable.
                        |    If not specified, defaults to looking for j2eo.jar in the current working directory.
                        |    If it's not found, downloads it from maven central. The download only happens when this key is NOT provided. 
-                       |$toplevel.$input - how the files are supplied to the analyzer. 
+                       |$toplevel.$input
+                       |    How the files are supplied to the analyzer. 
                        |    Can be either a path to a directory, path to a file, or absent. If absent, the code is read from standard input.
-                       |$toplevel.$tempDir - the path to a directory where temporary analysis file will be stored. 
+                       |$toplevel.$tempDir
+                       |    The path to a directory where temporary analysis file will be stored. 
                        |    If not specified, defaults to an OS-generated temporary directory.
-                       |$toplevel.$outputTo - the path to a directory where the results of the analysis are stored. 
+                       |$toplevel.$outputTo
+                       |    The path to a directory where the results of the analysis are stored. 
                        |    If not specified, the results will be printed to console.
-                       |$toplevel.$outputFormats - the formats for which output is generated. 
+                       |$toplevel.$outputFormats
+                       |    The formats for which output is generated. 
                        |    If it's an empty list or not specified, no output files are produced.
-                       |$toplevel.$includeRules | $toplevel.$excludeRules - which rules should be included in / excluded from the analysis.
+                       |$toplevel.$includeRules | $toplevel.$excludeRules 
+                       |    Which rules should be included in / excluded from the analysis.
                        |    If both are specified, $toplevel.$includeRules takes precedence. 
                        |    The list of available rule specifiers can be found by running:
                        |        polystat.jar list
