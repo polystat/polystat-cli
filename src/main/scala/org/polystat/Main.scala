@@ -141,10 +141,19 @@ object Main extends IOApp:
               for
                 tmp <- tempDir
                 _ <- input match
-                  case Input.FromStdin      => ???
-                  case Input.FromFile(path) => ???
+                  case Input.FromStdin =>
+                    for
+                      code <- readCodeFromStdin.compile.string
+                      stdinTmp <- Files[IO].createTempDirectory.map(path =>
+                        path / "stdin.eo"
+                      )
+                      _ <- writeOutputTo(stdinTmp)(code)
+                      _ <- J2EO.run(inputDir = stdinTmp, outputDir = tmp)
+                    yield ()
+                  case Input.FromFile(path) =>
+                    J2EO.run(inputDir = path, outputDir = tmp)
                   case Input.FromDirectory(path) =>
-                    J2EO.run(inputDir = path, outputDir = tmp).as(tempDir)
+                    J2EO.run(inputDir = path, outputDir = tmp)
                 inputFiles = readCodeFromInput(
                   ".eo",
                   Input.FromDirectory(tmp),

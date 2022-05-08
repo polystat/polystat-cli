@@ -25,6 +25,7 @@ libraryDependencies ++= Seq(
 )
 
 assembly / assemblyJarName := "polystat.jar"
+assembly / mainClass := Some("org.polystat.Main")
 
 enablePlugins(BuildInfoPlugin)
 buildInfoKeys := Seq(version)

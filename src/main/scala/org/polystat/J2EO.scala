@@ -25,7 +25,7 @@ object J2EO:
       .exists(DEFAULT_J2EO_PATH)
       .ifM(
         ifTrue = IO.pure(DEFAULT_J2EO_PATH),
-        ifFalse = downloadJ2EO *> IO.pure(DEFAULT_J2EO_PATH),
+        ifFalse = downloadJ2EO.as(DEFAULT_J2EO_PATH),
       )
 
   private def downloadJ2EO: IO[Unit] =
