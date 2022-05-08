@@ -108,7 +108,9 @@ object Main extends IOApp:
 
   def execute(usage: PolystatUsage): IO[Unit] =
     usage match
-      case PolystatUsage.List => listAnalyzers
+      case PolystatUsage.List(cfg) =>
+        if (cfg) then IO.println(HoconConfig.keys.explanation)
+        else listAnalyzers
       case PolystatUsage.Misc(version, config) =>
         if (version) then IO.println(BuildInfo.version)
         else
@@ -140,7 +142,7 @@ object Main extends IOApp:
             case SupportedLanguage.Java =>
               for
                 tmp <- tempDir
-                _ <- input match
+                _ <- input match // writing EO files to tempDir
                   case Input.FromStdin =>
                     for
                       code <- readCodeFromStdin.compile.string

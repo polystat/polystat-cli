@@ -22,7 +22,7 @@ object PolystatConfig:
 
   enum PolystatUsage:
     case Analyze(language: SupportedLanguage, config: AnalyzerConfig)
-    case List
+    case List(config: Boolean)
     case Misc(version: Boolean, configPath: Option[Path])
   end PolystatUsage
 

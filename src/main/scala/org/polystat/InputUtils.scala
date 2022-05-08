@@ -62,6 +62,7 @@ object InputUtils:
           .through(utf8.decode)
           .map(code => (relativePath(to = dir, path = path), code))
       )
+
   def readCodeFromStdin: Stream[IO, String] = stdinUtf8[IO](4096).bufferAll
 
   def readCodeFromInput(ext: String, input: Input): Stream[IO, (Path, String)] =

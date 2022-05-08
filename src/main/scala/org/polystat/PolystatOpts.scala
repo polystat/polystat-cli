@@ -85,8 +85,18 @@ object PolystatOpts extends IOApp.Simple:
     name = "list",
     help = "List available analyzers.",
   ) {
-    PolystatUsage.List.pure[IO].pure[Opts]
+    listConfig.map(IO.pure)
   }
+
+  def listConfig: Opts[PolystatUsage] = Opts
+    .flag(
+      long = "config",
+      help =
+        """Display configuration keys for Polystat config file (.polystat.conf).""",
+      short = "c",
+    )
+    .orFalse
+    .map(config => PolystatUsage.List(config = config))
 
   def version = Opts
     .flag(
