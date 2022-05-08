@@ -1,4 +1,4 @@
-scalaVersion := "3.1.2"
+ThisBuild / scalaVersion := "3.1.2"
 
 libraryDependencies ++= Seq(
   "org.typelevel" %% "cats-parse" % "0.3.7",
