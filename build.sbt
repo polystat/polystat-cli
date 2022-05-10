@@ -35,6 +35,22 @@ enablePlugins(BuildInfoPlugin)
 buildInfoKeys := Seq(version)
 buildInfoPackage := "org.polystat"
 
+Global / excludeLintKeys += nativeImageVersion
+
+enablePlugins(NativeImagePlugin)
+Compile / mainClass := Some("org.polystat.Main")
+nativeImageVersion := "22.1.0"
+nativeImageOptions ++= Seq(
+  s"-H:ReflectionConfigurationFiles=${nativeImageAgentOutputDir.value / "reflect-config.json"}",
+  s"-H:ConfigurationFileDirectories=${nativeImageAgentOutputDir.value}",
+  "-H:+ReportExceptionStackTraces",
+  "-H:+JNI",
+  "--initialize-at-run-time=scala.tools.nsc.ast.parser.ParsersCommon",
+  "--static",
+  "--no-fallback",
+  "--verbose",
+)
+
 scalacOptions ++= Seq(
   "-Wunused:all"
 )
@@ -47,6 +63,10 @@ releaseProcess := Seq[ReleaseStep](
   setReleaseVersion,
   commitReleaseVersion,
   tagRelease,
+  releaseStepTask(assembly),
+  releaseStepInputTask(nativeImageRunAgent),
+  releaseStepInputTask(nativeImageCopy, "polystat-x86_64-pc-linux"),
+  releaseStepInputTask(nativeImageRun),
   setNextVersion,
   commitNextVersion,
   pushChanges,

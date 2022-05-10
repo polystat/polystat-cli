@@ -45,3 +45,4 @@ jobs:
           tag_name: ${{ steps.get-latest-tag.outputs.tag }}
           files: |
             target/scala-3.1.2/polystat.jar
+            polystat-x86_64-pc-linux
