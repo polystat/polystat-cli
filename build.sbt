@@ -41,8 +41,8 @@ enablePlugins(NativeImagePlugin)
 Compile / mainClass := Some("org.polystat.Main")
 nativeImageVersion := "22.1.0"
 nativeImageOptions ++= Seq(
-  s"-H:ReflectionConfigurationFiles=${nativeImageAgentOutputDir.value / "reflect-config.json"}",
-  s"-H:ConfigurationFileDirectories=${nativeImageAgentOutputDir.value}",
+  s"-H:ReflectionConfigurationFiles=${baseDirectory.value / "native-image-configs" / "reflect-config.json"}",
+  s"-H:ConfigurationFileDirectories=${baseDirectory.value / "native-image-configs"}",
   "-H:+ReportExceptionStackTraces",
   "-H:+JNI",
   "--initialize-at-run-time=scala.tools.nsc.ast.parser.ParsersCommon",
