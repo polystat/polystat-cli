@@ -64,7 +64,6 @@ releaseProcess := Seq[ReleaseStep](
   commitReleaseVersion,
   tagRelease,
   releaseStepTask(assembly),
-  releaseStepInputTask(nativeImageRunAgent),
   releaseStepInputTask(nativeImageCopy, "polystat-x86_64-pc-linux"),
   releaseStepInputTask(nativeImageRun),
   setNextVersion,
