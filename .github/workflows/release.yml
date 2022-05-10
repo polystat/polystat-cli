@@ -34,8 +34,6 @@ jobs:
         if: ${{ github.event.inputs.release_version != '' }}
         run: |
           sbt "release with-defaults release-version ${{ github.event.inputs.release_version }}"
-      - name: Build
-        run: sbt assembly
       - name: Latest tag
         uses: actions-ecosystem/action-get-latest-tag@v1
         id: get-latest-tag
