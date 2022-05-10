@@ -43,6 +43,7 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ steps.get-latest-tag.outputs.tag }}
+          body_path: CHANGELOG.md
           files: |
             target/scala-3.1.2/polystat.jar
             polystat-x86_64-pc-linux
