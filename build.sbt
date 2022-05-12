@@ -48,6 +48,8 @@ nativeImageOptions ++= Seq(
   "--initialize-at-run-time=scala.tools.nsc.ast.parser.ParsersCommon",
   "--static",
   "--no-fallback",
+  "--enable-http",
+  "--enable-https",
   "--verbose",
 )
 
@@ -55,21 +57,46 @@ scalacOptions ++= Seq(
   "-Wunused:all"
 )
 
-releaseProcess := Seq[ReleaseStep](
-  checkSnapshotDependencies,
-  inquireVersions,
-  runClean,
-  runTest,
-  setReleaseVersion,
-  commitReleaseVersion,
-  tagRelease,
-  releaseStepTask(assembly),
-  releaseStepInputTask(nativeImageCopy, "polystat-x86_64-pc-linux"),
-  releaseStepInputTask(nativeImageRun),
-  setNextVersion,
-  commitNextVersion,
-  pushChanges,
-)
+commands += Command.command("preRelease") { state =>
+  val newState = Project
+    .extract(state)
+    .appendWithSession(
+      Seq(
+        releaseProcess := Seq(
+          checkSnapshotDependencies,
+          inquireVersions,
+          runClean,
+          runTest,
+          setReleaseVersion,
+          releaseStepTask(assembly),
+          commitReleaseVersion,
+          tagRelease,
+          pushChanges,
+        )
+      ),
+      state,
+    )
+
+  Command.process("release with-defaults", newState)
+}
+
+commands += Command.command("postRelease") { state =>
+  val newState = Project
+    .extract(state)
+    .appendWithSession(
+      Seq(
+        releaseProcess := Seq(
+          inquireVersions,
+          setNextVersion,
+          commitNextVersion,
+          pushChanges,
+        )
+      ),
+      state,
+    )
+
+  Command.process("release with-defaults", newState)
+}
 
 val githubWorkflowScalas = List("3.1.2")
 

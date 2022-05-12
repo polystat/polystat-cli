@@ -1,3 +1,3 @@
-## Polystat v0.1.1
+## Polystat v0.1.2
 
-In this release, the CI was updated to produce native Linux binaries using GraalVM Native Image. 
+In this release, the CI was updated to produce native binaries for Windows and Linux.

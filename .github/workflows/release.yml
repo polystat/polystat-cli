@@ -1,17 +1,12 @@
 name: Release
 
-on:
-  workflow_dispatch:
-    inputs:
-      release_version:
-        description: Release version
-        required: false
-        default: ''
+on: workflow_dispatch
 
 jobs:
-  release:
-    name: Release
+  pre-release:
     runs-on: ubuntu-latest
+    outputs:
+      release-tag: ${{ steps.latest-tag.outputs.tag }}
     steps:
       - name: Check out repository code
         uses: actions/checkout@v2
@@ -23,25 +18,87 @@ jobs:
           distribution: 'temurin'
           java-version: '11'
       - name: Configure local git
-        run: |
-          git config user.name "${{ secrets.GIT_USERNAME }}"
+        run: >-
+          git config user.name "${{ secrets.GIT_USERNAME }}" && 
           git config user.email "${{ secrets.GIT_USER_EMAIL }}"
       - name: Release new version
-        if: ${{ github.event.inputs.release_version == '' }}
-        run: |
-          sbt "release with-defaults"
-      - name: Release the specified version
-        if: ${{ github.event.inputs.release_version != '' }}
-        run: |
-          sbt "release with-defaults release-version ${{ github.event.inputs.release_version }}"
+        run: sbt preRelease
       - name: Latest tag
         uses: actions-ecosystem/action-get-latest-tag@v1
-        id: get-latest-tag
+        id: latest-tag
       - name: Github Release
+        id: gh_release
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: ${{ steps.get-latest-tag.outputs.tag }}
+          tag_name: ${{ steps.latest-tag.outputs.tag }}
           body_path: CHANGELOG.md
           files: |
             target/scala-3.1.2/polystat.jar
-            polystat-x86_64-pc-linux
+  build-binaries:
+    needs: pre-release
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        include:
+          - os: ubuntu-latest
+            uploaded_filename: polystat-x86_64-pc-linux
+            local_path: polystat
+          - os: windows-latest
+            uploaded_filename: polystat-x86_64-pc-win32.exe
+            local_path: polystat.exe
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v2
+        with:
+          token: ${{ secrets.GIT_TOKEN }}
+      - name: Configure local git
+        run: >-
+          git config user.name "${{ secrets.GIT_USERNAME }}" &&
+          git config user.email "${{ secrets.GIT_USER_EMAIL }}"
+      - run: git pull --no-rebase
+      - uses: olafurpg/setup-scala@v13
+      - name: Set up Visual Studio shell
+        uses: egor-tensin/vs-shell@v2
+        if: ${{ matrix.os == 'windows-latest' }}
+      - name: build native image (windows)
+        if: ${{ matrix.os == 'windows-latest' }}
+        shell: cmd
+        run: >-
+          echo %PATH% &&
+          sbt nativeImage &&
+          copy target\native-image\polystat-cli.exe ${{ matrix.uploaded_filename }} &&
+          tree
+      - name: build native image (linux)
+        if: ${{ matrix.os != 'windows-latest' }}
+        shell: bash
+        run: |
+          echo $PATH
+          sbt "nativeImageCopy ${{ matrix.uploaded_filename }}" nativeImageRun
+      - name: Upload release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ needs.pre-release.outputs.release-tag }}
+          files: ${{ matrix.uploaded_filename }}
+  post-release:
+    needs: build-binaries
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v2
+        with:
+          token: ${{ secrets.GIT_TOKEN }}
+      - name: Configure local git
+        run: |
+          git config user.name "${{ secrets.GIT_USERNAME }}"
+          git config user.email "${{ secrets.GIT_USER_EMAIL }}"
+      - name: setup JDK
+        uses: actions/setup-java@v2
+        with:
+          distribution: 'temurin'
+          java-version: '11'
+      - run: git pull --no-rebase
+      - name: Run post-release steps
+        run: |
+          sbt postRelease
