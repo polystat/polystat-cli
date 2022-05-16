@@ -1,6 +1,12 @@
 name: Release
 
-on: workflow_dispatch
+on: 
+  workflow_dispatch:
+    inputs:
+      release_version:
+        description: Release version
+        required: false
+        default: ''
 
 jobs:
   pre-release:
@@ -21,8 +27,12 @@ jobs:
         run: >-
           git config user.name "${{ secrets.GIT_USERNAME }}" && 
           git config user.email "${{ secrets.GIT_USER_EMAIL }}"
+      - name: Release the specified version
+        if: ${{ github.event.inputs.release_version != '' }}
+        run: sbt preRelease ${{ github.event.inputs.release_version }}
       - name: Release new version
-        run: sbt preRelease
+        if: ${{ github.event.inputs.release_version == '' }}
+        run: sbt preRelease ""
       - name: Latest tag
         uses: actions-ecosystem/action-get-latest-tag@v1
         id: latest-tag

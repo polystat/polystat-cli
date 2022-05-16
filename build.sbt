@@ -57,7 +57,7 @@ scalacOptions ++= Seq(
   "-Wunused:all"
 )
 
-commands += Command.command("preRelease") { state =>
+commands += Command.single("preRelease") { (state, nextVersion) =>
   val newState = Project
     .extract(state)
     .appendWithSession(
@@ -77,7 +77,14 @@ commands += Command.command("preRelease") { state =>
       state,
     )
 
-  Command.process("release with-defaults", newState)
+  if (nextVersion == "\"\"")
+    Command.process("release with-defaults", newState)
+  else
+    Command.process(
+      s"release with-defaults release-version $nextVersion",
+      newState,
+    )
+
 }
 
 commands += Command.command("postRelease") { state =>
