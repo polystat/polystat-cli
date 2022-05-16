@@ -6,6 +6,7 @@ import cats.syntax.apply.*
 import com.monovore.decline.Opts
 import fs2.Stream
 import fs2.io.file.Path
+import org.polystat.odin.analysis.ASTAnalyzer
 
 object PolystatConfig:
 
@@ -14,6 +15,14 @@ object PolystatConfig:
       input: Input,
       tmp: Option[Path],
       outputFormats: List[OutputFormat],
+      output: Output,
+  )
+
+  case class ProcessedConfig(
+      filteredAnalyzers: List[ASTAnalyzer[IO]],
+      tempDir: IO[Path],
+      input: Input,
+      fmts: List[OutputFormat],
       output: Output,
   )
 

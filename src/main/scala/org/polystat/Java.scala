@@ -13,8 +13,10 @@ import org.http4s.client.middleware.FollowRedirect
 import fs2.io.file.{Path, Files}
 import org.http4s.Uri
 import sys.process.*
+import PolystatConfig.*
+import InputUtils.*
 
-object J2EO:
+object Java:
 
   private val DEFAULT_J2EO_PATH = Path("j2eo.jar")
   private val J2EO_URL =
@@ -53,7 +55,11 @@ object J2EO:
       }
   end downloadJ2EO
 
-  def run(j2eo: Option[Path], inputDir: Path, outputDir: Path): IO[Unit] =
+  private def runJ2EO(
+      j2eo: Option[Path],
+      inputDir: Path,
+      outputDir: Path,
+  ): IO[Unit] =
     val command =
       s"java -jar ${j2eo.getOrElse(DEFAULT_J2EO_PATH)} -o $outputDir $inputDir"
     for
@@ -69,6 +75,28 @@ object J2EO:
         )
     yield ()
     end for
-  end run
+  end runJ2EO
 
-end J2EO
+  def analyze(j2eo: Option[Path], cfg: ProcessedConfig): IO[Unit] =
+    for
+      tmp <- cfg.tempDir
+      _ <- cfg.input match // writing EO files to tempDir
+        case Input.FromStdin =>
+          for
+            code <- readCodeFromStdin.compile.string
+            stdinTmp <- Files[IO].createTempDirectory.map(path =>
+              path / "stdin.eo"
+            )
+            _ <- writeOutputTo(stdinTmp)(code)
+            _ <- runJ2EO(j2eo, inputDir = stdinTmp, outputDir = tmp)
+          yield ()
+        case Input.FromFile(path) =>
+          runJ2EO(j2eo, inputDir = path, outputDir = tmp)
+        case Input.FromDirectory(path) =>
+          runJ2EO(j2eo, inputDir = path, outputDir = tmp)
+      _ <- EO.analyze(
+        cfg.copy(input = Input.FromDirectory(tmp))
+      )
+    yield ()
+
+end Java

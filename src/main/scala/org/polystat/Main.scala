@@ -14,10 +14,12 @@ import org.polystat.odin.analysis.ASTAnalyzer
 import org.polystat.odin.analysis.EOOdinAnalyzer
 import org.polystat.odin.analysis.EOOdinAnalyzer.OdinAnalysisResult
 import org.polystat.odin.parser.EoParser.sourceCodeEoParser
+import org.polystat.py2eo.transpiler.Transpile
 
 import PolystatConfig.*
 import IncludeExclude.*
 import InputUtils.*
+import org.polystat.py2eo.parser.PythonLexer
 object Main extends IOApp:
   override def run(args: List[String]): IO[ExitCode] =
     for exitCode <- CommandIOApp.run(
@@ -49,66 +51,14 @@ object Main extends IOApp:
         }
       case None => analyzers.map(_._2)
 
-  def analyze(
-      analyzers: List[ASTAnalyzer[IO]]
-  )(code: String): IO[List[EOOdinAnalyzer.OdinAnalysisResult]] =
-    analyzers.traverse(a =>
-      EOOdinAnalyzer
-        .analyzeSourceCode(a)(code)(cats.Monad[IO], sourceCodeEoParser[IO]())
-    )
-
-  def listAnalyzers: IO[Unit] = analyzers.traverse_ { case (name, _) =>
-    IO.println(name)
-  }
-
-  def readConfigFromFile(path: Path): IO[PolystatUsage.Analyze] =
-    HoconConfig(path).config.load
-
-  def writeOutputTo(path: Path)(output: String): IO[Unit] =
-    for
-      _ <- path.parent
-        .map(Files[IO].createDirectories)
-        .getOrElse(IO.unit)
-      _ <- Stream
-        .emits(output.getBytes)
-        .through(Files[IO].writeAll(path))
-        .compile
-        .drain
-    yield ()
-    end for
-  end writeOutputTo
-
-  def analyzeEO(
-      inputFiles: Stream[IO, (Path, String)],
-      outputFormats: List[OutputFormat],
-      out: Output,
-      filteredAnalyzers: List[ASTAnalyzer[IO]],
-  ): IO[Unit] =
-    inputFiles
-      .evalMap { case (codePath, code) =>
-        for
-          _ <- IO.println(s"Analyzing $codePath...")
-          analyzed <- analyze(filteredAnalyzers)(code)
-          _ <- out match
-            case Output.ToConsole => IO.println(analyzed)
-            case Output.ToDirectory(out) =>
-              outputFormats.traverse_ { case OutputFormat.Sarif =>
-                val outPath =
-                  out / "sarif" / codePath.replaceExt(".sarif.json")
-                val sarifJson = SarifOutput(analyzed).json.toString
-                IO.println(s"Writing results to $outPath") *>
-                  writeOutputTo(outPath)(sarifJson)
-              }
-        yield ()
-      }
-      .compile
-      .drain
-
   def execute(usage: PolystatUsage): IO[Unit] =
     usage match
       case PolystatUsage.List(cfg) =>
-        if (cfg) then IO.println(HoconConfig.keys.explanation)
-        else listAnalyzers
+        if cfg then IO.println(HoconConfig.keys.explanation)
+        else
+          analyzers.traverse_ { case (name, _) =>
+            IO.println(name)
+          }
       case PolystatUsage.Misc(version, config) =>
         if (version) then IO.println(BuildInfo.version)
         else
@@ -118,55 +68,26 @@ object Main extends IOApp:
             lang,
             AnalyzerConfig(inex, input, tmp, fmts, out),
           ) =>
-        val filteredAnalyzers = filterAnalyzers(inex)
-        val tempDir: IO[Path] = tmp match
-          case Some(path) => IO.pure(path)
-          case None       => Files[IO].createTempDirectory
-        val inputExt: String = lang match
-          case SupportedLanguage.EO      => ".eo"
-          case SupportedLanguage.Java(_) => ".java"
-          case SupportedLanguage.Python  => ".py"
-
+        val processedConfig = ProcessedConfig(
+          filteredAnalyzers = filterAnalyzers(inex),
+          tempDir = tmp match
+            case Some(path) =>
+              (IO.println(s"Cleaning ${path.absolute}...") *>
+                Files[IO].deleteRecursively(path) *>
+                Files[IO].createDirectory(path))
+                .as(path)
+            case None => Files[IO].createTempDirectory
+          ,
+          output = out,
+          input = input,
+          fmts = fmts,
+        )
         val analysisResults: IO[Unit] =
           lang match
-            case SupportedLanguage.EO =>
-              val inputFiles = readCodeFromInput(ext = inputExt, input = input)
-              analyzeEO(
-                inputFiles = inputFiles,
-                outputFormats = fmts,
-                out = out,
-                filteredAnalyzers = filteredAnalyzers,
-              )
+            case SupportedLanguage.EO => EO.analyze(processedConfig)
             case SupportedLanguage.Java(j2eo) =>
-              for
-                tmp <- tempDir
-                _ <- input match // writing EO files to tempDir
-                  case Input.FromStdin =>
-                    for
-                      code <- readCodeFromStdin.compile.string
-                      stdinTmp <- Files[IO].createTempDirectory.map(path =>
-                        path / "stdin.eo"
-                      )
-                      _ <- writeOutputTo(stdinTmp)(code)
-                      _ <- J2EO.run(j2eo, inputDir = stdinTmp, outputDir = tmp)
-                    yield ()
-                  case Input.FromFile(path) =>
-                    J2EO.run(j2eo, inputDir = path, outputDir = tmp)
-                  case Input.FromDirectory(path) =>
-                    J2EO.run(j2eo, inputDir = path, outputDir = tmp)
-                inputFiles = readCodeFromInput(
-                  ".eo",
-                  Input.FromDirectory(tmp),
-                )
-                _ <- analyzeEO(
-                  inputFiles = inputFiles,
-                  outputFormats = fmts,
-                  out = out,
-                  filteredAnalyzers = filteredAnalyzers,
-                )
-              yield ()
-            case SupportedLanguage.Python =>
-              IO.println("Analyzing Python is not implemented yet!")
+              Java.analyze(j2eo, processedConfig)
+            case SupportedLanguage.Python => Python.analyze(processedConfig)
         analysisResults
   end execute
 

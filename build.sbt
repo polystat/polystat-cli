@@ -26,6 +26,7 @@ libraryDependencies ++= Seq(
   "io.circe" %% "circe-core" % "0.14.1",
   "org.scalameta" %% "munit" % "1.0.0-M3" % Test,
   "org.slf4j" % "slf4j-nop" % "1.7.36",
+  "org.polystat.py2eo" % "transpiler" % "0.0.10",
 )
 
 assembly / assemblyJarName := "polystat.jar"

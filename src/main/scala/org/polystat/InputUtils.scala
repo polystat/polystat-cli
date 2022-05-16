@@ -9,7 +9,7 @@ import fs2.text.utf8
 
 import java.io.FileNotFoundException
 
-import PolystatConfig.Input
+import PolystatConfig.{Input, PolystatUsage}
 
 object InputUtils:
   extension (path: Path)
@@ -73,4 +73,22 @@ object InputUtils:
         readCodeFromDir(ext = ext, dir = path)
       case Input.FromStdin =>
         readCodeFromStdin.map(code => (Path("stdin" + ext), "\n" + code + "\n"))
+
+  def readConfigFromFile(path: Path): IO[PolystatUsage.Analyze] =
+    HoconConfig(path).config.load
+
+  def writeOutputTo(path: Path)(output: String): IO[Unit] =
+    for
+      _ <- path.parent
+        .map(Files[IO].createDirectories)
+        .getOrElse(IO.unit)
+      _ <- Stream
+        .emits(output.getBytes)
+        .through(Files[IO].writeAll(path))
+        .compile
+        .drain
+    yield ()
+    end for
+  end writeOutputTo
+
 end InputUtils
