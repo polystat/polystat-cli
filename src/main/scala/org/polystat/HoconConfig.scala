@@ -33,7 +33,6 @@ case class HoconConfig(path: Path):
   end hocon
 
   private val lang = hocon(keys.inputLanguage).as[SupportedLanguage]
-  private val j2eo = hocon(keys.j2eo).as[Path].option
   private val input = hocon(keys.input).as[Path].option.evalMap {
     case Some(path) => path.toInput
     case None       => IO.pure(Input.FromStdin)
@@ -53,13 +52,10 @@ case class HoconConfig(path: Path):
       .option
 
   val config: ConfigValue[IO, PolystatUsage.Analyze] =
-    (j2eo, inex, input, tmp, outputTo, outputFormats, lang).parMapN {
-      case (j2eo, inex, input, tmp, outputTo, outputFormats, lang) =>
+    (inex, input, tmp, outputTo, outputFormats, lang).parMapN {
+      case (inex, input, tmp, outputTo, outputFormats, lang) =>
         PolystatUsage.Analyze(
-          language = lang match
-            case Java(_) => Java(j2eo)
-            case other   => other
-          ,
+          language = lang,
           config = AnalyzerConfig(
             inex = inex,
             input = input,
@@ -82,7 +78,6 @@ object HoconConfig:
     val outputFormats = "outputFormats"
     val includeRules = "includeRules"
     val excludeRules = "excludeRules"
-    val j2eo = "j2eo"
     val explanation = s"""
                        |$toplevel.$inputLanguage
                        |    The type of input files which will be analyzed. This key must be present.
@@ -90,10 +85,6 @@ object HoconConfig:
                        |        "java" - only ".java" files will be analyzed.
                        |        "eo" - only ".eo" files will be analyzed.
                        |        "python" - only ".py" files will be analyzed.
-                       |$toplevel.$j2eo
-                       |    Specifies the path to the J2EO executable.
-                       |    If not specified, defaults to looking for j2eo.jar in the current working directory.
-                       |    If it's not found, downloads it from maven central. The download only happens when this key is NOT provided. 
                        |$toplevel.$input
                        |    How the files are supplied to the analyzer. 
                        |    Can be either a path to a directory, path to a file, or absent. If absent, the code is read from standard input.
@@ -124,7 +115,7 @@ object HoconConfig:
   extension (s: String)
     def asSupportedLang: Option[SupportedLanguage] = s match
       case "eo"     => Some(EO)
-      case "java"   => Some(Java(None))
+      case "java"   => Some(Java)
       case "python" => Some(Python)
       case _        => None
 

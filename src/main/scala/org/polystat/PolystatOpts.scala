@@ -24,16 +24,6 @@ object PolystatOpts extends IOApp.Simple:
       "--config",
       "aboba",
       "--version",
-
-      // "c++",
-      // "--in",
-      // "tmp",
-      // "--include",
-      // "1",
-      // "--include",
-      // "2",
-      // "--files",
-      // "sandbox"
     )
 
     polystat
@@ -67,20 +57,10 @@ object PolystatOpts extends IOApp.Simple:
     name = "java",
     help = "Analyze Java files",
   ) {
-    (analyzerConfig, j2eo).mapN((conf, j2eo) =>
-      conf.map(conf =>
-        PolystatUsage.Analyze(SupportedLanguage.Java(j2eo), conf)
-      )
+    analyzerConfig.map(conf =>
+      conf.map(conf => PolystatUsage.Analyze(SupportedLanguage.Java, conf))
     )
   }
-
-  def j2eo: Opts[Option[Path]] = Opts
-    .option[JPath](
-      long = "j2eo",
-      help = "Path to a j2eo executable.",
-    )
-    .map(Path.fromNioPath)
-    .orNone
 
   def analyzePython: Opts[IO[PolystatUsage.Analyze]] = Opts.subcommand(
     name = "py",

@@ -21,8 +21,7 @@ Write the [SARIF](https://docs.oasis-open.org/sarif/sarif/v2.1.0/sarif-v2.1.0.ht
 The description follows [this guide](https://en.wikipedia.org/wiki/Command-line_interface#Command_description_syntax).
 > Note: {a | b | c} means a set of _mutually-exclusive_ items.
 ```
-polystat {eo | python} [--tmp <path>] [--in <path>] [{--include <rule...> | --exclude <rule...>}] [--sarif] [--files [path]]
-polystat java [--j2eo <path>] [--tmp <path>] [--in <path>] [{--include <rule...> | --exclude <rule...>}] [--sarif] [--files <path>]
+polystat {eo | java | python} [--tmp <path>] [--in <path>] [{--include <rule...> | --exclude <rule...>}] [--sarif] [--files [path]]
 polystat [--version] [--help] [--config <path>]
 polystat list [--config | -c]
 ```
@@ -34,8 +33,6 @@ polystat list [--config | -c]
 
 ## Configuration options
 * `--include` and `--exclude` respectively define which rules should be included/excluded from the analysis run. These options are mutually exclusive, so specifying both should not be valid. If neither option is specified, all the available analyzers will be run. The list of available rule specifiers can be found via `polystat list` command.
-* `--j2eo` options allows users to specify the path to the j2eo executable jar. If it's not specified, it looks for one in the current working diretory. 
-If it's not present in the current working directory, download one from Maven Central (for now, the version is hardcoded to be 0.4.0).
 
 ## Output configuration
 * `--sarif` option means that the command will produce the output in the [SARIF](https://docs.oasis-open.org/sarif/sarif/v2.1.0/sarif-v2.1.0.html) format in addition to output in other formats (if any). 
