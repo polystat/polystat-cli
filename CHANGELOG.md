@@ -1,5 +1,16 @@
-## Polystat v0.1.3
+## Polystat v0.1.4
 
-In this release the `odin` dependency was updated to 0.4.0. 
+In this release the `py2eo` project was integrated into `polystat-cli`. You can now run:
+```
+polystat py --in python_files
+```
 
-The CD pipeline was updated to allow releasing a specified version. 
+...to analyze a directory with a bunch of python files. For more options and explanations, run:
+```
+polystat --help
+```
+or
+```
+polystat list --config
+```
+if you want to use the config file. 
