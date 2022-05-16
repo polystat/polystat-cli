@@ -15,10 +15,6 @@ import org.polystat.odin.analysis.EOOdinAnalyzer
 import org.polystat.odin.analysis.EOOdinAnalyzer.OdinAnalysisResult
 import org.polystat.odin.parser.EoParser.sourceCodeEoParser
 
-import EOOdinAnalyzer.{
-  advancedMutualRecursionAnalyzer,
-  unjustifiedAssumptionAnalyzer,
-}
 import PolystatConfig.*
 import IncludeExclude.*
 import InputUtils.*
@@ -33,8 +29,10 @@ object Main extends IOApp:
   val analyzers: List[(String, ASTAnalyzer[IO])] =
     // TODO: In Odin, change analyzer names to shorter ones.
     List(
-      ("mutualrec", advancedMutualRecursionAnalyzer),
-      ("unjustified", unjustifiedAssumptionAnalyzer),
+      ("mutualrec", EOOdinAnalyzer.advancedMutualRecursionAnalyzer),
+      ("unjustified", EOOdinAnalyzer.unjustifiedAssumptionAnalyzer),
+      ("liskov", EOOdinAnalyzer.liskovPrincipleViolationAnalyzer),
+      ("directAccess", EOOdinAnalyzer.directStateAccessAnalyzer),
     )
 
   def filterAnalyzers(

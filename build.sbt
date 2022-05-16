@@ -10,7 +10,7 @@ libraryDependencies ++= Seq(
   "com.monovore" %% "decline-effect" % "2.2.0",
   "co.fs2" %% "fs2-core" % "3.2.7",
   "co.fs2" %% "fs2-io" % "3.2.7",
-  "org.polystat.odin" %% "analysis" % "0.3.3",
+  "org.polystat.odin" %% "analysis" % "0.4.0",
   "is.cir" %% "ciris" % "2.3.2",
   "lt.dvim.ciris-hocon" %% "ciris-hocon" % "1.0.1",
 ).map(_.cross(CrossVersion.for3Use2_13))
@@ -57,7 +57,7 @@ scalacOptions ++= Seq(
   "-Wunused:all"
 )
 
-commands += Command.command("preRelease") { state =>
+commands += Command.single("preRelease") { (state, nextVersion) =>
   val newState = Project
     .extract(state)
     .appendWithSession(
@@ -77,7 +77,14 @@ commands += Command.command("preRelease") { state =>
       state,
     )
 
-  Command.process("release with-defaults", newState)
+  if (nextVersion == "next")
+    Command.process("release with-defaults", newState)
+  else
+    Command.process(
+      s"release with-defaults release-version $nextVersion",
+      newState,
+    )
+
 }
 
 commands += Command.command("postRelease") { state =>

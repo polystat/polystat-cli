@@ -6,6 +6,7 @@ import io.circe.Encoder
 import io.circe.Json
 import io.circe.syntax.*
 import org.polystat.odin.analysis.EOOdinAnalyzer.OdinAnalysisResult
+import cats.syntax.foldable.*
 
 import scala.CanEqual.derived
 
@@ -44,7 +45,7 @@ final case class SarifOutput(errors: List[OdinAnalysisResult]):
           ),
           executionSuccessful = false,
         )
-      case DefectDetected(ruleId, _) =>
+      case DefectsDetected(ruleId, _) =>
         SarifInvocation(
           toolExecutionNotifications = Seq(
             SarifNotification(
@@ -76,13 +77,13 @@ final case class SarifOutput(errors: List[OdinAnalysisResult]):
   private def sarifResult(error: OdinAnalysisResult): Option[SarifResult] =
     error match
       case AnalyzerFailure(_, _) => None
-      case DefectDetected(ruleId, message) =>
+      case DefectsDetected(ruleId, message) =>
         Some(
           SarifResult(
             ruleId = ruleId,
             level = SarifLevel.ERROR,
             kind = SarifKind.FAIL,
-            message = SarifMessage(message),
+            message = SarifMessage(message.mkString_("\n")),
           )
         )
       case Ok(ruleId) =>

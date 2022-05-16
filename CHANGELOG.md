@@ -1,3 +1,5 @@
-## Polystat v0.1.2
+## Polystat v0.1.3
 
-In this release, the CI was updated to produce native binaries for Windows and Linux.
+In this release the `odin` dependency was updated to 0.4.0. 
+
+The CD pipeline was updated to allow releasing a specified version. 
