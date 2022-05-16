@@ -77,7 +77,7 @@ commands += Command.single("preRelease") { (state, nextVersion) =>
       state,
     )
 
-  if (nextVersion == "\"\"")
+  if (nextVersion == "next")
     Command.process("release with-defaults", newState)
   else
     Command.process(

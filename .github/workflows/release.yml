@@ -29,10 +29,10 @@ jobs:
           git config user.email "${{ secrets.GIT_USER_EMAIL }}"
       - name: Release the specified version
         if: ${{ github.event.inputs.release_version != '' }}
-        run: sbt preRelease ${{ github.event.inputs.release_version }}
+        run: sbt "preRelease ${{ github.event.inputs.release_version }}"
       - name: Release new version
         if: ${{ github.event.inputs.release_version == '' }}
-        run: sbt preRelease ""
+        run: sbt "preRelease next"
       - name: Latest tag
         uses: actions-ecosystem/action-get-latest-tag@v1
         id: latest-tag
