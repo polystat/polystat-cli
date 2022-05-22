@@ -4,22 +4,8 @@ ThisBuild / scalaVersion := "3.1.2"
 ThisBuild / versionScheme := Some("semver-spec")
 ThisBuild / releaseVersionBump := sbtrelease.Version.Bump.Next
 
-libraryDependencies ++= Seq(
-  "org.typelevel" %% "cats-parse" % "0.3.7",
-  "com.monovore" %% "decline" % "2.2.0",
-  "com.monovore" %% "decline-effect" % "2.2.0",
-  "co.fs2" %% "fs2-core" % "3.2.7",
-  "co.fs2" %% "fs2-io" % "3.2.7",
-  "org.polystat.odin" %% "analysis" % "0.4.0",
-  "is.cir" %% "ciris" % "2.3.2",
-  "lt.dvim.ciris-hocon" %% "ciris-hocon" % "1.0.1",
-  "org.http4s" %% "http4s-ember-client" % "1.0.0-M32",
-).map(_.cross(CrossVersion.for3Use2_13))
-
 excludeDependencies ++= Seq(
-  "org.typelevel" % "simulacrum-scalafix-annotations_3",
-  "org.typelevel" % "cats-kernel_3",
-  "org.typelevel" % "cats-core_3",
+  "org.scala-lang.modules" % "scala-xml_2.13"
 )
 
 libraryDependencies ++= Seq(
@@ -27,6 +13,15 @@ libraryDependencies ++= Seq(
   "org.scalameta" %% "munit" % "1.0.0-M3" % Test,
   "org.slf4j" % "slf4j-nop" % "1.7.36",
   "org.polystat.py2eo" % "transpiler" % "0.0.10",
+  "org.typelevel" %% "cats-parse" % "0.3.7",
+  "com.monovore" %% "decline" % "2.2.0",
+  "com.monovore" %% "decline-effect" % "2.2.0",
+  "co.fs2" %% "fs2-core" % "3.2.7",
+  "co.fs2" %% "fs2-io" % "3.2.7",
+  "org.polystat.odin" %% "analysis" % "0.4.1",
+  "is.cir" %% "ciris" % "2.3.2",
+  "lt.dvim.ciris-hocon" %% "ciris-hocon" % "1.0.1",
+  "org.http4s" %% "http4s-ember-client" % "1.0.0-M32",
 )
 
 assembly / assemblyJarName := "polystat.jar"
