@@ -13,13 +13,17 @@ object Python:
       tmp <- cfg.tempDir
       _ <- readCodeFromInput(".py", cfg.input)
         .evalMap { case (path, code) =>
+          val fileName = path.fileName.toString
           for
-            maybeCode <- IO.blocking(Transpile(path.toString, code))
+            maybeCode <- IO(
+              Transpile(fileName.splitAt(fileName.indexOf("."))._1, code)
+            )
             _ <- maybeCode match
               case Some(code) =>
                 writeOutputTo(tmp / path.replaceExt(".eo"))(code)
               case None => IO.println(s"Couldn't analyze $path...")
           yield ()
+          end for
         }
         .compile
         .drain
