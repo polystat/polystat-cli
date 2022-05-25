@@ -5,23 +5,21 @@ ThisBuild / versionScheme := Some("semver-spec")
 ThisBuild / releaseVersionBump := sbtrelease.Version.Bump.Next
 
 excludeDependencies ++= Seq(
-  "org.scala-lang.modules" % "scala-xml_2.13"
+  "org.scalatest" % "scalatest_2.13"
 )
 
 libraryDependencies ++= Seq(
-  "io.circe" %% "circe-core" % "0.14.1",
-  "org.scalameta" %% "munit" % "1.0.0-M3" % Test,
-  "org.slf4j" % "slf4j-nop" % "1.7.36",
-  "org.polystat.py2eo" % "transpiler" % "0.0.10",
   "org.typelevel" %% "cats-parse" % "0.3.7",
-  "com.monovore" %% "decline" % "2.2.0",
   "com.monovore" %% "decline-effect" % "2.2.0",
-  "co.fs2" %% "fs2-core" % "3.2.7",
   "co.fs2" %% "fs2-io" % "3.2.7",
   "org.polystat.odin" %% "analysis" % "0.4.1",
   "is.cir" %% "ciris" % "2.3.2",
   "lt.dvim.ciris-hocon" %% "ciris-hocon" % "1.0.1",
   "org.http4s" %% "http4s-ember-client" % "1.0.0-M32",
+  "org.scalameta" %% "munit" % "1.0.0-M3" % Test,
+  "io.circe" %% "circe-core" % "0.14.1",
+  "org.polystat.py2eo" % "transpiler" % "0.0.10",
+  "org.slf4j" % "slf4j-nop" % "1.7.36",
 )
 
 assembly / assemblyJarName := "polystat.jar"
@@ -33,9 +31,13 @@ buildInfoPackage := "org.polystat"
 
 Global / excludeLintKeys += nativeImageVersion
 
-enablePlugins(NativeImagePlugin)
 Compile / mainClass := Some("org.polystat.Main")
+
+enablePlugins(NativeImagePlugin)
 nativeImageVersion := "22.1.0"
+nativeImageAgentOutputDir := baseDirectory.value / "native-image-configs"
+nativeImageGraalHome := java.nio.file.Paths.get(sys.env.get("GRAALVM_HOME").get)
+nativeImageAgentMerge := true
 nativeImageOptions ++= Seq(
   s"-H:ReflectionConfigurationFiles=${baseDirectory.value / "native-image-configs" / "reflect-config.json"}",
   s"-H:ConfigurationFileDirectories=${baseDirectory.value / "native-image-configs"}",
@@ -50,7 +52,11 @@ nativeImageOptions ++= Seq(
 )
 
 scalacOptions ++= Seq(
-  "-Wunused:all"
+  "-Wunused:all",
+  "-encoding",
+  "UTF-8",
+  "-feature",
+  "-language:implicitConversions",
 )
 
 commands += Command.single("preRelease") { (state, nextVersion) =>

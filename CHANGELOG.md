@@ -1,16 +1,7 @@
-## Polystat v0.1.4
+## Polystat v0.1.5
 
-In this release the `py2eo` project was integrated into `polystat-cli`. You can now run:
-```
-polystat py --in python_files
-```
+In this release the Polystat CLI was updated to use the latest version of j2eo (0.5.0).
+Also, py2eo integration was updated to produce EO objects with valid names.  
 
-...to analyze a directory with a bunch of python files. For more options and explanations, run:
-```
-polystat --help
-```
-or
-```
-polystat list --config
-```
-if you want to use the config file. 
+> WARNING: This release does not have binaries because some of the Scala 3 libraries are not 
+compatible with Native Image.

@@ -50,7 +50,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        os: []
         include:
           - os: ubuntu-latest
             uploaded_filename: polystat-x86_64-pc-linux
