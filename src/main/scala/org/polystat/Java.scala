@@ -20,7 +20,7 @@ object Java:
 
   private val DEFAULT_J2EO_PATH = Path("j2eo.jar")
   private val J2EO_URL =
-    "https://search.maven.org/remotecontent?filepath=org/polystat/j2eo/0.4.0/j2eo-0.4.0.jar"
+    "https://search.maven.org/remotecontent?filepath=org/polystat/j2eo/0.5.0/j2eo-0.5.0.jar"
 
   private def defaultJ2EO: IO[Path] =
     Files[IO]

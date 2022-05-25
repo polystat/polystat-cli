@@ -1,17 +1,16 @@
-class MutualRec {
-    class Base {
-        void f(int x) {
-        }
-
-        void g(int x) {
-            f(x);
-        }
+class Base {
+    int f(int x) {
+        return x;
     }
 
-    class Derived extends Base {
-        @Override
-        void f(int x) {
-            g(x);
-        }
+    int g(int x) {
+        return f(x);
+    }
+}
+
+class Derived extends Base {
+    @Override
+    int f(int x) {
+        return g(x);
     }
 }
