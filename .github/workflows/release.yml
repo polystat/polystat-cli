@@ -44,55 +44,55 @@ jobs:
           body_path: CHANGELOG.md
           files: |
             target/scala-3.1.2/polystat.jar
-  build-binaries:
-    needs: pre-release
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: []
-        include:
-          - os: ubuntu-latest
-            uploaded_filename: polystat-x86_64-pc-linux
-            local_path: polystat
-          - os: windows-latest
-            uploaded_filename: polystat-x86_64-pc-win32.exe
-            local_path: polystat.exe
-    steps:
-      - name: Check out repository code
-        uses: actions/checkout@v2
-        with:
-          token: ${{ secrets.GIT_TOKEN }}
-      - name: Configure local git
-        run: >-
-          git config user.name "${{ secrets.GIT_USERNAME }}" &&
-          git config user.email "${{ secrets.GIT_USER_EMAIL }}"
-      - run: git pull --no-rebase
-      - uses: olafurpg/setup-scala@v13
-      - name: Set up Visual Studio shell
-        uses: egor-tensin/vs-shell@v2
-        if: ${{ matrix.os == 'windows-latest' }}
-      - name: build native image (windows)
-        if: ${{ matrix.os == 'windows-latest' }}
-        shell: cmd
-        run: >-
-          echo %PATH% &&
-          sbt nativeImage &&
-          copy target\native-image\polystat-cli.exe ${{ matrix.uploaded_filename }} &&
-          tree
-      - name: build native image (linux)
-        if: ${{ matrix.os != 'windows-latest' }}
-        shell: bash
-        run: |
-          echo $PATH
-          sbt "nativeImageCopy ${{ matrix.uploaded_filename }}" nativeImageRun
-      - name: Upload release
-        uses: softprops/action-gh-release@v1
-        with:
-          tag_name: ${{ needs.pre-release.outputs.release-tag }}
-          files: ${{ matrix.uploaded_filename }}
+  # build-binaries:
+  #   needs: pre-release
+  #   runs-on: ${{ matrix.os }}
+  #   strategy:
+  #     fail-fast: false
+  #     matrix:
+  #       os: []
+  #       include:
+  #         - os: ubuntu-latest
+  #           uploaded_filename: polystat-x86_64-pc-linux
+  #           local_path: polystat
+  #         - os: windows-latest
+  #           uploaded_filename: polystat-x86_64-pc-win32.exe
+  #           local_path: polystat.exe
+  #   steps:
+  #     - name: Check out repository code
+  #       uses: actions/checkout@v2
+  #       with:
+  #         token: ${{ secrets.GIT_TOKEN }}
+  #     - name: Configure local git
+  #       run: >-
+  #         git config user.name "${{ secrets.GIT_USERNAME }}" &&
+  #         git config user.email "${{ secrets.GIT_USER_EMAIL }}"
+  #     - run: git pull --no-rebase
+  #     - uses: olafurpg/setup-scala@v13
+  #     - name: Set up Visual Studio shell
+  #       uses: egor-tensin/vs-shell@v2
+  #       if: ${{ matrix.os == 'windows-latest' }}
+  #     - name: build native image (windows)
+  #       if: ${{ matrix.os == 'windows-latest' }}
+  #       shell: cmd
+  #       run: >-
+  #         echo %PATH% &&
+  #         sbt nativeImage &&
+  #         copy target\native-image\polystat-cli.exe ${{ matrix.uploaded_filename }} &&
+  #         tree
+  #     - name: build native image (linux)
+  #       if: ${{ matrix.os != 'windows-latest' }}
+  #       shell: bash
+  #       run: |
+  #         echo $PATH
+  #         sbt "nativeImageCopy ${{ matrix.uploaded_filename }}" nativeImageRun
+  #     - name: Upload release
+  #       uses: softprops/action-gh-release@v1
+  #       with:
+  #         tag_name: ${{ needs.pre-release.outputs.release-tag }}
+  #         files: ${{ matrix.uploaded_filename }}
   post-release:
-    needs: build-binaries
+    needs: pre-release
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository code
