@@ -9,39 +9,17 @@ import com.monovore.decline.Opts
 import fs2.io.file.Files
 import fs2.io.file.Path
 import org.polystat.PolystatConfig.*
-
+import com.monovore.decline.Argument
 import java.io.FileNotFoundException
 import java.nio.file.Path as JPath
+import cats.data.ValidatedNel
 
 import IncludeExclude.*
 import Validated.*
 import InputUtils.toInput
+import com.monovore.decline.Argument
 
-object PolystatOpts extends IOApp.Simple:
-
-  override def run: IO[Unit] =
-    val opts = Seq(
-      "--config",
-      "aboba",
-      "--version",
-
-      // "c++",
-      // "--in",
-      // "tmp",
-      // "--include",
-      // "1",
-      // "--include",
-      // "2",
-      // "--files",
-      // "sandbox"
-    )
-
-    polystat
-      .parse(opts)
-      .map(a => a.flatMap(IO.println))
-      .leftMap(IO.println)
-      .merge
-  end run
+object PolystatOpts:
 
   def polystat: Command[IO[PolystatUsage]] = Command(
     name = "polystat",
@@ -170,16 +148,52 @@ object PolystatOpts extends IOApp.Simple:
       sarif
     ).sequence.map(_.flattenOption)
 
-  // TODO: this doesn't really conform to spec,
-  //       because decline doesn't support optional arguments to options
-  //       https://github.com/bkirwi/decline/issues/350
+  private enum OutputArg:
+    case File(path: Path)
+    case Directory(path: Path)
+    case Console
+  end OutputArg
+
+  private given Argument[OutputArg] with
+    def read(string: String): ValidatedNel[String, OutputArg] =
+      val KVArg = "(.*)=(.*)".r
+      string match
+        case KVArg(key, value) =>
+          key match
+            case "dir" =>
+              Argument[JPath]
+                .read(value)
+                .map(path => OutputArg.Directory(Path.fromNioPath(path)))
+            case "file" =>
+              Argument[JPath]
+                .read(value)
+                .map(path => OutputArg.File(Path.fromNioPath(path)))
+            case other =>
+              Validated.invalidNel(s"Unknown key in `--to` option: $other")
+        case "console" => Validated.valid(OutputArg.Console)
+        case other     => Validated.invalidNel(s"Unknown argument: $string")
+      end match
+    end read
+    def defaultMetavar: String = "console | dir=<path> | file=<path>"
+  end given
+
   def files: Opts[Output] = Opts
-    .option[JPath](
-      long = "files",
+    .options[OutputArg](
+      long = "to",
       help = "Create output files in the specified path",
     )
-    .map(p => Output.ToDirectory(Path.fromNioPath(p)))
-    .orElse(Output.ToConsole.pure[Opts])
+    .orEmpty
+    .map(args =>
+      val initialState = Output(dirs = List(), files = List(), console = false)
+      args.foldLeft(initialState) {
+        case (acc, OutputArg.File(path)) =>
+          acc.copy(files = acc.files.prepended(path))
+        case (acc, OutputArg.Directory(path)) =>
+          acc.copy(dirs = acc.dirs.prepended(path))
+        case (acc, OutputArg.Console) =>
+          if acc.console then acc else acc.copy(console = true)
+      }
+    )
 
   def analyzerConfig: Opts[IO[AnalyzerConfig]] =
     (inex, in, tmp, outputFormats, files).mapN {

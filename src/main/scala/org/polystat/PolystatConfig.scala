@@ -18,7 +18,7 @@ object PolystatConfig:
       output: Output,
   )
 
-  case class ProcessedConfig(
+  final case class ProcessedConfig(
       filteredAnalyzers: List[ASTAnalyzer[IO]],
       tempDir: IO[Path],
       input: Input,
@@ -51,9 +51,10 @@ object PolystatConfig:
   enum OutputFormat:
     case Sarif
 
-  enum Output:
-    case ToDirectory(path: Path)
-    case ToConsole
-  end Output
+  final case class Output(
+      dirs: List[Path],
+      files: List[Path],
+      console: Boolean,
+  )
 
 end PolystatConfig

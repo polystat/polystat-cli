@@ -26,16 +26,17 @@ object EO:
         for
           _ <- IO.println(s"Analyzing $codePath...")
           analyzed <- runAnalyzers(cfg.filteredAnalyzers)(code)
-          _ <- cfg.output match
-            case Output.ToConsole => IO.println(analyzed)
-            case Output.ToDirectory(out) =>
-              cfg.fmts.traverse_ { case OutputFormat.Sarif =>
-                val outPath =
-                  out / "sarif" / codePath.replaceExt(".sarif.json")
-                val sarifJson = SarifOutput(analyzed).json.toString
-                IO.println(s"Writing results to $outPath") *>
-                  writeOutputTo(outPath)(sarifJson)
-              }
+          _ <- if cfg.output.console then IO.println(analyzed) else IO.unit
+          _ <- cfg.fmts.traverse_ { case OutputFormat.Sarif =>
+            val sarifJson = SarifOutput(analyzed).json.toString
+            cfg.output.dirs.traverse_(out =>
+              val outPath =
+                out / "sarif" / codePath.replaceExt(".sarif.json")
+
+              IO.println(s"Writing results to $outPath") *>
+                writeOutputTo(outPath)(sarifJson)
+            )
+          }
         yield ()
       }
       .compile

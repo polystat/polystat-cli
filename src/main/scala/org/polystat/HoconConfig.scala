@@ -39,9 +39,16 @@ case class HoconConfig(path: Path):
     case None       => IO.pure(Input.FromStdin)
   }
   private val tmp = hocon(keys.tempDir).as[Path].option
-  private val outputTo = hocon(keys.outputTo).as[Path].option.map {
-    case Some(path) => Output.ToDirectory(path)
-    case None       => Output.ToConsole
+  private val outputsDirs =
+    hocon(keys.outputsDirs).as[List[Path]].default(List())
+  private val outputsFiles =
+    hocon(keys.outputsFiles).as[List[Path]].default(List())
+  private val outputsConsole =
+    hocon(keys.outputsConsole).as[Boolean].default(false)
+
+  private val outputs = (outputsDirs, outputsFiles, outputsConsole).parMapN {
+    case (dirs, files, console) =>
+      Output(dirs = dirs, files = files, console = console)
   }
   private val outputFormats =
     hocon(keys.outputFormats).as[List[OutputFormat]].default(List.empty)
@@ -53,8 +60,8 @@ case class HoconConfig(path: Path):
       .option
 
   val config: ConfigValue[IO, PolystatUsage.Analyze] =
-    (j2eo, inex, input, tmp, outputTo, outputFormats, lang).parMapN {
-      case (j2eo, inex, input, tmp, outputTo, outputFormats, lang) =>
+    (j2eo, inex, input, tmp, outputs, outputFormats, lang).parMapN {
+      case (j2eo, inex, input, tmp, outputs, outputFormats, lang) =>
         PolystatUsage.Analyze(
           language = lang match
             case Java(_) => Java(j2eo)
@@ -65,7 +72,7 @@ case class HoconConfig(path: Path):
             input = input,
             tmp = tmp,
             outputFormats = outputFormats,
-            output = outputTo,
+            output = outputs,
           ),
         )
     }
@@ -83,6 +90,9 @@ object HoconConfig:
     val includeRules = "includeRules"
     val excludeRules = "excludeRules"
     val j2eo = "j2eo"
+    val outputsConsole = "outputs.console"
+    val outputsDirs = "outputs.dirs"
+    val outputsFiles = "output.files"
     val explanation = s"""
                        |$toplevel.$inputLanguage
                        |    The type of input files which will be analyzed. This key must be present.
@@ -111,6 +121,13 @@ object HoconConfig:
                        |    If both are specified, $toplevel.$includeRules takes precedence. 
                        |    The list of available rule specifiers can be found by running:
                        |        polystat.jar list
+                       |$toplevel.$outputsConsole
+                       |    Produce console output?
+                       |$toplevel.$outputsDirs
+                       |    A list of directories to write files to.
+                       |$toplevel.$outputsFiles
+                       |    A list of files to write aggregated output to. 
+                       |
                        |""".stripMargin
   end keys
   extension (v: HoconConfigValue)
@@ -151,8 +168,16 @@ object HoconConfig:
       _.toNelString.map(Exclude(_))
     )
 
-  private given ConfigDecoder[HoconConfigValue, List[OutputFormat]] =
+  private given hocon2listFormat
+      : ConfigDecoder[HoconConfigValue, List[OutputFormat]] =
     ConfigDecoder[HoconConfigValue].mapOption(keys.outputFormats) {
       _.toListString.traverse(_.asOutputFormat)
+    }
+
+  private given hocon2listPath: ConfigDecoder[HoconConfigValue, List[Path]] =
+    ConfigDecoder[HoconConfigValue].mapOption("paths") {
+      _.toListString.traverse(path =>
+        ConfigDecoder[String, Path].decode(key = None, path).toOption
+      )
     }
 end HoconConfig
