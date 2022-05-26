@@ -72,10 +72,7 @@ object Main extends IOApp:
           filteredAnalyzers = filterAnalyzers(inex),
           tempDir = tmp match
             case Some(path) =>
-              (IO.println(s"Cleaning ${path.absolute}...") *>
-                Files[IO].deleteRecursively(path) *>
-                Files[IO].createDirectory(path))
-                .as(path)
+              IO.println(s"Cleaning ${path.absolute}...") *> path.clean
             case None => Files[IO].createTempDirectory
           ,
           output = out,

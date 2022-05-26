@@ -20,6 +20,12 @@ object InputUtils:
           ._1 + newExt
       )
 
+    def clean: IO[Path] =
+      for
+        _ <- Files[IO].deleteRecursively(path)
+        _ <- Files[IO].createDirectory(path)
+      yield path
+
     def toInput: IO[Input] =
       Files[IO]
         .isDirectory(path)

@@ -44,9 +44,10 @@ object EO:
             cfg.output.dirs.traverse_(out =>
               val outPath =
                 out / "sarif" / codePath.replaceExt(".sarif.json")
-
-              IO.println(s"Writing results to $outPath") *>
-                writeOutputTo(outPath)(sarifJson)
+              for
+                _ <- IO.println(s"Writing results to $outPath")
+                _ <- writeOutputTo(outPath)(sarifJson)
+              yield ()
             )
           }
         yield ()
@@ -68,6 +69,16 @@ object EO:
       }
     }
 
-    analyzeToDirs *> analyzeAggregate
+    for
+      _ <- cfg.output.dirs.traverse_ { outDir =>
+        for
+          _ <- IO.println(s"Cleaning $outDir before writing...")
+          _ <- outDir.clean
+        yield ()
+      }
+      _ <- analyzeToDirs
+      _ <- analyzeAggregate
+    yield ()
+    end for
   end analyze
 end EO
