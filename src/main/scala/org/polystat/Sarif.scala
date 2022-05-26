@@ -5,20 +5,31 @@ import io.circe.Decoder
 import io.circe.Encoder
 import io.circe.Json
 import io.circe.syntax.*
+import fs2.io.file.Path
 import org.polystat.odin.analysis.EOOdinAnalyzer.OdinAnalysisResult
 import cats.syntax.foldable.*
+import cats.syntax.functorFilter.*
 
 import scala.CanEqual.derived
 
 import OdinAnalysisResult.*
 import Sarif.*
 
-final case class SarifOutput(errors: List[OdinAnalysisResult]):
+object AggregatedSarifOutput:
+  def fromAnalyzed(
+      analyzed: Map[Path, List[OdinAnalysisResult]]
+  ): Seq[SarifLog] =
+    analyzed.toSeq.map { case (path, results) =>
+      SarifOutput(path, results).sarif
+    }
+end AggregatedSarifOutput
+
+final case class SarifOutput(filePath: Path, errors: List[OdinAnalysisResult]):
   def json: Json = sarif.asJson.deepDropNullValues
 
   private val sarifRun: SarifRun = SarifRun(
     SarifTool(SarifDriver()),
-    results = errors.flatMap(sarifResult),
+    results = errors.mapFilter(sarifResult),
     invocations = errors.map(sarifInvocation),
   )
 
@@ -84,6 +95,13 @@ final case class SarifOutput(errors: List[OdinAnalysisResult]):
             level = SarifLevel.ERROR,
             kind = SarifKind.FAIL,
             message = SarifMessage(message.mkString_("\n")),
+            locations = Seq(
+              SarifLocation(physicalLocation =
+                SarifPhysicalLocation(artifactLocation =
+                  SarifArtifactLocation(uri = filePath.toNioPath.toUri.toString)
+                )
+              )
+            ),
           )
         )
       case Ok(ruleId) =>
@@ -93,11 +111,18 @@ final case class SarifOutput(errors: List[OdinAnalysisResult]):
             level = SarifLevel.NONE,
             kind = SarifKind.PASS,
             message = SarifMessage("No errors were found."),
+            locations = Seq(
+              SarifLocation(physicalLocation =
+                SarifPhysicalLocation(artifactLocation =
+                  SarifArtifactLocation(uri = filePath.toNioPath.toUri.toString)
+                )
+              )
+            ),
           )
         )
 end SarifOutput
 
-object Sarif extends App:
+object Sarif:
 
   final val SARIF_VERSION = "2.1.0"
   final val SARIF_SCHEMA =
@@ -128,6 +153,19 @@ object Sarif extends App:
       level: SarifLevel,
       kind: SarifKind,
       message: SarifMessage,
+      locations: Seq[SarifLocation],
+  ) derives Codec.AsObject
+
+  final case class SarifLocation(
+      physicalLocation: SarifPhysicalLocation
+  ) derives Codec.AsObject
+
+  final case class SarifPhysicalLocation(
+      artifactLocation: SarifArtifactLocation
+  ) derives Codec.AsObject
+
+  final case class SarifArtifactLocation(
+      uri: String
   ) derives Codec.AsObject
 
   enum SarifLevel:
