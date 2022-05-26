@@ -24,7 +24,11 @@ class HoconConfigTests extends munit.FunSuite:
       cfg = """|polystat {
        |    lang = eo
        |    input = sandbox
-       |    outputTo = tmp
+       |    outputs = {
+       |        dirs = [tmp]
+       |        console = true
+       |        files = [/tmp/src/eo, /src/eo]
+       |    }
        |    outputFormats = [sarif]
        |}
     """.stripMargin,
@@ -36,7 +40,11 @@ class HoconConfigTests extends munit.FunSuite:
             input = Input.FromDirectory(Path("sandbox")),
             tmp = None,
             outputFormats = List(OutputFormat.Sarif),
-            output = Output.ToDirectory(Path("tmp")),
+            output = Output(
+              console = true,
+              files = List(Path("/tmp/src/eo"), Path("/src/eo")),
+              dirs = List(Path("tmp")),
+            ),
           ),
         )
       ),

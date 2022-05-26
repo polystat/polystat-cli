@@ -90,9 +90,10 @@ object HoconConfig:
     val includeRules = "includeRules"
     val excludeRules = "excludeRules"
     val j2eo = "j2eo"
-    val outputsConsole = "outputs.console"
-    val outputsDirs = "outputs.dirs"
-    val outputsFiles = "output.files"
+    val outputs = "outputs"
+    val outputsConsole = s"$outputs.console"
+    val outputsDirs = s"$outputs.dirs"
+    val outputsFiles = s"$outputs.files"
     val explanation = s"""
                        |$toplevel.$inputLanguage
                        |    The type of input files which will be analyzed. This key must be present.
