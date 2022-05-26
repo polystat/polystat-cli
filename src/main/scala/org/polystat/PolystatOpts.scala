@@ -45,12 +45,19 @@ object PolystatOpts:
     name = "java",
     help = "Analyze Java files",
   ) {
-    (analyzerConfig, j2eo).mapN((conf, j2eo) =>
+    (analyzerConfig, j2eo, j2eoVersion).mapN((conf, j2eo, j2eoVesion) =>
       conf.map(conf =>
-        PolystatUsage.Analyze(SupportedLanguage.Java(j2eo), conf)
+        PolystatUsage.Analyze(SupportedLanguage.Java(j2eo, j2eoVesion), conf)
       )
     )
   }
+
+  def j2eoVersion: Opts[Option[String]] = Opts
+    .option[String](
+      long = "j2eo-version",
+      help = "Version of j2eo to download.",
+    )
+    .orNone
 
   def j2eo: Opts[Option[Path]] = Opts
     .option[JPath](

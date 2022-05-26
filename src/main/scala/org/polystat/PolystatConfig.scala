@@ -28,7 +28,7 @@ object PolystatConfig:
 
   enum SupportedLanguage:
     case EO, Python
-    case Java(j2eo: Option[Path])
+    case Java(j2eo: Option[Path], j2eoVersion: Option[String])
   end SupportedLanguage
 
   enum PolystatUsage:

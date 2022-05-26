@@ -50,6 +50,8 @@ case class HoconConfig(path: Path):
     case (dirs, files, console) =>
       Output(dirs = dirs, files = files, console = console)
   }
+
+  private val j2eoVersion = hocon(keys.j2eoVersion).as[String].option
   private val outputFormats =
     hocon(keys.outputFormats).as[List[OutputFormat]].default(List.empty)
   private val inex: ConfigValue[IO, Option[IncludeExclude]] =
@@ -60,22 +62,32 @@ case class HoconConfig(path: Path):
       .option
 
   val config: ConfigValue[IO, PolystatUsage.Analyze] =
-    (j2eo, inex, input, tmp, outputs, outputFormats, lang).parMapN {
-      case (j2eo, inex, input, tmp, outputs, outputFormats, lang) =>
-        PolystatUsage.Analyze(
-          language = lang match
-            case Java(_) => Java(j2eo)
-            case other   => other
-          ,
-          config = AnalyzerConfig(
-            inex = inex,
-            input = input,
-            tmp = tmp,
-            outputFormats = outputFormats,
-            output = outputs,
-          ),
-        )
-    }
+    (j2eo, j2eoVersion, inex, input, tmp, outputs, outputFormats, lang)
+      .parMapN {
+        case (
+              j2eo,
+              j2eoVersion,
+              inex,
+              input,
+              tmp,
+              outputs,
+              outputFormats,
+              lang,
+            ) =>
+          PolystatUsage.Analyze(
+            language = lang match
+              case Java(_, _) => Java(j2eo, j2eoVersion)
+              case other      => other
+            ,
+            config = AnalyzerConfig(
+              inex = inex,
+              input = input,
+              tmp = tmp,
+              outputFormats = outputFormats,
+              output = outputs,
+            ),
+          )
+      }
 end HoconConfig
 
 object HoconConfig:
@@ -94,6 +106,7 @@ object HoconConfig:
     val outputsConsole = s"$outputs.console"
     val outputsDirs = s"$outputs.dirs"
     val outputsFiles = s"$outputs.files"
+    val j2eoVersion = "j2eoVersion"
     val explanation = s"""
                        |$toplevel.$inputLanguage
                        |    The type of input files which will be analyzed. This key must be present.
@@ -101,6 +114,8 @@ object HoconConfig:
                        |        "java" - only ".java" files will be analyzed.
                        |        "eo" - only ".eo" files will be analyzed.
                        |        "python" - only ".py" files will be analyzed.
+                       |$toplevel.$j2eoVersion
+                       |    Specifies the version of J2EO to download.
                        |$toplevel.$j2eo
                        |    Specifies the path to the J2EO executable.
                        |    If not specified, defaults to looking for j2eo.jar in the current working directory.
@@ -142,7 +157,7 @@ object HoconConfig:
   extension (s: String)
     def asSupportedLang: Option[SupportedLanguage] = s match
       case "eo"     => Some(EO)
-      case "java"   => Some(Java(None))
+      case "java"   => Some(Java(None, None))
       case "python" => Some(Python)
       case _        => None
 

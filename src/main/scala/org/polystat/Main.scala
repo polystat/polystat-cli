@@ -82,8 +82,8 @@ object Main extends IOApp:
         val analysisResults: IO[Unit] =
           lang match
             case SupportedLanguage.EO => EO.analyze(processedConfig)
-            case SupportedLanguage.Java(j2eo) =>
-              Java.analyze(j2eo, processedConfig)
+            case SupportedLanguage.Java(j2eo, j2eoVersion) =>
+              Java.analyze(j2eoVersion, j2eo, processedConfig)
             case SupportedLanguage.Python => Python.analyze(processedConfig)
         analysisResults
   end execute

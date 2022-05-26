@@ -19,18 +19,19 @@ import InputUtils.*
 object Java:
 
   private val DEFAULT_J2EO_PATH = Path("j2eo.jar")
-  private val J2EO_URL =
-    "https://search.maven.org/remotecontent?filepath=org/polystat/j2eo/0.5.0/j2eo-0.5.0.jar"
+  val DEFAULT_J2EO_VERSION = "0.5.0"
+  private def j2eoUrl(j2eoVesion: String) =
+    s"https://search.maven.org/remotecontent?filepath=org/polystat/j2eo/$j2eoVesion/j2eo-$j2eoVesion.jar"
 
-  private def defaultJ2EO: IO[Path] =
+  private def defaultJ2EO(j2eoVesion: String): IO[Path] =
     Files[IO]
       .exists(DEFAULT_J2EO_PATH)
       .ifM(
         ifTrue = IO.pure(DEFAULT_J2EO_PATH),
-        ifFalse = downloadJ2EO.as(DEFAULT_J2EO_PATH),
+        ifFalse = downloadJ2EO(j2eoVesion),
       )
 
-  private def downloadJ2EO: IO[Unit] =
+  private def downloadJ2EO(j2eoVesion: String): IO[Path] =
     EmberClientBuilder
       .default[IO]
       .build
@@ -40,7 +41,7 @@ object Java:
           .run(
             Request[IO](
               GET,
-              uri = Uri.unsafeFromString(J2EO_URL),
+              uri = Uri.unsafeFromString(j2eoUrl(j2eoVesion)),
             )
           )
           .use(resp =>
@@ -53,9 +54,11 @@ object Java:
                 .drain
           )
       }
+      .as(DEFAULT_J2EO_PATH)
   end downloadJ2EO
 
   private def runJ2EO(
+      j2eoVersion: Option[String],
       j2eo: Option[Path],
       inputDir: Path,
       outputDir: Path,
@@ -63,7 +66,9 @@ object Java:
     val command =
       s"java -jar ${j2eo.getOrElse(DEFAULT_J2EO_PATH)} -o $outputDir $inputDir"
     for
-      j2eo <- j2eo.map(IO.pure).getOrElse(defaultJ2EO)
+      j2eo <- j2eo
+        .map(IO.pure)
+        .getOrElse(defaultJ2EO(j2eoVersion.getOrElse(DEFAULT_J2EO_VERSION)))
       _ <- Files[IO]
         .exists(j2eo)
         .ifM(
@@ -77,7 +82,11 @@ object Java:
     end for
   end runJ2EO
 
-  def analyze(j2eo: Option[Path], cfg: ProcessedConfig): IO[Unit] =
+  def analyze(
+      j2eoVersion: Option[String],
+      j2eo: Option[Path],
+      cfg: ProcessedConfig,
+  ): IO[Unit] =
     for
       tmp <- cfg.tempDir
       _ <- cfg.input match // writing EO files to tempDir
@@ -88,12 +97,17 @@ object Java:
               path / "stdin.eo"
             )
             _ <- writeOutputTo(stdinTmp)(code)
-            _ <- runJ2EO(j2eo, inputDir = stdinTmp, outputDir = tmp)
+            _ <- runJ2EO(
+              j2eoVersion,
+              j2eo,
+              inputDir = stdinTmp,
+              outputDir = tmp,
+            )
           yield ()
         case Input.FromFile(path) =>
-          runJ2EO(j2eo, inputDir = path, outputDir = tmp)
+          runJ2EO(j2eoVersion, j2eo, inputDir = path, outputDir = tmp)
         case Input.FromDirectory(path) =>
-          runJ2EO(j2eo, inputDir = path, outputDir = tmp)
+          runJ2EO(j2eoVersion, j2eo, inputDir = path, outputDir = tmp)
       _ <- EO.analyze(
         cfg.copy(input = Input.FromDirectory(tmp))
       )
