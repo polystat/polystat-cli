@@ -94,7 +94,7 @@ object Java:
           for
             code <- readCodeFromStdin.compile.string
             stdinTmp <- Files[IO].createTempDirectory.map(path =>
-              path / "stdin.eo"
+              path / "stdin.java"
             )
             _ <- writeOutputTo(stdinTmp)(code)
             _ <- runJ2EO(
@@ -108,6 +108,15 @@ object Java:
           runJ2EO(j2eoVersion, j2eo, inputDir = path, outputDir = tmp)
         case Input.FromDirectory(path) =>
           runJ2EO(j2eoVersion, j2eo, inputDir = path, outputDir = tmp)
+      // J2EO deletes the tmp directory when there are no files to analyze
+      // This causes the subsequent call to EO.analyze to fail, because there is no temp directory.
+      // The line below patches this issue by creating the temp directory if it was deleted by J2EO.
+      _ <- Files[IO] 
+        .exists(tmp)
+        .ifM(
+          ifTrue = IO.unit,
+          ifFalse = Files[IO].createDirectory(tmp),
+        )
       _ <- EO.analyze(
         cfg.copy(input = Input.FromDirectory(tmp))
       )
