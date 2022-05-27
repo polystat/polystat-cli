@@ -5,11 +5,15 @@ import org.polystat.odin.analysis.EOOdinAnalyzer.OdinAnalysisResult
 
 import Sarif.*
 
+case class AggregatedSarifOutput(
+    analyzed: Seq[(Path, List[OdinAnalysisResult])]
+)
+
 object AggregatedSarifOutput:
   def fromAnalyzed(
-      analyzed: Map[Path, List[OdinAnalysisResult]]
+      analyzed: Seq[(Path, List[OdinAnalysisResult])]
   ): Seq[SarifLog] =
-    analyzed.toSeq.map { case (path, results) =>
+    analyzed.map { case (path, results) =>
       SarifOutput(path, results).sarif
     }
 end AggregatedSarifOutput

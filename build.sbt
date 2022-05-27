@@ -31,7 +31,7 @@ buildInfoPackage := "org.polystat.cli"
 
 Global / excludeLintKeys += nativeImageVersion
 
-Compile / mainClass := Some("org.polystat.Main")
+Compile / mainClass := Some("org.polystat.cli.Main")
 
 enablePlugins(NativeImagePlugin)
 nativeImageVersion := "22.1.0"
