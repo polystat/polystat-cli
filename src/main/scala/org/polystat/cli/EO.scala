@@ -63,11 +63,7 @@ object EO:
         cfg.fmts.traverse_ { case OutputFormat.Sarif =>
           for
             _ <- IO.println(s"Writing aggregated output to $outputPath...")
-            sariOutput = AggregatedSarifOutput
-              .fromAnalyzed(analyzed)
-              .asJson
-              .deepDropNullValues
-              .toString
+            sariOutput = AggregatedSarifOutput(analyzed).json.toString
             _ <- writeOutputTo(outputPath)(sariOutput)
           yield ()
         }

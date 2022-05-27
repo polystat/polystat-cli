@@ -20,15 +20,20 @@ object Sarif:
 
   final case class SarifRun(
       tool: SarifTool,
+      artifacts: Seq[SarifArtifact],
       results: Seq[SarifResult],
       invocations: Seq[SarifInvocation],
+  ) derives Codec.AsObject
+
+  final case class SarifArtifact(
+      location: SarifArtifactLocation
   ) derives Codec.AsObject
 
   final case class SarifTool(driver: SarifDriver) derives Codec.AsObject
 
   final case class SarifDriver(
-      name: String = "Polystat",
-      informationUri: String = "https://www.polystat.org/",
+      name: String = "Polystat CLI",
+      informationUri: String = "https://github.com/nikololiahim/polystat-cli",
       semanticVersion: String = BuildInfo.version,
   ) derives Codec.AsObject
 
@@ -37,7 +42,7 @@ object Sarif:
       level: SarifLevel,
       kind: SarifKind,
       message: SarifMessage,
-      locations: Seq[SarifLocation],
+      locations: Option[Seq[SarifLocation]],
   ) derives Codec.AsObject
 
   final case class SarifLocation(

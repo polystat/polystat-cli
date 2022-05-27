@@ -14,17 +14,28 @@ import OdinAnalysisResult.*
 import Sarif.*
 
 final case class SarifOutput(filePath: Path, errors: List[OdinAnalysisResult]):
-  def json: Json = sarif.asJson.deepDropNullValues
-
-  private val sarifRun: SarifRun = SarifRun(
-    SarifTool(SarifDriver()),
-    results = errors.mapFilter(sarifResult),
-    invocations = errors.map(sarifInvocation),
-  )
+  private val sarifRun: SarifRun = SarifOutput.sarifRun(filePath, errors)
 
   val sarif: SarifLog = SarifLog(Seq(sarifRun))
 
-  private def sarifInvocation(
+  val json: Json = sarif.asJson.deepDropNullValues
+
+end SarifOutput
+
+object SarifOutput:
+
+  def sarifRun(filePath: Path, errors: List[OdinAnalysisResult]): SarifRun =
+    SarifRun(
+      tool = SarifTool(SarifDriver()),
+      results = errors.mapFilter(SarifOutput.sarifResult),
+      invocations = errors.map(SarifOutput.sarifInvocation),
+      artifacts = Seq(
+        SarifArtifact(location =
+          SarifArtifactLocation(uri = filePath.toNioPath.toUri.toString)
+        )
+      ),
+    )
+  def sarifInvocation(
       error: OdinAnalysisResult
   ): SarifInvocation =
     error match
@@ -74,7 +85,7 @@ final case class SarifOutput(filePath: Path, errors: List[OdinAnalysisResult]):
           executionSuccessful = true,
         )
 
-  private def sarifResult(error: OdinAnalysisResult): Option[SarifResult] =
+  def sarifResult(error: OdinAnalysisResult): Option[SarifResult] =
     error match
       case AnalyzerFailure(_, _) => None
       case DefectsDetected(ruleId, message) =>
@@ -84,13 +95,7 @@ final case class SarifOutput(filePath: Path, errors: List[OdinAnalysisResult]):
             level = SarifLevel.ERROR,
             kind = SarifKind.FAIL,
             message = SarifMessage(message.mkString_("\n")),
-            locations = Seq(
-              SarifLocation(physicalLocation =
-                SarifPhysicalLocation(artifactLocation =
-                  SarifArtifactLocation(uri = filePath.toNioPath.toUri.toString)
-                )
-              )
-            ),
+            locations = None,
           )
         )
       case Ok(ruleId) =>
@@ -100,13 +105,7 @@ final case class SarifOutput(filePath: Path, errors: List[OdinAnalysisResult]):
             level = SarifLevel.NONE,
             kind = SarifKind.PASS,
             message = SarifMessage("No errors were found."),
-            locations = Seq(
-              SarifLocation(physicalLocation =
-                SarifPhysicalLocation(artifactLocation =
-                  SarifArtifactLocation(uri = filePath.toNioPath.toUri.toString)
-                )
-              )
-            ),
+            locations = None,
           )
         )
 end SarifOutput
