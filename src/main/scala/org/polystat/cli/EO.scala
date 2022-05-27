@@ -1,14 +1,17 @@
-package org.polystat
+package org.polystat.cli
 
 import cats.effect.IO
-import PolystatConfig.*
-import InputUtils.*
+import cats.syntax.foldable.*
+import cats.syntax.traverse.*
+import io.circe.syntax.*
 import org.polystat.odin.analysis.ASTAnalyzer
 import org.polystat.odin.analysis.EOOdinAnalyzer
 import org.polystat.odin.parser.EoParser.sourceCodeEoParser
-import cats.syntax.traverse.*
-import cats.syntax.foldable.*
-import io.circe.syntax.*
+import org.polystat.sarif.AggregatedSarifOutput
+import org.polystat.sarif.SarifOutput
+
+import PolystatConfig.*
+import InputUtils.*
 
 object EO:
 

@@ -1,17 +1,18 @@
-package org.polystat
+package org.polystat.cli
 import cats.effect.*
 import cats.syntax.all.*
+import fs2.io.file.Files
+import fs2.io.file.Path
 import fs2.io.net.*
+import fs2.text.utf8
+import org.http4s.Method.GET
+import org.http4s.Request
+import org.http4s.Uri
+import org.http4s.client.middleware.FollowRedirect
 import org.http4s.ember.client.EmberClientBuilder
 import org.http4s.ember.core.h2.*
 import org.http4s.implicits.*
-import org.http4s.Method.GET
-import fs2.text.utf8
-import org.http4s.Request
-import org.http4s.client.middleware.FollowRedirect
 
-import fs2.io.file.{Path, Files}
-import org.http4s.Uri
 import sys.process.*
 import PolystatConfig.*
 import InputUtils.*

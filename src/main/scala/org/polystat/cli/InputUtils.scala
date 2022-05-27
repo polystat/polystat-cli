@@ -1,4 +1,4 @@
-package org.polystat
+package org.polystat.cli
 import cats.data.NonEmptyList
 import cats.effect.IO
 import fs2.Stream

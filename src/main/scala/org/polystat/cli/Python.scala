@@ -1,10 +1,12 @@
-package org.polystat
+package org.polystat.cli
 
+import cats.effect.IO
+import cats.effect.IOApp
+import fs2.io.file.Files
+import fs2.io.file.Path
+import org.polystat.cli.InputUtils.*
+import org.polystat.cli.PolystatConfig.*
 import org.polystat.py2eo.transpiler.Transpile
-import fs2.io.file.{Files, Path}
-import cats.effect.{IO, IOApp}
-import org.polystat.PolystatConfig.*
-import org.polystat.InputUtils.*
 
 object Python:
 

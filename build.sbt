@@ -27,7 +27,7 @@ assembly / mainClass := Some("org.polystat.Main")
 
 enablePlugins(BuildInfoPlugin)
 buildInfoKeys := Seq(version)
-buildInfoPackage := "org.polystat"
+buildInfoPackage := "org.polystat.cli"
 
 Global / excludeLintKeys += nativeImageVersion
 

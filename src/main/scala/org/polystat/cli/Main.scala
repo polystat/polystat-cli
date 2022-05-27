@@ -1,4 +1,4 @@
-package org.polystat
+package org.polystat.cli
 
 import cats.effect.ExitCode
 import cats.effect.IO
@@ -14,12 +14,13 @@ import org.polystat.odin.analysis.ASTAnalyzer
 import org.polystat.odin.analysis.EOOdinAnalyzer
 import org.polystat.odin.analysis.EOOdinAnalyzer.OdinAnalysisResult
 import org.polystat.odin.parser.EoParser.sourceCodeEoParser
+import org.polystat.py2eo.parser.PythonLexer
 import org.polystat.py2eo.transpiler.Transpile
+import org.polystat.cli.BuildInfo
 
 import PolystatConfig.*
 import IncludeExclude.*
 import InputUtils.*
-import org.polystat.py2eo.parser.PythonLexer
 object Main extends IOApp:
   override def run(args: List[String]): IO[ExitCode] =
     for exitCode <- CommandIOApp.run(

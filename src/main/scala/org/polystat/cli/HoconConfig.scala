@@ -1,4 +1,4 @@
-package org.polystat
+package org.polystat.cli
 
 import cats.Show
 import cats.data.NonEmptyList

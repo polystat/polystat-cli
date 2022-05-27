@@ -1,7 +1,7 @@
-package org.polystat
+package org.polystat.cli
 
 import fs2.io.file.Path
-import org.polystat.HoconConfig
+import org.polystat.cli.HoconConfig
 
 import java.nio.file.Files
 import java.nio.file.Paths

@@ -1,23 +1,23 @@
-package org.polystat
+package org.polystat.cli
 import cats.data.NonEmptyList
 import cats.data.Validated
+import cats.data.ValidatedNel
 import cats.effect.IO
 import cats.effect.IOApp
 import cats.syntax.all.*
+import com.monovore.decline.Argument
 import com.monovore.decline.Command
 import com.monovore.decline.Opts
 import fs2.io.file.Files
 import fs2.io.file.Path
-import org.polystat.PolystatConfig.*
-import com.monovore.decline.Argument
+import org.polystat.cli.PolystatConfig.*
+
 import java.io.FileNotFoundException
 import java.nio.file.Path as JPath
-import cats.data.ValidatedNel
 
 import IncludeExclude.*
 import Validated.*
 import InputUtils.toInput
-import com.monovore.decline.Argument
 
 object PolystatOpts:
 
