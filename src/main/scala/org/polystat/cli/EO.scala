@@ -1,8 +1,7 @@
 package org.polystat.cli
 
 import cats.effect.IO
-import cats.syntax.foldable.*
-import cats.syntax.traverse.*
+import cats.syntax.all.*
 import io.circe.syntax.*
 import org.polystat.odin.analysis.ASTAnalyzer
 import org.polystat.odin.analysis.EOOdinAnalyzer
@@ -20,9 +19,15 @@ object EO:
   def runAnalyzers(
       analyzers: List[ASTAnalyzer[IO]]
   )(code: String): IO[List[EOOdinAnalyzer.OdinAnalysisResult]] =
-    analyzers.traverse(a =>
+    analyzers.traverse(analyzer =>
       EOOdinAnalyzer
-        .analyzeSourceCode(a)(code)(cats.Monad[IO], sourceCodeEoParser[IO]())
+        .analyzeSourceCode(analyzer)(code)(
+          cats.Monad[IO],
+          sourceCodeEoParser[IO](),
+        )
+        .handleError(e =>
+          EOOdinAnalyzer.OdinAnalysisResult.AnalyzerFailure(analyzer.name, e)
+        )
     )
 
   def analyze(cfg: ProcessedConfig): IO[Unit] =
