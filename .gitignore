@@ -12,3 +12,4 @@ sarif/**
 polystat-x86_64-pc-linux
 out/
 **.json
+hadoop/
