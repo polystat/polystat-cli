@@ -20,7 +20,7 @@ import InputUtils.*
 object Java:
 
   private val DEFAULT_J2EO_PATH = Path("j2eo.jar")
-  val DEFAULT_J2EO_VERSION = "0.5.0"
+  val DEFAULT_J2EO_VERSION = "0.5.3"
   private def j2eoUrl(j2eoVesion: String) =
     s"https://search.maven.org/remotecontent?filepath=org/polystat/j2eo/$j2eoVesion/j2eo-$j2eoVesion.jar"
 
