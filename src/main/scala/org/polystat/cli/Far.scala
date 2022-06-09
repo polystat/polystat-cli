@@ -41,7 +41,7 @@ object Far:
   ): IO[java.util.Collection[String]] =
     IO.delay(new FaR().errors(program(pathToXml), locator))
 
-  def analyze(pathToTmpDir: Path)(
+  def analyze(ruleId: String)(pathToTmpDir: Path)(
       pathToCode: Path
   ): IO[OdinAnalysisResult] =
     val codeFileName: Path = pathToCode.fileName
@@ -72,5 +72,5 @@ object Far:
         .handleErrorWith(_ =>
           runFar(pathToXml)("Q.class__" + codeFileNameNoExt)
         )
-      result = OdinAnalysisResult.fromErrors("FaR")(errors.asScala.toList)
+      result = OdinAnalysisResult.fromErrors(ruleId)(errors.asScala.toList)
     yield result

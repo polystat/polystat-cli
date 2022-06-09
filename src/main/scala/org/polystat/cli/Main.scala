@@ -34,22 +34,22 @@ object Main extends IOApp:
   ): List[EOAnalyzer] =
     inex match
       case Some(Exclude(exclude)) =>
-        analyzers.mapFilter { case (id, a) =>
-          Option.when(!exclude.contains_(id))(a)
+        analyzers.mapFilter { case a =>
+          Option.when(!exclude.contains_(a.ruleId))(a)
         }
       case Some(Include(include)) =>
-        analyzers.mapFilter { case (id, a) =>
-          Option.when(include.contains_(id))(a)
+        analyzers.mapFilter { case a =>
+          Option.when(include.contains_(a.ruleId))(a)
         }
-      case None => analyzers.map(_._2)
+      case None => analyzers
 
   def execute(usage: PolystatUsage): IO[Unit] =
     usage match
       case PolystatUsage.List(cfg) =>
         if cfg then IO.println(HoconConfig.keys.explanation)
         else
-          analyzers.traverse_ { case (name, _) =>
-            IO.println(name)
+          analyzers.traverse_ { case a =>
+            IO.println(a.ruleId)
           }
       case PolystatUsage.Misc(version, config) =>
         if (version) then IO.println(BuildInfo.version)

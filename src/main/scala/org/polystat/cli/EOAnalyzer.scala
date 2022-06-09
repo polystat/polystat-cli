@@ -9,45 +9,54 @@ import cats.effect.Sync
 import cats.syntax.all.*
 import fs2.io.file.Path
 import cats.effect.IO
+import org.polystat.odin.analysis.liskov.Analyzer
 
 trait EOAnalyzer:
+  def ruleId: String
   def analyze(tmpDir: Path)(pathToCode: Path)(
       code: String
   ): IO[OdinAnalysisResult]
 
 object EOAnalyzer:
 
-  val analyzers: List[(String, EOAnalyzer)] =
+  val analyzers: List[EOAnalyzer] =
+    // TODO: remove ruleIds from Odin analyzers
     List(
-      (
-        "mutualrec",
-        fromOdinAstAnalyzer(EOOdinAnalyzer.advancedMutualRecursionAnalyzer),
+      fromOdinAstAnalyzer("mutualrec")(
+        EOOdinAnalyzer.advancedMutualRecursionAnalyzer
       ),
-      (
-        "unjustified",
-        fromOdinAstAnalyzer(EOOdinAnalyzer.unjustifiedAssumptionAnalyzer),
+      fromOdinAstAnalyzer("unjustified")(
+        EOOdinAnalyzer.unjustifiedAssumptionAnalyzer
       ),
-      (
-        "liskov",
-        fromOdinAstAnalyzer(EOOdinAnalyzer.liskovPrincipleViolationAnalyzer),
+      fromOdinAstAnalyzer("liskov")(
+        EOOdinAnalyzer.liskovPrincipleViolationAnalyzer
       ),
-      (
-        "directAccess",
-        fromOdinAstAnalyzer(EOOdinAnalyzer.directStateAccessAnalyzer),
+      fromOdinAstAnalyzer("direct_access")(
+        EOOdinAnalyzer.directStateAccessAnalyzer
       ),
-      ("far", farEOAnalyzer),
+      farEOAnalyzer("division_by_zero"),
     )
 
-def fromOdinAstAnalyzer(a: ASTAnalyzer[IO]): EOAnalyzer =
-  new EOAnalyzer:
-    def analyze(
-        tmpDir: Path
-    )(pathToCode: Path)(code: String): IO[OdinAnalysisResult] =
-      EOOdinAnalyzer
-        .analyzeSourceCode(a)(code)(cats.Monad[IO], sourceCodeEoParser[IO](2))
+  def fromOdinAstAnalyzer(_ruleId: String)(a: ASTAnalyzer[IO]): EOAnalyzer =
+    new EOAnalyzer:
 
-def farEOAnalyzer: EOAnalyzer = new EOAnalyzer:
-  def analyze(tmpDir: Path)(pathToCode: Path)(
-      code: String
-  ): IO[OdinAnalysisResult] =
-    Far.analyze(tmpDir)(pathToCode)
+      def ruleId: String = _ruleId
+      def analyze(
+          tmpDir: Path
+      )(pathToCode: Path)(code: String): IO[OdinAnalysisResult] =
+        EOOdinAnalyzer
+          .analyzeSourceCode(a)(code)(cats.Monad[IO], sourceCodeEoParser[IO](2))
+          .map {
+            case f: OdinAnalysisResult.AnalyzerFailure =>
+              f.copy(ruleId = ruleId)
+            case d: OdinAnalysisResult.DefectsDetected =>
+              d.copy(ruleId = ruleId)
+            case ok: OdinAnalysisResult.Ok => ok.copy(ruleId = ruleId)
+          }
+
+  def farEOAnalyzer(_ruleId: String): EOAnalyzer = new EOAnalyzer:
+    def ruleId: String = _ruleId
+    def analyze(tmpDir: Path)(pathToCode: Path)(
+        code: String
+    ): IO[OdinAnalysisResult] =
+      Far.analyze(ruleId)(tmpDir)(pathToCode)
