@@ -22,8 +22,9 @@ object EO:
       .traverse { case (codePath, code) =>
         for
           _ <- IO.println(s"Analyzing $codePath...")
-          analyzed <- cfg.filteredAnalyzers.traverse(
-            _.analyze(cfg.tempDir)(codePath)(code)
+          analyzed <- cfg.filteredAnalyzers.traverse(a =>
+            a.analyze(cfg.tempDir)(codePath)(code)
+              .handleError(e => OdinAnalysisResult.AnalyzerFailure(a.ruleId, e))
           )
         yield (codePath, analyzed)
       }
