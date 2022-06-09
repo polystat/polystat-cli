@@ -2,11 +2,33 @@
 This repository provides an alternative implementation to [Polystat](https://github.com/polystat/polystat).
 
 # Basic usage
+
+> `polystat`
+
+If no arguments are provided to `polystat`, it will read the configuration from the [HOCON](https://github.com/lightbend/config/blob/main/HOCON.md) config file in the current working directory. The default name for this file is `.polystat.conf` in the current working directory. If you want to read the configuration from the file located elsewhere, the following command can be used:
+
+```
+polystat --config path/to/hocon/config.conf
+```
+
 > `polystat list -c` 
 
-Prints all the available config keys. The configuration file format is [HOCON](https://github.com/lightbend/config/blob/main/HOCON.md). The default name for this file is `.polystat.conf` in the current working directory.
+Prints all the available config keys.  
+> `polystat list`
 
-> `polystat java --in src/main/java`
+Prints the rule IDs for all the available analyzers. By default, all of them are enabled, however you can exclude some / include only the ones you want using the following commands:
+
+> `polystat eo --in tmp --exclude mutualrec --sarif`
+
+All the rules BUT the `mutualrec` will be executed.
+
+
+> `polystat eo --in tmp --include mutualrec --include liskov --sarif`
+
+Only `mutualrec` and `liskov` rules will be executed. 
+
+
+> `polystat java --in src/main/java --console`
 
 Get the plain text console output from analyzing Java files. The Java files are in the directory `src/main/java`. 
 
@@ -44,7 +66,7 @@ polystat list [--config | -c]
 * The subcommand specifies which files should be analyzed (`.eo`, `.java` or `.py`). More languages can be added in the future. 
 * Analyzes the input files in the `--in` directory. If `--in` is not specified, defaults to reading the input language code from stdin. 
 * `--in` can also accept a path which leads to a file. In this case, only the specified file will be analyzed. 
-* The temporary files produced by analyzers are to be stored in `--tmp` directory.  If `--tmp` is not specified, temporary files will be stored in the OS-created tempdir. Each target language may have a different structure of the files in the temporary directory. It is assumed that the `path` supplied by `--tmp` points to an empty directory. If not, the contents of the `path` will be purged.
+* The temporary files produced by analyzers are to be stored in `--tmp` directory.  If `--tmp` is not specified, temporary files will be stored in the OS-created tempdir. Each target language may have a different structure of the files in the temporary directory. It is assumed that the `path` supplied by `--tmp` points to an empty directory. If not, the contents of the `path` will be purged. If the `--tmp` option is specified but the directory it points to does not exist, it will be created. 
 
 ## Configuration options
 * `--include` and `--exclude` respectively define which rules should be included/excluded from the analysis run. These options are mutually exclusive, so specifying both should not be valid. If neither option is specified, all the available analyzers will be run. The list of available rule specifiers can be found via `polystat list` command.
@@ -55,7 +77,7 @@ If it's not present in the current working directory, download one from Maven Ce
 ## Output configuration
 * `--sarif` option means that the command will produce the output in the [SARIF](https://docs.oasis-open.org/sarif/sarif/v2.1.0/sarif-v2.1.0.html) format in addition to output in other formats (if any). 
 * `--to { console | dir=<path>| file=<path> }` is a repeatable option that specifies where the output should be written. If this option is not specified, no output is produced. 
-* `--to dir=<path>` means that the files will be written to the given path. The path is assumed to be an empty directory. If it is not, its contents will be purged.
+* `--to dir=<path>` means that the files will be written to the given path. The path is assumed to be an empty directory. If it is not, its contents will be purged. If the `path` is specified but the directory it points to does not exist, it will be created. 
     * If an additional output format is specified (e.g. `--sarif`), then the files created by the analyzer will be written in the respective subdirectory. For example, in case of `--sarif`,  the SARIF files will be located in `path/sarif/`. The console output is not written anywhere. Therefore, if none of the output format options (e.g. `--sarif`) are specified, no files are produced. 
     * The output format options (e.g. `--sarif`) also determine the extension of the output files. In case of `--sarif` the extension would be `.sarif.json`.
     * If `--in` option specifies a directory, the structure of the output directory will be similar to the structure of the input directory. 
@@ -73,11 +95,6 @@ If it's not present in the current working directory, download one from Maven Ce
 * `--version` prints the version of the CLI tool, maybe with some additional information.
 * `--help` displays some informative help message for commands.
 * `--config <path>` allows to configure Polystat from the specified HOCON config file. If not specified, reads configs from the file `.polystat.conf` in the current working directory.
-
-
-## Calling Polystat without arguments
-If no arguments are provided to `polystat`, it will read the configuration from the HOCON config file in the current working directory.
-
 
 # Development
 ## Setup
