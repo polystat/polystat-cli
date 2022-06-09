@@ -63,7 +63,8 @@ object Main extends IOApp:
         for
           tempDir <- tmp match
             case Some(path) =>
-              IO.println(s"Cleaning ${path.absolute}...") *> path.clean
+              IO.println(s"Cleaning ${path.absolute}...") *>
+                path.createDirIfDoesntExist.flatMap(_.clean)
             case None => Files[IO].createTempDirectory
           processedConfig = ProcessedConfig(
             filteredAnalyzers = filterAnalyzers(inex),
