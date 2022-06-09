@@ -17,27 +17,20 @@ import org.polystat.odin.analysis.EOOdinAnalyzer.OdinAnalysisResult
 
 object EO:
 
-  def runAnalyzers(
-      analyzers: List[ASTAnalyzer[IO]]
-  )(code: String): IO[List[EOOdinAnalyzer.OdinAnalysisResult]] =
-    analyzers.traverse(a =>
-      EOOdinAnalyzer
-        .analyzeSourceCode(a)(code)(cats.Monad[IO], sourceCodeEoParser[IO]())
-    )
-
   def analyze(cfg: ProcessedConfig): IO[Unit] =
-    val inputFiles = readCodeFromInput(".eo", cfg.input)
-    val analyze = inputFiles
-      .evalMap { case (codePath, code) =>
+    def runAnalyzers(inputFiles: Vector[(Path, String)]) = inputFiles
+      .traverse { case (codePath, code) =>
         for
           _ <- IO.println(s"Analyzing $codePath...")
-          analyzed <- runAnalyzers(cfg.filteredAnalyzers)(code)
+          analyzed <- cfg.filteredAnalyzers.traverse(
+            _.analyze(cfg.tempDir)(codePath)(code)
+          )
         yield (codePath, analyzed)
       }
-      .compile
-      .toVector
 
-    def writeToDirs(analyzed: Vector[(Path, List[OdinAnalysisResult])]): IO[Unit] =
+    def writeToDirs(
+        analyzed: Vector[(Path, List[OdinAnalysisResult])]
+    ): IO[Unit] =
       analyzed.traverse_ { case (codePath, results) =>
         for
           _ <- if cfg.output.console then IO.println(analyzed) else IO.unit
@@ -76,9 +69,11 @@ object EO:
       case _ => relPath
 
     for
-      analyzed <- analyze.map(_.map { case (path, results) =>
-        (pathToDisplay(path), results)
-      })
+      inputFiles <- readCodeFromInput(".eo", cfg.input).compile.toVector
+        .map(_.map { case (path, results) =>
+          (pathToDisplay(path), results)
+        })
+      analyzed <- runAnalyzers(inputFiles)
       _ <- cfg.output.dirs.traverse_ { outDir =>
         for
           _ <- IO.println(s"Cleaning $outDir before writing...")

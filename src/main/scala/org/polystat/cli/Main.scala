@@ -11,12 +11,12 @@ import fs2.io.file.Files
 import fs2.io.file.Path
 import fs2.text.utf8
 import org.polystat.odin.analysis.ASTAnalyzer
-import org.polystat.odin.analysis.EOOdinAnalyzer
 import org.polystat.odin.analysis.EOOdinAnalyzer.OdinAnalysisResult
 import org.polystat.odin.parser.EoParser.sourceCodeEoParser
 import org.polystat.py2eo.parser.PythonLexer
 import org.polystat.py2eo.transpiler.Transpile
 import org.polystat.cli.BuildInfo
+import org.polystat.cli.EOAnalyzer.analyzers
 
 import PolystatConfig.*
 import IncludeExclude.*
@@ -29,18 +29,9 @@ object Main extends IOApp:
       )
     yield exitCode
 
-  val analyzers: List[(String, ASTAnalyzer[IO])] =
-    // TODO: In Odin, change analyzer names to shorter ones.
-    List(
-      ("mutualrec", EOOdinAnalyzer.advancedMutualRecursionAnalyzer),
-      ("unjustified", EOOdinAnalyzer.unjustifiedAssumptionAnalyzer),
-      ("liskov", EOOdinAnalyzer.liskovPrincipleViolationAnalyzer),
-      ("directAccess", EOOdinAnalyzer.directStateAccessAnalyzer),
-    )
-
   def filterAnalyzers(
       inex: Option[IncludeExclude]
-  ): List[ASTAnalyzer[IO]] =
+  ): List[EOAnalyzer] =
     inex match
       case Some(Exclude(exclude)) =>
         analyzers.mapFilter { case (id, a) =>

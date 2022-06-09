@@ -7,6 +7,7 @@ import com.monovore.decline.Opts
 import fs2.Stream
 import fs2.io.file.Path
 import org.polystat.odin.analysis.ASTAnalyzer
+import org.polystat.cli.EOAnalyzer
 
 object PolystatConfig:
 
@@ -19,7 +20,7 @@ object PolystatConfig:
   )
 
   final case class ProcessedConfig(
-      filteredAnalyzers: List[ASTAnalyzer[IO]],
+      filteredAnalyzers: List[EOAnalyzer],
       tempDir: Path,
       input: Input,
       fmts: List[OutputFormat],
