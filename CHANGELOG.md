@@ -1,4 +1,11 @@
-## Polystat v0.1.7
+## Polystat v0.1.8
 
-* Fixed a bug which caused the CLI to crash when analyzing an empty directory with J2EO.
-* Fixed generation of the aggregated SARIF output. Now it generates a single `sarifLog` object with a `run` object for each of the files it was run on. The file location can be found at `sarifLog.runs[i].artifacts[0].location.uri`.
+This release added a [FaR](https://github.com/polystat/far) analyzer to Polystat CLI. In addition, the following problems were addressed:
+
+* Paths to files in `.sarif.json` files should be generated correctly now. 
+* Output and temporary directories that are specified are created if they don't exist. 
+* Analyzers names printed by `polystat list` and the ones used in `.sarif.json` files are now consistent (and shorter). They can also be changed easily if necessary. The analyzer names can be found by running:
+```
+java -jar polystat.jar list
+```
+* Using odin v0.4.2 (with better support for J2EO output). 
