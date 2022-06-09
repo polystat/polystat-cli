@@ -81,7 +81,7 @@ object Main extends IOApp:
             input = input,
             fmts = fmts,
           )
-          analysisResults: IO[Unit] =
+          analysisResults <-
             lang match
               case SupportedLanguage.EO => EO.analyze(processedConfig)
               case SupportedLanguage.Java(j2eo, j2eoVersion) =>

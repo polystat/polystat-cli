@@ -27,7 +27,7 @@ object EO:
 
   def analyze(cfg: ProcessedConfig): IO[Unit] =
     val inputFiles = readCodeFromInput(".eo", cfg.input)
-    val analyzed = inputFiles
+    val analyze = inputFiles
       .evalMap { case (codePath, code) =>
         for
           _ <- IO.println(s"Analyzing $codePath...")
@@ -37,7 +37,7 @@ object EO:
       .compile
       .toVector
 
-    def writeToDirs(analyzed: Vector[(Path, List[OdinAnalysisResult])]) =
+    def writeToDirs(analyzed: Vector[(Path, List[OdinAnalysisResult])]): IO[Unit] =
       analyzed.traverse_ { case (codePath, results) =>
         for
           _ <- if cfg.output.console then IO.println(analyzed) else IO.unit
@@ -69,8 +69,16 @@ object EO:
         }
       }
 
+    def pathToDisplay(relPath: Path) = cfg.input match
+      case Input.FromDirectory(dir) => dir / relPath
+      // TODO: account for other cases
+      // This should be the same pass that is created when running readCodeFromX
+      case _ => relPath
+
     for
-      analyzed <- analyzed
+      analyzed <- analyze.map(_.map { case (path, results) =>
+        (pathToDisplay(path), results)
+      })
       _ <- cfg.output.dirs.traverse_ { outDir =>
         for
           _ <- IO.println(s"Cleaning $outDir before writing...")

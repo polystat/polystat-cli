@@ -31,7 +31,9 @@ object SarifOutput:
       invocations = errors.map(SarifOutput.sarifInvocation),
       artifacts = Seq(
         SarifArtifact(location =
-          SarifArtifactLocation(uri = filePath.toNioPath.toUri.toString)
+          SarifArtifactLocation(uri =
+            filePath.absolute.toNioPath.toUri.toString
+          )
         )
       ),
     )
