@@ -89,7 +89,6 @@ object Java:
       cfg: ProcessedConfig,
   ): IO[Unit] =
     for
-      tmp <- cfg.tempDir
       _ <- cfg.input match // writing EO files to tempDir
         case Input.FromStdin =>
           for
@@ -102,24 +101,24 @@ object Java:
               j2eoVersion,
               j2eo,
               inputDir = stdinTmp,
-              outputDir = tmp,
+              outputDir = cfg.tempDir,
             )
           yield ()
         case Input.FromFile(path) =>
-          runJ2EO(j2eoVersion, j2eo, inputDir = path, outputDir = tmp)
+          runJ2EO(j2eoVersion, j2eo, inputDir = path, outputDir = cfg.tempDir)
         case Input.FromDirectory(path) =>
-          runJ2EO(j2eoVersion, j2eo, inputDir = path, outputDir = tmp)
+          runJ2EO(j2eoVersion, j2eo, inputDir = path, outputDir = cfg.tempDir)
       // J2EO deletes the tmp directory when there are no files to analyze
       // This causes the subsequent call to EO.analyze to fail, because there is no temp directory.
       // The line below patches this issue by creating the temp directory if it was deleted by J2EO.
       _ <- Files[IO]
-        .exists(tmp)
+        .exists(cfg.tempDir)
         .ifM(
           ifTrue = IO.unit,
-          ifFalse = Files[IO].createDirectory(tmp),
+          ifFalse = Files[IO].createDirectory(cfg.tempDir),
         )
       _ <- EO.analyze(
-        cfg.copy(input = Input.FromDirectory(tmp))
+        cfg.copy(input = Input.FromDirectory(cfg.tempDir))
       )
     yield ()
 

@@ -20,7 +20,7 @@ object PolystatConfig:
 
   final case class ProcessedConfig(
       filteredAnalyzers: List[ASTAnalyzer[IO]],
-      tempDir: IO[Path],
+      tempDir: Path,
       input: Input,
       fmts: List[OutputFormat],
       output: Output,

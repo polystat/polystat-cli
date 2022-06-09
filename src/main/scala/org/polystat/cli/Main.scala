@@ -69,24 +69,25 @@ object Main extends IOApp:
             lang,
             AnalyzerConfig(inex, input, tmp, fmts, out),
           ) =>
-        val processedConfig = ProcessedConfig(
-          filteredAnalyzers = filterAnalyzers(inex),
-          tempDir = tmp match
+        for
+          tempDir <- tmp match
             case Some(path) =>
               IO.println(s"Cleaning ${path.absolute}...") *> path.clean
             case None => Files[IO].createTempDirectory
-          ,
-          output = out,
-          input = input,
-          fmts = fmts,
-        )
-        val analysisResults: IO[Unit] =
-          lang match
-            case SupportedLanguage.EO => EO.analyze(processedConfig)
-            case SupportedLanguage.Java(j2eo, j2eoVersion) =>
-              Java.analyze(j2eoVersion, j2eo, processedConfig)
-            case SupportedLanguage.Python => Python.analyze(processedConfig)
-        analysisResults
+          processedConfig = ProcessedConfig(
+            filteredAnalyzers = filterAnalyzers(inex),
+            tempDir = tempDir,
+            output = out,
+            input = input,
+            fmts = fmts,
+          )
+          analysisResults: IO[Unit] =
+            lang match
+              case SupportedLanguage.EO => EO.analyze(processedConfig)
+              case SupportedLanguage.Java(j2eo, j2eoVersion) =>
+                Java.analyze(j2eoVersion, j2eo, processedConfig)
+              case SupportedLanguage.Python => Python.analyze(processedConfig)
+        yield ()
   end execute
 
 end Main
