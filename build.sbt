@@ -23,8 +23,23 @@ libraryDependencies ++= Seq(
   "org.polystat" % "far" % "0.2.0",
 )
 
+packageOptions := Seq(
+  sbt.Package.ManifestAttributes(
+    ("EO-Version", "https://github.com/nikololiahim/polystat-cli/issues/18")
+  )
+)
+
 assembly / assemblyJarName := "polystat.jar"
 assembly / mainClass := (Compile / mainClass).value
+assembly / assemblyMergeStrategy := {
+  case p if p.endsWith("versions/9/module-info.class") =>
+    MergeStrategy.first
+  case PathList(ps @ _*) if ps.last.endsWith("log4j.properties") =>
+    MergeStrategy.first
+  case x =>
+    val oldStrategy = (ThisBuild / assemblyMergeStrategy).value
+    oldStrategy(x)
+}
 
 enablePlugins(BuildInfoPlugin)
 buildInfoKeys := Seq(version)
