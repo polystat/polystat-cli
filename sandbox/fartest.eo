@@ -1,0 +1,8 @@
++package org.polystat.far
+
+[a b] > fartest
+  add. > @
+    a.div b
+    div.
+      b.div a
+      a
