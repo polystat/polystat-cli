@@ -96,6 +96,7 @@ object PolystatOpts:
   def version = Opts
     .flag(
       long = "version",
+      short = "v",
       help = "Display the version of Polystat CLI.",
     )
     .orFalse
