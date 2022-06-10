@@ -1,11 +1,15 @@
-## Polystat v0.1.8
+## Polystat v0.1.9
 
-This release added a [FaR](https://github.com/polystat/far) analyzer to Polystat CLI. In addition, the following problems were addressed:
+This release addressed the usability of the `--version` option, in particular:
 
-* Paths to files in `.sarif.json` files should be generated correctly now. 
-* Output and temporary directories that are specified are created if they don't exist. 
-* Analyzers names printed by `polystat list` and the ones used in `.sarif.json` files are now consistent (and shorter). They can also be changed easily if necessary. The analyzer names can be found by running:
-```
-java -jar polystat.jar list
-```
-* Using odin v0.4.3 (with better support for J2EO output). 
+* In addition to the version of the `polystat-cli` itself, `polystat --version` also prints the following:
+  * `j2eo` version (the one when no `--j2eoVersion` is specified)
+  * `py2eo` version
+  * `odin` version
+  * `far` version
+
+* The names of downloaded `j2eo` jars now include the version downloaded, e.g. `j2eo-v0.5.3.jar`.
+
+* The `--version` commandline option now has a shorter alternative `-v`, so that `polystat --version` and `polystat -v` are equivalent.
+
+Besides, the names of analyzers where changed according to needs of @APotyomkin. You may want to update the config files. See the updated names by typing `polystat list`.
