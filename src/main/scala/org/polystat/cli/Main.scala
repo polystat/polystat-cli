@@ -1,5 +1,6 @@
 package org.polystat.cli
 
+import cats.data.NonEmptyList
 import cats.effect.ExitCode
 import cats.effect.IO
 import cats.effect.IOApp
@@ -29,13 +30,35 @@ object Main extends IOApp:
       )
     yield exitCode
 
+  def warnMissingKeys(
+      givenKeys: List[String],
+      availableKeys: List[String],
+  ): IO[Unit] =
+    givenKeys.traverse_(rule =>
+      if availableKeys.contains(rule) then IO.unit
+      else
+        IO.println(
+          s"WARNING: The analyzer with the key '$rule' does not exist. " +
+            s"Run 'polystat list' to get the list of the available keys."
+        )
+    )
+
   def filterAnalyzers(
-      inex: Option[IncludeExclude]
-  ): List[EOAnalyzer] =
-    inex match
+      availableAnalyzers: List[EOAnalyzer],
+      inex: Option[IncludeExclude],
+  ): IO[List[EOAnalyzer]] =
+    val givenKeys = inex
+      .map {
+        case Include(list) => list.toList
+        case Exclude(list) => list.toList
+      }
+      .getOrElse(List())
+
+    for _ <- warnMissingKeys(givenKeys, availableAnalyzers.map(_.ruleId))
+    yield inex match
       case Some(Exclude(exclude)) =>
         analyzers.mapFilter { case a =>
-          Option.when(!exclude.contains_(a.ruleId))(a)
+          Option.unless(exclude.contains_(a.ruleId))(a)
         }
       case Some(Include(include)) =>
         analyzers.mapFilter { case a =>
@@ -66,8 +89,10 @@ object Main extends IOApp:
               IO.println(s"Cleaning ${path.absolute}...") *>
                 path.createDirIfDoesntExist.flatMap(_.clean)
             case None => Files[IO].createTempDirectory
+
+          filtered <- filterAnalyzers(EOAnalyzer.analyzers, inex)
           processedConfig = ProcessedConfig(
-            filteredAnalyzers = filterAnalyzers(inex),
+            filteredAnalyzers = filtered,
             tempDir = tempDir,
             output = out,
             input = input,
