@@ -47,8 +47,14 @@ buildInfoKeys := Seq(
   version,
   "farVersion" -> V.far,
   "j2eoVersion" -> V.j2eo,
-  "py2eoVersion" -> V.py2eo,
   "odinVersion" -> V.odin,
+  "py2eoVersion" -> V.py2eo,
+  "versionSummary" ->
+    s"""|far - ${V.far}
+        |j2eo - ${V.j2eo}
+        |odin - ${V.odin}
+        |py2eo - ${V.py2eo}
+        |""".stripMargin,
 )
 buildInfoPackage := "org.polystat.cli"
 

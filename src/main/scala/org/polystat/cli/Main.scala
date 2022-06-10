@@ -52,7 +52,7 @@ object Main extends IOApp:
             IO.println(a.ruleId)
           }
       case PolystatUsage.Misc(version, config) =>
-        if (version) then IO.println(BuildInfo.version)
+        if (version) then IO.println(BuildInfo.versionSummary)
         else
           readConfigFromFile(config.getOrElse(Path(".polystat.conf")))
             .flatMap(execute)
