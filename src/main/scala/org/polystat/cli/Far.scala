@@ -49,7 +49,6 @@ object Far:
       codeFileName.toString.splitAt(codeFileName.toString.indexOf("."))._1
     val pathToXml: JPath =
       (pathToTmpDir / codeFileName.replaceExt(".xml")).toNioPath
-    println(pathToXml)
 
     for
       // parse EO to XMIR
