@@ -22,19 +22,19 @@ object EOAnalyzer:
   val analyzers: List[EOAnalyzer] =
     // TODO: remove ruleIds from Odin analyzers
     List(
-      fromOdinAstAnalyzer("mutualrec")(
+      fromOdinAstAnalyzer("mutual-recursion")(
         EOOdinAnalyzer.advancedMutualRecursionAnalyzer
       ),
-      fromOdinAstAnalyzer("unjustified")(
+      fromOdinAstAnalyzer("unjustified-assumption")(
         EOOdinAnalyzer.unjustifiedAssumptionAnalyzer
       ),
-      fromOdinAstAnalyzer("liskov")(
+      fromOdinAstAnalyzer("liskov-principle")(
         EOOdinAnalyzer.liskovPrincipleViolationAnalyzer
       ),
-      fromOdinAstAnalyzer("direct_access")(
+      fromOdinAstAnalyzer("direct-state-access")(
         EOOdinAnalyzer.directStateAccessAnalyzer
       ),
-      farEOAnalyzer("division_by_zero"),
+      farEOAnalyzer("division-by-zero"),
     )
 
   def fromOdinAstAnalyzer(_ruleId: String)(a: ASTAnalyzer[IO]): EOAnalyzer =
