@@ -12,7 +12,7 @@ libraryDependencies ++= Seq(
   "org.typelevel" %% "cats-parse" % "0.3.7",
   "com.monovore" %% "decline-effect" % "2.2.0",
   "co.fs2" %% "fs2-io" % "3.2.7",
-  "org.polystat.odin" %% "analysis" % "0.4.2",
+  "org.polystat.odin" %% "analysis" % "0.4.3",
   "is.cir" %% "ciris" % "2.3.2",
   "lt.dvim.ciris-hocon" %% "ciris-hocon" % "1.0.1",
   "org.http4s" %% "http4s-ember-client" % "1.0.0-M32",

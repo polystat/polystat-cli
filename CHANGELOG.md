@@ -8,4 +8,4 @@ This release added a [FaR](https://github.com/polystat/far) analyzer to Polystat
 ```
 java -jar polystat.jar list
 ```
-* Using odin v0.4.2 (with better support for J2EO output). 
+* Using odin v0.4.3 (with better support for J2EO output). 
