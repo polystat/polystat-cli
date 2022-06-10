@@ -1,4 +1,5 @@
-import ReleaseTransformations.*
+import ReleaseTransformations._
+import Dependencies._
 
 ThisBuild / scalaVersion := "3.1.2"
 ThisBuild / versionScheme := Some("semver-spec")
@@ -9,18 +10,18 @@ excludeDependencies ++= Seq(
 )
 
 libraryDependencies ++= Seq(
-  "org.typelevel" %% "cats-parse" % "0.3.7",
-  "com.monovore" %% "decline-effect" % "2.2.0",
   "co.fs2" %% "fs2-io" % "3.2.7",
-  "org.polystat.odin" %% "analysis" % "0.4.3",
+  "com.monovore" %% "decline-effect" % "2.2.0",
+  "io.circe" %% "circe-core" % "0.14.1",
   "is.cir" %% "ciris" % "2.3.2",
   "lt.dvim.ciris-hocon" %% "ciris-hocon" % "1.0.1",
   "org.http4s" %% "http4s-ember-client" % "1.0.0-M32",
+  "org.polystat.odin" %% "analysis" % V.odin,
+  "org.polystat.py2eo" % "transpiler" % V.py2eo,
+  "org.polystat" % "far" % V.far,
   "org.scalameta" %% "munit" % "1.0.0-M3" % Test,
-  "io.circe" %% "circe-core" % "0.14.1",
-  "org.polystat.py2eo" % "transpiler" % "0.0.10",
   "org.slf4j" % "slf4j-nop" % "1.7.36",
-  "org.polystat" % "far" % "0.2.0",
+  "org.typelevel" %% "cats-parse" % "0.3.7",
 )
 
 packageOptions := Seq(
@@ -42,7 +43,13 @@ assembly / assemblyMergeStrategy := {
 }
 
 enablePlugins(BuildInfoPlugin)
-buildInfoKeys := Seq(version)
+buildInfoKeys := Seq(
+  version,
+  "farVersion" -> V.far,
+  "j2eoVersion" -> V.j2eo,
+  "py2eoVersion" -> V.py2eo,
+  "odinVersion" -> V.odin,
+)
 buildInfoPackage := "org.polystat.cli"
 
 Global / excludeLintKeys += nativeImageVersion
