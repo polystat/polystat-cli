@@ -7,7 +7,7 @@ project/project/
 .metals/
 tmp/
 polystat_out/
-j2eo.jar
+j2eo*.jar
 sarif/**
 polystat-x86_64-pc-linux
 out/

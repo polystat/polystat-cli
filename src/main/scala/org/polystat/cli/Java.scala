@@ -16,23 +16,26 @@ import org.http4s.implicits.*
 import sys.process.*
 import PolystatConfig.*
 import InputUtils.*
+import org.polystat.cli.BuildInfo
 
 object Java:
 
-  private val DEFAULT_J2EO_PATH = Path("j2eo.jar")
-  val DEFAULT_J2EO_VERSION = "0.5.0"
-  private def j2eoUrl(j2eoVesion: String) =
+  private def j2eoPath(using j2eoVersion: String) = Path(
+    s"j2eo-v$j2eoVersion.jar"
+  )
+  val DEFAULT_J2EO_VERSION = BuildInfo.j2eoVersion
+  private def j2eoUrl(using j2eoVesion: String) =
     s"https://search.maven.org/remotecontent?filepath=org/polystat/j2eo/$j2eoVesion/j2eo-$j2eoVesion.jar"
 
-  private def defaultJ2EO(j2eoVesion: String): IO[Path] =
+  private def defaultJ2EO(using j2eoVesion: String): IO[Path] =
     Files[IO]
-      .exists(DEFAULT_J2EO_PATH)
+      .exists(j2eoPath)
       .ifM(
-        ifTrue = IO.pure(DEFAULT_J2EO_PATH),
-        ifFalse = downloadJ2EO(j2eoVesion),
+        ifTrue = IO.pure(j2eoPath),
+        ifFalse = downloadJ2EO,
       )
 
-  private def downloadJ2EO(j2eoVesion: String): IO[Path] =
+  private def downloadJ2EO(using j2eoVesion: String): IO[Path] =
     EmberClientBuilder
       .default[IO]
       .build
@@ -42,20 +45,20 @@ object Java:
           .run(
             Request[IO](
               GET,
-              uri = Uri.unsafeFromString(j2eoUrl(j2eoVesion)),
+              uri = Uri.unsafeFromString(j2eoUrl),
             )
           )
           .use(resp =>
             IO.println(
-              "j2eo.jar was not found in the current working directory. Downloading..."
+              s"$j2eoPath was not found in the current working directory. Downloading..."
             ) *>
               resp.body
-                .through(Files[IO].writeAll(DEFAULT_J2EO_PATH))
+                .through(Files[IO].writeAll(j2eoPath))
                 .compile
                 .drain
           )
       }
-      .as(DEFAULT_J2EO_PATH)
+      .as(j2eoPath)
   end downloadJ2EO
 
   private def runJ2EO(
@@ -64,12 +67,15 @@ object Java:
       inputDir: Path,
       outputDir: Path,
   ): IO[Unit] =
+    given inferredJ2eoVersion: String =
+      j2eoVersion.getOrElse(DEFAULT_J2EO_VERSION)
+    val inferredJ2eoPath = j2eo.getOrElse(j2eoPath)
     val command =
-      s"java -jar ${j2eo.getOrElse(DEFAULT_J2EO_PATH)} -o $outputDir $inputDir"
+      s"java -jar ${inferredJ2eoPath} -o $outputDir $inputDir"
     for
       j2eo <- j2eo
         .map(IO.pure)
-        .getOrElse(defaultJ2EO(j2eoVersion.getOrElse(DEFAULT_J2EO_VERSION)))
+        .getOrElse(defaultJ2EO)
       _ <- Files[IO]
         .exists(j2eo)
         .ifM(
