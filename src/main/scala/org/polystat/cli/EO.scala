@@ -16,33 +16,21 @@ import org.polystat.odin.analysis.EOOdinAnalyzer.OdinAnalysisResult
 
 object EO:
 
-  def runAnalyzers(
-      analyzers: List[ASTAnalyzer[IO]]
-  )(code: String): IO[List[EOOdinAnalyzer.OdinAnalysisResult]] =
-    analyzers.traverse(analyzer =>
-      EOOdinAnalyzer
-        .analyzeSourceCode(analyzer)(code)(
-          cats.Monad[IO],
-          sourceCodeEoParser[IO](),
-        )
-        .handleError(e =>
-          EOOdinAnalyzer.OdinAnalysisResult.AnalyzerFailure(analyzer.name, e)
-        )
-    )
-
   def analyze(cfg: ProcessedConfig): IO[Unit] =
-    val inputFiles = readCodeFromInput(".eo", cfg.input)
-    val analyzed = inputFiles
-      .evalMap { case (codePath, code) =>
+    def runAnalyzers(inputFiles: Vector[(Path, String)]) = inputFiles
+      .traverse { case (codePath, code) =>
         for
           _ <- IO.println(s"Analyzing $codePath...")
-          analyzed <- runAnalyzers(cfg.filteredAnalyzers)(code)
+          analyzed <- cfg.filteredAnalyzers.traverse(a =>
+            a.analyze(cfg.tempDir)(codePath)(code)
+              .handleError(e => OdinAnalysisResult.AnalyzerFailure(a.ruleId, e))
+          )
         yield (codePath, analyzed)
       }
-      .compile
-      .toVector
 
-    def writeToDirs(analyzed: Vector[(Path, List[OdinAnalysisResult])]) =
+    def writeToDirs(
+        analyzed: Vector[(Path, List[OdinAnalysisResult])]
+    ): IO[Unit] =
       analyzed.traverse_ { case (codePath, results) =>
         for
           _ <- if cfg.output.console then IO.println(analyzed) else IO.unit
@@ -74,12 +62,22 @@ object EO:
         }
       }
 
+    def pathToDisplay(relPath: Path) = cfg.input match
+      case Input.FromDirectory(dir) => dir / relPath
+      // TODO: account for other cases
+      // This should be the same pass that is created when running readCodeFromX
+      case _ => relPath
+
     for
-      analyzed <- analyzed
+      inputFiles <- readCodeFromInput(".eo", cfg.input).compile.toVector
+        .map(_.map { case (path, results) =>
+          (pathToDisplay(path), results)
+        })
+      analyzed <- runAnalyzers(inputFiles)
       _ <- cfg.output.dirs.traverse_ { outDir =>
         for
           _ <- IO.println(s"Cleaning $outDir before writing...")
-          _ <- outDir.clean
+          _ <- outDir.createDirIfDoesntExist.flatMap(_.clean)
         yield ()
       }
       _ <- writeToDirs(analyzed)

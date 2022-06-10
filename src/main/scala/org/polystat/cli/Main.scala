@@ -11,12 +11,12 @@ import fs2.io.file.Files
 import fs2.io.file.Path
 import fs2.text.utf8
 import org.polystat.odin.analysis.ASTAnalyzer
-import org.polystat.odin.analysis.EOOdinAnalyzer
 import org.polystat.odin.analysis.EOOdinAnalyzer.OdinAnalysisResult
 import org.polystat.odin.parser.EoParser.sourceCodeEoParser
 import org.polystat.py2eo.parser.PythonLexer
 import org.polystat.py2eo.transpiler.Transpile
 import org.polystat.cli.BuildInfo
+import org.polystat.cli.EOAnalyzer.analyzers
 
 import PolystatConfig.*
 import IncludeExclude.*
@@ -29,36 +29,27 @@ object Main extends IOApp:
       )
     yield exitCode
 
-  val analyzers: List[(String, ASTAnalyzer[IO])] =
-    // TODO: In Odin, change analyzer names to shorter ones.
-    List(
-      ("mutualrec", EOOdinAnalyzer.advancedMutualRecursionAnalyzer),
-      ("unjustified", EOOdinAnalyzer.unjustifiedAssumptionAnalyzer),
-      ("liskov", EOOdinAnalyzer.liskovPrincipleViolationAnalyzer),
-      ("directAccess", EOOdinAnalyzer.directStateAccessAnalyzer),
-    )
-
   def filterAnalyzers(
       inex: Option[IncludeExclude]
-  ): List[ASTAnalyzer[IO]] =
+  ): List[EOAnalyzer] =
     inex match
       case Some(Exclude(exclude)) =>
-        analyzers.mapFilter { case (id, a) =>
-          Option.when(!exclude.contains_(id))(a)
+        analyzers.mapFilter { case a =>
+          Option.when(!exclude.contains_(a.ruleId))(a)
         }
       case Some(Include(include)) =>
-        analyzers.mapFilter { case (id, a) =>
-          Option.when(include.contains_(id))(a)
+        analyzers.mapFilter { case a =>
+          Option.when(include.contains_(a.ruleId))(a)
         }
-      case None => analyzers.map(_._2)
+      case None => analyzers
 
   def execute(usage: PolystatUsage): IO[Unit] =
     usage match
       case PolystatUsage.List(cfg) =>
         if cfg then IO.println(HoconConfig.keys.explanation)
         else
-          analyzers.traverse_ { case (name, _) =>
-            IO.println(name)
+          analyzers.traverse_ { case a =>
+            IO.println(a.ruleId)
           }
       case PolystatUsage.Misc(version, config) =>
         if (version) then IO.println(BuildInfo.version)
@@ -69,24 +60,26 @@ object Main extends IOApp:
             lang,
             AnalyzerConfig(inex, input, tmp, fmts, out),
           ) =>
-        val processedConfig = ProcessedConfig(
-          filteredAnalyzers = filterAnalyzers(inex),
-          tempDir = tmp match
+        for
+          tempDir <- tmp match
             case Some(path) =>
-              IO.println(s"Cleaning ${path.absolute}...") *> path.clean
+              IO.println(s"Cleaning ${path.absolute}...") *>
+                path.createDirIfDoesntExist.flatMap(_.clean)
             case None => Files[IO].createTempDirectory
-          ,
-          output = out,
-          input = input,
-          fmts = fmts,
-        )
-        val analysisResults: IO[Unit] =
-          lang match
-            case SupportedLanguage.EO => EO.analyze(processedConfig)
-            case SupportedLanguage.Java(j2eo, j2eoVersion) =>
-              Java.analyze(j2eoVersion, j2eo, processedConfig)
-            case SupportedLanguage.Python => Python.analyze(processedConfig)
-        analysisResults
+          processedConfig = ProcessedConfig(
+            filteredAnalyzers = filterAnalyzers(inex),
+            tempDir = tempDir,
+            output = out,
+            input = input,
+            fmts = fmts,
+          )
+          analysisResults <-
+            lang match
+              case SupportedLanguage.EO => EO.analyze(processedConfig)
+              case SupportedLanguage.Java(j2eo, j2eoVersion) =>
+                Java.analyze(j2eoVersion, j2eo, processedConfig)
+              case SupportedLanguage.Python => Python.analyze(processedConfig)
+        yield ()
   end execute
 
 end Main

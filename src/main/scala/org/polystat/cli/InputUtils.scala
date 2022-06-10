@@ -13,6 +13,14 @@ import PolystatConfig.{Input, PolystatUsage}
 
 object InputUtils:
   extension (path: Path)
+
+    def createDirIfDoesntExist: IO[Path] =
+      Files[IO]
+        .exists(path)
+        .ifM(
+          ifTrue = IO.pure(path),
+          ifFalse = Files[IO].createDirectories(path).as(path),
+        )
     def replaceExt(newExt: String): Path =
       Path(
         path.toString

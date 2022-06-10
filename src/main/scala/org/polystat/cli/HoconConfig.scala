@@ -20,74 +20,83 @@ import PolystatConfig.*
 import SupportedLanguage.*
 import IncludeExclude.*
 import InputUtils.toInput
+import com.typesafe.config.Config
 
 case class HoconConfig(path: Path):
 
   import HoconConfig.{given, *}
 
-  private object hocon:
-    private val config =
-      IO.blocking(ConfigFactory.parseFile(path.toNioPath.toFile))
-    def apply(s: String): ConfigValue[IO, HoconConfigValue] =
-      ConfigValue.eval(config.map(c => hoconAt(c)(keys.toplevel)(s)))
-  end hocon
-
-  private val lang = hocon(keys.inputLanguage).as[SupportedLanguage]
-  private val j2eo = hocon(keys.j2eo).as[Path].option
-  private val input = hocon(keys.input).as[Path].option.evalMap {
-    case Some(path) => path.toInput
-    case None       => IO.pure(Input.FromStdin)
-  }
-  private val tmp = hocon(keys.tempDir).as[Path].option
-  private val outputsDirs =
-    hocon(keys.outputsDirs).as[List[Path]].default(List())
-  private val outputsFiles =
-    hocon(keys.outputsFiles).as[List[Path]].default(List())
-  private val outputsConsole =
-    hocon(keys.outputsConsole).as[Boolean].default(false)
-
-  private val outputs = (outputsDirs, outputsFiles, outputsConsole).parMapN {
-    case (dirs, files, console) =>
-      Output(dirs = dirs, files = files, console = console)
-  }
-
-  private val j2eoVersion = hocon(keys.j2eoVersion).as[String].option
-  private val outputFormats =
-    hocon(keys.outputFormats).as[List[OutputFormat]].default(List.empty)
-  private val inex: ConfigValue[IO, Option[IncludeExclude]] =
-    hocon(keys.includeRules)
-      .as[Include]
-      .widen[IncludeExclude]
-      .or(hocon(keys.excludeRules).as[Exclude].widen[IncludeExclude])
-      .option
+  def hocon(key: String)(using cfg: Config): ConfigValue[IO, HoconConfigValue] =
+    hoconAt(cfg)(keys.toplevel)(key)
 
   val config: ConfigValue[IO, PolystatUsage.Analyze] =
-    (j2eo, j2eoVersion, inex, input, tmp, outputs, outputFormats, lang)
-      .parMapN {
-        case (
-              j2eo,
-              j2eoVersion,
-              inex,
-              input,
-              tmp,
-              outputs,
-              outputFormats,
-              lang,
-            ) =>
-          PolystatUsage.Analyze(
-            language = lang match
-              case Java(_, _) => Java(j2eo, j2eoVersion)
-              case other      => other
-            ,
-            config = AnalyzerConfig(
-              inex = inex,
-              input = input,
-              tmp = tmp,
-              outputFormats = outputFormats,
-              output = outputs,
-            ),
-          )
-      }
+    val loadConfig: IO[Config] =
+      IO.blocking(ConfigFactory.parseFile(path.toNioPath.toFile))
+
+    val parseConfig: IO[ConfigValue[IO, PolystatUsage.Analyze]] =
+      loadConfig.map(parsed =>
+        given Config = parsed
+        val lang = hocon(keys.inputLanguage).as[SupportedLanguage]
+        val j2eo = hocon(keys.j2eo).as[Path].option
+        val input = hocon(keys.input).as[Path].option.evalMap {
+          case Some(path) => path.toInput
+          case None       => IO.pure(Input.FromStdin)
+        }
+        val tmp = hocon(keys.tempDir).as[Path].option
+        val outputsDirs =
+          hocon(keys.outputsDirs).as[List[Path]].default(List())
+        val outputsFiles =
+          hocon(keys.outputsFiles).as[List[Path]].default(List())
+        val outputsConsole =
+          hocon(keys.outputsConsole).as[Boolean].default(false)
+
+        val outputs = (outputsDirs, outputsFiles, outputsConsole).parMapN {
+          case (dirs, files, console) =>
+            Output(dirs = dirs, files = files, console = console)
+        }
+
+        val j2eoVersion = hocon(keys.j2eoVersion).as[String].option
+        val outputFormats =
+          hocon(keys.outputFormats).as[List[OutputFormat]].default(List.empty)
+        val inex: ConfigValue[IO, Option[IncludeExclude]] =
+          hocon(keys.includeRules)
+            .as[Include]
+            .widen[IncludeExclude]
+            .or(hocon(keys.excludeRules).as[Exclude].widen[IncludeExclude])
+            .option
+
+        (j2eo, j2eoVersion, inex, input, tmp, outputs, outputFormats, lang)
+          .parMapN {
+            case (
+                  j2eo,
+                  j2eoVersion,
+                  inex,
+                  input,
+                  tmp,
+                  outputs,
+                  outputFormats,
+                  lang,
+                ) =>
+              PolystatUsage.Analyze(
+                language = lang match
+                  case Java(_, _) => Java(j2eo, j2eoVersion)
+                  case other      => other
+                ,
+                config = AnalyzerConfig(
+                  inex = inex,
+                  input = input,
+                  tmp = tmp,
+                  outputFormats = outputFormats,
+                  output = outputs,
+                ),
+              )
+          }
+      )
+    end parseConfig
+
+    ConfigValue.eval(parseConfig)
+  end config
+
 end HoconConfig
 
 object HoconConfig:
