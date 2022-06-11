@@ -9,7 +9,9 @@ This repository provides an alternative implementation to [Polystat](https://git
     * A **directory** with the `.sarif.json` files, where each SARIF file corresponds to the file in the input directory. 
     * An **single file** where the outputs of the analyzers for all the analyzed files are aggregated in a single SARIF JSON object. 
 
-...and many minor quality-of-life improvements.
+...and many minor quality-of-life improvements. 
+
+⚠ WARNING ⚠: The tool is still in the early stages of development, so feature suggestions and bug reports are more than welcome!
 
 # Installation
 The CLI is distributed as a fat jar (can be downloaded from [Github Releases](https://github.com/polystat/polystat-cli/releases)), so you can run without any prerequisites other than the [JRE](https://ru.wikipedia.org/wiki/Java_Runtime_Environment). If you have it installed, you can run `polystat-cli` by just executing:
@@ -80,8 +82,8 @@ $ polystat eo --in tmp --sarif --to dir=polystat_out
 ```
 
 
-
 # <a name="full"></a> Full Usage Specification
+This section covers all the options available in the CLI interface and their meanings. 
 
 ## Notation
 The description follows [this guide](https://en.wikipedia.org/wiki/Command-line_interface#Command_description_syntax).
@@ -139,6 +141,31 @@ If it's not present in the current working directory, download one from Maven Ce
 * `--version` prints the version of the CLI tool, maybe with some additional information.
 * `--help` displays some informative help message for commands.
 * `--config <path>` allows to configure Polystat from the specified HOCON config file. If not specified, reads configs from the file `.polystat.conf` in the current working directory.
+
+# Configuration File
+This section covers all the keys that can be used in the HOCON configuration files. The most relevant version of the information presented in this section can be printed to console by running:
+```
+$ polystat list --config
+```
+The example of the working config file can be found [here](.polystat.conf).
+
+* `polystat.lang` - the type of input files which will be analyzed. This key must be present. Possible values:
+    * "java" - only ".java" files will be analyzed.
+    * "eo" - only ".eo" files will be analyzed.
+    * "python" - only ".py" files will be analyzed.
+* `polystat.j2eoVersion` - specifies the version of J2EO to download.
+* `polystat.j2eo` - specifies the path to the J2EO executable. If not specified, defaults to looking for j2eo.jar in the current working directory. If it's not found, downloads it from maven central. The download only happens when this key is NOT provided. 
+* `polystat.input` - specifies how the files are supplied to the analyzer. Can be either a path to a directory, path to a file, or absent. If absent, the code is read from standard input.
+* `polystat.tempDir` - the path to a directory where temporary analysis file will be stored. If not specified, defaults to an OS-generated temporary directory.
+* `polystat.outputTo` - the path to a directory where the results of the analysis are stored. If not specified, the results will be printed to console.
+* `polystat.outputFormats` - the formats for which output is generated. If it's an empty list or not specified, no output files are produced.
+* `polystat.includeRules` | `polystat.excludeRules` - specified which rules should be included in / excluded from the analysis. If both are specified, polystat.includeRules takes precedence. The list of available rule specifiers can be found by running:
+    ```
+    $ polystat.jar list
+    ```
+* `polystat.outputs.console` - specifies if the analysis results should be output to console. `false` by default.
+* `polystat.outputs.dirs` - a list of directories to write files to.
+* `polystat.outputs.files` - a list of files to write aggregated output to. 
 
 # Development
 ## Setup
