@@ -5,6 +5,19 @@ ThisBuild / scalaVersion := "3.1.2"
 ThisBuild / versionScheme := Some("semver-spec")
 ThisBuild / releaseVersionBump := sbtrelease.Version.Bump.Next
 
+homepage := Some(url("https://github.com/polystat/polystat-cli"))
+organizationName := "Polystat"
+organization := "org.polystat"
+organizationHomepage := Some(url("https://www.polystat.org/)"))
+developers := List(
+  Developer(
+    id = "nikololiahim",
+    name = "Mikhail Olokin",
+    email = "olomishcak@outlook.com",
+    url = url("https://github.com/nikololiahim"),
+  )
+)
+
 excludeDependencies ++= Seq(
   "org.scalatest" % "scalatest_2.13"
 )
@@ -26,7 +39,7 @@ libraryDependencies ++= Seq(
 
 packageOptions := Seq(
   sbt.Package.ManifestAttributes(
-    ("EO-Version", "https://github.com/nikololiahim/polystat-cli/issues/18")
+    ("EO-Version", "https://github.com/polystat/polystat-cli/issues/18")
   )
 )
 
@@ -45,6 +58,7 @@ assembly / assemblyMergeStrategy := {
 enablePlugins(BuildInfoPlugin)
 buildInfoKeys := Seq(
   version,
+  organizationHomepage,
   "farVersion" -> V.far,
   "j2eoVersion" -> V.j2eo,
   "odinVersion" -> V.odin,
