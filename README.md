@@ -1,3 +1,10 @@
+![logo](https://camo.githubusercontent.com/249d7357b20b54fb522bb75c82902fb6ae47d894c36015aba2c7b7f23a39b65d/68747470733a2f2f7777772e706f6c79737461742e6f72672f6c6f676f2e737667)
+
+[![Continuous Integration](https://github.com/polystat/polystat-cli/actions/workflows/ci.yml/badge.svg)](https://github.com/polystat/polystat-cli/actions/workflows/ci.yml)
+
+![GitHub release (latest by date)](https://img.shields.io/github/v/release/polystat/polystat-cli)
+![GitHub Release Date](https://img.shields.io/github/release-date/polystat/polystat-cli)
+![GitHub all releases](https://img.shields.io/github/downloads/polystat/polystat-cli/total)
 # Polystat CLI
 This repository provides an alternative implementation to [Polystat](https://github.com/polystat/polystat). This tool's objective is to extend the functionality of the original implementation. These extensions include:
 * A precise [specification](#full) for the command-line interface. 
