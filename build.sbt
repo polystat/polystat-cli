@@ -6,6 +6,7 @@ ThisBuild / versionScheme := Some("semver-spec")
 ThisBuild / releaseVersionBump := sbtrelease.Version.Bump.Next
 
 homepage := Some(url("https://github.com/polystat/polystat-cli"))
+licenses := Seq(License.MIT)
 organizationName := "Polystat"
 organization := "org.polystat"
 organizationHomepage := Some(url("https://www.polystat.org/)"))
