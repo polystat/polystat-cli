@@ -2,6 +2,7 @@
 
 [![Continuous Integration](https://github.com/polystat/polystat-cli/actions/workflows/ci.yml/badge.svg)](https://github.com/polystat/polystat-cli/actions/workflows/ci.yml)
 
+![GitHub](https://img.shields.io/github/license/polystat/polystat-cli)
 ![GitHub release (latest by date)](https://img.shields.io/github/v/release/polystat/polystat-cli)
 ![GitHub Release Date](https://img.shields.io/github/release-date/polystat/polystat-cli)
 ![GitHub all releases](https://img.shields.io/github/downloads/polystat/polystat-cli/total)
