@@ -1,56 +1,84 @@
 # Polystat CLI
-This repository provides an alternative implementation to [Polystat](https://github.com/polystat/polystat).
+This repository provides an alternative implementation to [Polystat](https://github.com/polystat/polystat). This tool's objective is to extend the functionality of the original implementation. These extensions include:
+* A precise [specification](#full) for the command-line interface. 
+* A configuration file that is not tied to the command-line interface.  
+* A setup-free and customizable integration with the existing source-to-EO translators (specifically [j2eo](https://github.com/polystat/j2eo) and [py2eo](https://github.com/polystat/py2eo)). The following features are implemented for the `j2eo` translator:
+    * Automatic downloading of the specified version from Maven Central
+    * If you have `j2eo` installed locally, you can provide a path to it via a configuration option.
+* The [SARIF](https://docs.oasis-open.org/sarif/sarif/v2.1.0/os/sarif-v2.1.0-os.html) output of the analyzers can be produced in the following two forms:
+    * A **directory** with the `.sarif.json` files, where each SARIF file corresponds to the file in the input directory. 
+    * An **single file** where the outputs of the analyzers for all the analyzed files are aggregated in a single SARIF JSON object. 
+
+...and many minor quality-of-life improvements.
 
 # Installation
-The CLI is distributed as a fat jar, so that you can run without any prerequisites other than the JRE. To run it, just execute:
+The CLI is distributed as a fat jar (can be downloaded from [Github Releases](https://github.com/polystat/polystat-cli/releases)), so you can run without any prerequisites other than the [JRE](https://ru.wikipedia.org/wiki/Java_Runtime_Environment). If you have it installed, you can run `polystat-cli` by just executing:
 ```
-java -jar polystat.jar <args>
+$ java -jar polystat.jar <args>
 ```
-It may be helpful to define an alias (the following works in Unix/MacOs):
+It may be helpful to define an alias (the following works in most Linux and macos):
 ```
-alias polystat="java -jar /path/to/polystat.jar"
+$ alias polystat="java -jar /path/to/polystat.jar"
 ```
 And then simply run it like:
 ```
-polystat <args>
+$ polystat <args>
 ```
 More about the arguments you can pass can be found [here](#basic) and [here](#full).
 
 
 # <a name="basic"></a> Basic usage
 
-> `polystat`
-
-If no arguments are provided to `polystat`, it will read the configuration from the [HOCON](https://github.com/lightbend/config/blob/main/HOCON.md) config file in the current working directory. The default name for this file is `.polystat.conf` in the current working directory. If you want to read the configuration from the file located elsewhere, the following command can be used:
+* If no arguments are provided to `polystat`, it will read the configuration from the [HOCON](https://github.com/lightbend/config/blob/main/HOCON.md) config file in the current working directory. The default name for this file is `.polystat.conf` in the current working directory.
 
 ```
-polystat --config path/to/hocon/config.conf
+$ polystat
 ```
 
-> `polystat list -c` 
+* If you want to read the configuration from the file located elsewhere, the following command can be used:
 
-Prints all the available config keys.  
-> `polystat list`
-
-Prints the rule IDs for all the available analyzers. By default, all of them are enabled, however you can exclude some / include only the ones you want using the following commands:
-
-> `polystat eo --in tmp --exclude mutualrec --sarif`
-
-All the rules BUT the `mutualrec` will be executed.
+```
+$ polystat --config path/to/hocon/config.conf
+```
 
 
-> `polystat eo --in tmp --include mutualrec --include liskov --sarif`
+* Print all the available configuration keys that can be used in the config file.  
 
-Only `mutualrec` and `liskov` rules will be executed. 
+```
+$ polystat list -c
+``` 
+
+* Print the rule IDs for all the available analyzers. 
+
+```
+$ polystat list
+```
+
+* Don't execute some rules during the analysis. This option is repeatable, so you can add any number of `--exclude rule` arguments to exclude all the specified rules. In the example below all the rules **but** `mutualrec` and `long` will be executed.
+```
+$ polystat eo --in tmp --exclude mutualrec --exclude long --sarif
+```
+
+* Execute _only_ the given rules during the analysis. This option is also repeatable. 
+In the example below **only** `mutualrec` and `liskov` rules will be executed. 
+
+```
+$ polystat eo --in tmp --include mutualrec --include liskov --sarif
+```
+
+* Get the plain text console output from analyzing Java files located in the directory `src/main/java`. 
+
+```
+$ polystat java --in src/main/java --console
+```
+
+* Write the SARIF JSON files to `polystat_out/sarif` from analysing the `tmp` directory with `.eo` files.
 
 
-> `polystat java --in src/main/java --console`
+```
+$ polystat eo --in tmp --sarif --to dir=polystat_out
+```
 
-Get the plain text console output from analyzing Java files. The Java files are in the directory `src/main/java`. 
-
-> `polystat eo --in tmp --sarif --to dir=polystat_out`
-
-Write the [SARIF](https://docs.oasis-open.org/sarif/sarif/v2.1.0/sarif-v2.1.0.html) JSON files to `polystat_out/sarif` from analysing the `tmp` directory with `.eo` files.
 
 
 # <a name="full"></a> Full Usage Specification
@@ -85,7 +113,7 @@ polystat list [--config | -c]
 * The temporary files produced by analyzers are to be stored in `--tmp` directory.  If `--tmp` is not specified, temporary files will be stored in the OS-created tempdir. Each target language may have a different structure of the files in the temporary directory. It is assumed that the `path` supplied by `--tmp` points to an empty directory. If not, the contents of the `path` will be purged. If the `--tmp` option is specified but the directory it points to does not exist, it will be created. 
 
 ## Configuration options
-* `--include` and `--exclude` respectively define which rules should be included/excluded from the analysis run. These options are mutually exclusive, so specifying both should not be valid. If neither option is specified, all the available analyzers will be run. The list of available rule specifiers can be found via `polystat list` command.
+* <a name="inex"></a>`--include` and `--exclude` respectively define which rules should be included/excluded from the analysis run. These options are mutually exclusive, so specifying both should not be valid. If neither option is specified, all the available analyzers will be run. The list of available rule specifiers can be found via `polystat list` command.
 * `--j2eo` option allows users to specify the path to the j2eo executable jar. If it's not specified, it looks for one in the current working diretory. 
 If it's not present in the current working directory, download one from Maven Central (for now, the version is hardcoded to be 0.4.0).
 * `--j2eo-version` option allows users to specify which version of `j2eo` should be downloaded.
@@ -115,24 +143,28 @@ If it's not present in the current working directory, download one from Maven Ce
 # Development
 ## Setup
 This is an sbt Scala project. In order to build the project you need the following:
-  * JDK 8+
-  * sbt 1.6.2
+  * [JDK](https://ru.wikipedia.org/wiki/Java_Development_Kit) 8+
+  * [sbt](https://www.scala-sbt.org/) 1.6.2
 
 Both can be easily fetched via [coursier](https://get-coursier.io/docs/overview). 
 
 ## Running the CLI
-> `sbt run`
+```
+$ sbt run
+```
 
 It's best to run this command in the interactive mode, because you can specify the cmdline args there.
 However, for better turnaround time, it's better to tailor the `.polystat.conf` in the repository root for your needs and just run `run`.
 If you want to change the command-line arguments, edit the `.polystat.conf` in the repository root.
 
 ## Generating the fat JAR
-> `sbt assembly`
+```
+$ sbt assembly
+```
 
-The jar can be then found at `target/scala-3.1.2/polystat.jar`.
+The generated jar can be then found at `target/scala-3.1.2/polystat.jar`.
 
 ## Running the tests
-> `sbt test`
-
-
+```
+$ sbt test
+```
