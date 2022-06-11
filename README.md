@@ -1,7 +1,23 @@
 # Polystat CLI
 This repository provides an alternative implementation to [Polystat](https://github.com/polystat/polystat).
 
-# Basic usage
+# Installation
+The CLI is distributed as a fat jar, so that you can run without any prerequisites other than the JRE. To run it, just execute:
+```
+java -jar polystat.jar <args>
+```
+It may be helpful to define an alias (the following works in Unix/MacOs):
+```
+alias polystat="java -jar /path/to/polystat.jar"
+```
+And then simply run it like:
+```
+polystat <args>
+```
+More about the arguments you can pass can be found [here](#basic) and [here](#full).
+
+
+# <a name="basic"></a> Basic usage
 
 > `polystat`
 
@@ -37,7 +53,7 @@ Get the plain text console output from analyzing Java files. The Java files are 
 Write the [SARIF](https://docs.oasis-open.org/sarif/sarif/v2.1.0/sarif-v2.1.0.html) JSON files to `polystat_out/sarif` from analysing the `tmp` directory with `.eo` files.
 
 
-# Full Usage Specification
+# <a name="full"></a> Full Usage Specification
 
 ## Notation
 The description follows [this guide](https://en.wikipedia.org/wiki/Command-line_interface#Command_description_syntax).
