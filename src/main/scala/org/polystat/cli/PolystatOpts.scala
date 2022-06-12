@@ -12,6 +12,7 @@ import fs2.io.file.Files
 import fs2.io.file.Path
 import org.polystat.cli.PolystatConfig.*
 import org.polystat.cli.util.InputUtils.toInput
+import org.polystat.cli.util.FileTypes.*
 
 import java.io.FileNotFoundException
 import java.nio.file.Path as JPath
@@ -46,8 +47,12 @@ object PolystatOpts:
     help = "Analyze Java files",
   ) {
     (analyzerConfig, j2eo, j2eoVersion).mapN((conf, j2eo, j2eoVesion) =>
-      conf.map(conf =>
-        PolystatUsage.Analyze(SupportedLanguage.Java(j2eo, j2eoVesion), conf)
+      conf.flatMap(conf =>
+        for j2eo <- j2eo.traverse(File.fromPathFailFast)
+        yield PolystatUsage.Analyze(
+          SupportedLanguage.Java(j2eo, j2eoVesion),
+          conf,
+        )
       )
     )
   }
@@ -111,9 +116,9 @@ object PolystatOpts:
 
   def misc: Opts[IO[PolystatUsage.Misc]] =
     (version, configPath).mapN { case (version, config) =>
-      PolystatUsage
+      for config <- config.traverse(File.fromPathFailFast)
+      yield PolystatUsage
         .Misc(version, config)
-        .pure[IO]
     }
 
   def tmp: Opts[Option[Path]] = Opts
@@ -185,28 +190,41 @@ object PolystatOpts:
     def defaultMetavar: String = "console | dir=<path> | file=<path>"
   end given
 
-  def files: Opts[Output] = Opts
+  def files: Opts[IO[Output]] = Opts
     .options[OutputArg](
       long = "to",
       help = "Create output files in the specified path",
     )
     .orEmpty
     .map(args =>
-      val initialState = Output(dirs = List(), files = List(), console = false)
-      args.foldLeft(initialState) {
-        case (acc, OutputArg.File(path)) =>
-          acc.copy(files = acc.files.prepended(path))
-        case (acc, OutputArg.Directory(path)) =>
-          acc.copy(dirs = acc.dirs.prepended(path))
-        case (acc, OutputArg.Console) =>
-          if acc.console then acc else acc.copy(console = true)
+      val initialState =
+        IO.pure(Output(dirs = List(), files = List(), console = false))
+      args.foldLeft(initialState) { case (acc, arg) =>
+        for
+          acc <- acc
+          newAcc <- arg match
+            case OutputArg.File(path) =>
+              File
+                .fromPathFailFast(path)
+                .map(file => acc.copy(files = acc.files.prepended(file)))
+            case OutputArg.Directory(path) =>
+              Directory
+                .fromPathFailFast(path)
+                .map(dir => acc.copy(dirs = acc.dirs.prepended(dir)))
+            case OutputArg.Console =>
+              IO.pure(if acc.console then acc else acc.copy(console = true))
+        yield newAcc
       }
     )
 
   def analyzerConfig: Opts[IO[AnalyzerConfig]] =
     (inex, in, tmp, outputFormats, files).mapN {
       case (inex, in, tmp, outputFormats, out) =>
-        in.map(in => AnalyzerConfig(inex, in, tmp, outputFormats, out))
+        for
+          in <- in
+          tmp <- tmp.traverse(Directory.fromPathFailFast)
+          out <- out
+        yield AnalyzerConfig(inex, in, tmp, outputFormats, out)
     }
 
 end PolystatOpts

@@ -10,63 +10,34 @@ import fs2.text.utf8
 import org.polystat.cli.HoconConfig
 import org.polystat.cli.PolystatConfig.Input
 import org.polystat.cli.PolystatConfig.PolystatUsage
+import FileTypes.*
 
 import java.io.FileNotFoundException
 object InputUtils:
 
   extension (path: Path)
-
-    def mount(to: Path, relativelyTo: Path): Path =
-      val relativePath =
-        relativelyTo.absolute.normalize.relativize(path.absolute.normalize)
-      to.normalize / relativePath
-
-    def filenameNoExt: String =
-      val fileName = path.fileName.toString
-      fileName.splitAt(fileName.indexOf("."))._1
-
-    def createDirIfDoesntExist: IO[Path] =
-      Files[IO]
-        .exists(path)
-        .ifM(
-          ifTrue = IO.pure(path),
-          ifFalse = Files[IO].createDirectories(path).as(path),
-        )
-
-    def replaceExt(newExt: String): Path =
-      Path(
-        path.toString
-          .splitAt(path.toString.lastIndexOf("."))
-          ._1 + newExt
-      )
-
-    def clean: IO[Path] =
-      for
-        _ <- Files[IO].deleteRecursively(path)
-        _ <- Files[IO].createDirectory(path)
-      yield path
-
     def toInput: IO[Input] =
-      Files[IO]
-        .isDirectory(path)
-        .ifM(
-          ifTrue = IO.pure(Input.FromDirectory(path)),
-          ifFalse = Files[IO]
-            .isFile(path.toNioPath)
-            .ifM(
-              ifTrue = IO.pure(Input.FromFile(path)),
-              ifFalse = IO.raiseError(
+      Directory.fromPath(path).flatMap {
+        case Some(dir) => IO.pure(Input.FromDirectory(dir))
+        case None =>
+          File.fromPath(path).flatMap {
+            case Some(file) => IO.pure(Input.FromFile(file))
+            case None =>
+              IO.raiseError(
                 new FileNotFoundException(
                   s"\"$path\" is neither a file, nor a directory!"
                 )
-              ),
-            ),
-        )
+              )
+          }
+      }
+
+    def unsafeToDirectory: Directory = Directory.fromPathUnsafe(path)
+    def unsafeToFile: File = File.fromPathUnsafe(path)
   end extension
 
-  def readCodeFromFile(ext: String, path: Path): Stream[IO, (Path, String)] =
+  def readCodeFromFile(ext: String, file: File): Stream[IO, (File, String)] =
     Stream
-      .emit(path)
+      .emit(file)
       .filter(_.extName.endsWith(ext))
       .flatMap(path =>
         Files[IO]
@@ -75,7 +46,7 @@ object InputUtils:
           .map(code => (path, code))
       )
 
-  def readCodeFromDir(ext: String, dir: Path): Stream[IO, (Path, String)] =
+  def readCodeFromDir(ext: String, dir: Directory): Stream[IO, (File, String)] =
     Files[IO]
       .walk(dir)
       .filter(_.extName.endsWith(ext))
@@ -83,21 +54,21 @@ object InputUtils:
         Files[IO]
           .readAll(path)
           .through(utf8.decode)
-          .map(code => (path, code))
+          .map(code => (path.unsafeToFile, code))
       )
 
   def readCodeFromStdin: Stream[IO, String] = stdinUtf8[IO](4096).bufferAll
 
-  def readCodeFromInput(ext: String, input: Input): Stream[IO, (Path, String)] =
+  def readCodeFromInput(ext: String, input: Input): Stream[IO, (File, String)] =
     input match
       case Input.FromFile(path) =>
-        readCodeFromFile(ext = ext, path = path)
+        readCodeFromFile(ext = ext, file = path)
       case Input.FromDirectory(path) =>
         readCodeFromDir(ext = ext, dir = path)
       case Input.FromStdin =>
-        readCodeFromStdin.map(code => (Path("stdin" + ext), "\n" + code + "\n"))
+        readCodeFromStdin.map(code => (Path("stdin" + ext).unsafeToFile, "\n" + code + "\n"))
 
-  def readConfigFromFile(path: Path): IO[PolystatUsage.Analyze] =
+  def readConfigFromFile(path: File): IO[PolystatUsage.Analyze] =
     HoconConfig(path).config.load
 
   def writeOutputTo(path: Path)(output: String): IO[Unit] =

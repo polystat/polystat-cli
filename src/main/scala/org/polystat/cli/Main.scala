@@ -19,9 +19,11 @@ import org.polystat.odin.analysis.EOOdinAnalyzer.OdinAnalysisResult
 import org.polystat.odin.parser.EoParser.sourceCodeEoParser
 import org.polystat.py2eo.parser.PythonLexer
 import org.polystat.py2eo.transpiler.Transpile
+import org.polystat.cli.util.FileTypes.*
 
 import PolystatConfig.*
 import IncludeExclude.*
+
 object Main extends IOApp:
   override def run(args: List[String]): IO[ExitCode] =
     for exitCode <- CommandIOApp.run(
@@ -68,8 +70,13 @@ object Main extends IOApp:
       case PolystatUsage.Misc(version, config) =>
         if (version) then IO.println(BuildInfo.versionSummary)
         else
-          readConfigFromFile(config.getOrElse(Path(".polystat.conf")))
-            .flatMap(execute)
+          for
+            configFile <- config match
+              case Some(file) => IO.pure(file)
+              case None       => File.fromPathFailFast(Path(".polystat.conf"))
+            config <- readConfigFromFile(configFile)
+            result <- execute(config)
+          yield result
       case PolystatUsage.Analyze(
             lang,
             AnalyzerConfig(inex, input, tmp, fmts, out),
@@ -79,7 +86,8 @@ object Main extends IOApp:
             case Some(path) =>
               IO.println(s"Cleaning ${path.absolute}...") *>
                 path.createDirIfDoesntExist.flatMap(_.clean)
-            case None => Files[IO].createTempDirectory
+            case None =>
+              Files[IO].createTempDirectory.flatMap(Directory.fromPathFailFast)
           parsedKeys = inex
             .map {
               case Include(list) => list.toList
