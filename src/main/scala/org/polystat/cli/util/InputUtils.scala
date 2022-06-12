@@ -1,4 +1,5 @@
-package org.polystat.cli
+package org.polystat.cli.util
+
 import cats.data.NonEmptyList
 import cats.effect.IO
 import fs2.Stream
@@ -6,13 +7,23 @@ import fs2.io.file.Files
 import fs2.io.file.Path
 import fs2.io.stdinUtf8
 import fs2.text.utf8
+import org.polystat.cli.HoconConfig
+import org.polystat.cli.PolystatConfig.Input
+import org.polystat.cli.PolystatConfig.PolystatUsage
 
 import java.io.FileNotFoundException
-
-import PolystatConfig.{Input, PolystatUsage}
-
 object InputUtils:
+
   extension (path: Path)
+
+    def mount(to: Path, relativelyTo: Path): Path =
+      val relativePath =
+        relativelyTo.absolute.normalize.relativize(path.absolute.normalize)
+      to.normalize / relativePath
+
+    def filenameNoExt: String =
+      val fileName = path.fileName.toString
+      fileName.splitAt(fileName.indexOf("."))._1
 
     def createDirIfDoesntExist: IO[Path] =
       Files[IO]
@@ -21,6 +32,7 @@ object InputUtils:
           ifTrue = IO.pure(path),
           ifFalse = Files[IO].createDirectories(path).as(path),
         )
+
     def replaceExt(newExt: String): Path =
       Path(
         path.toString
@@ -52,9 +64,6 @@ object InputUtils:
         )
   end extension
 
-  def relativePath(to: Path, path: Path): Path =
-    to.absolute.normalize.relativize(path.absolute.normalize)
-
   def readCodeFromFile(ext: String, path: Path): Stream[IO, (Path, String)] =
     Stream
       .emit(path)
@@ -74,7 +83,7 @@ object InputUtils:
         Files[IO]
           .readAll(path)
           .through(utf8.decode)
-          .map(code => (relativePath(to = dir, path = path), code))
+          .map(code => (path, code))
       )
 
   def readCodeFromStdin: Stream[IO, String] = stdinUtf8[IO](4096).bufferAll
