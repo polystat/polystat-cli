@@ -176,14 +176,13 @@ The example of the working config file can be found [here](.polystat.conf).
 * `polystat.outputs.files` - a list of files to write aggregated output to. 
 
 # Development
-## Setup
-This is an sbt Scala project. In order to build the project you need the following:
+Polystat CLI is an sbt Scala project. In order to build the project you need the following:
   * [JDK](https://ru.wikipedia.org/wiki/Java_Development_Kit) 8+
   * [sbt](https://www.scala-sbt.org/) 1.6.2
 
 Both can be easily fetched via [coursier](https://get-coursier.io/docs/overview). 
 
-## Running the CLI
+Running the CLI:
 ```
 $ sbt run
 ```
@@ -192,14 +191,14 @@ It's best to run this command in the interactive mode, because you can specify t
 However, for better turnaround time, it's better to tailor the `.polystat.conf` in the repository root for your needs and just run `run`.
 If you want to change the command-line arguments, edit the `.polystat.conf` in the repository root.
 
-## Generating the fat JAR
+The following command can be used to generate the fat JAR file. 
 ```
 $ sbt assembly
 ```
 
-The generated jar can be then found at `target/scala-3.1.2/polystat.jar`.
+The generated `.jar` file can be then found at `target/scala-3.1.2/polystat.jar`.
 
-## Running the tests
+To run the tests use the relevant `sbt` task:
 ```
 $ sbt test
 ```
