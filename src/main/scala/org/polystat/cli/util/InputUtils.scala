@@ -66,7 +66,9 @@ object InputUtils:
       case Input.FromDirectory(path) =>
         readCodeFromDir(ext = ext, dir = path)
       case Input.FromStdin =>
-        readCodeFromStdin.map(code => (Path("stdin" + ext).unsafeToFile, "\n" + code + "\n"))
+        readCodeFromStdin.map(code =>
+          (Path("stdin" + ext).unsafeToFile, "\n" + code + "\n")
+        )
 
   def readConfigFromFile(path: File): IO[PolystatUsage.Analyze] =
     HoconConfig(path).config.load

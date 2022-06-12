@@ -56,7 +56,7 @@ class HoconConfigTests extends munit.FunSuite:
       label = "empty",
       cfg = """""".stripMargin,
       expected = None,
-    ),
+    )
   )
 
   private def runTestcases(tests: List[ConfigTestCase]) =
