@@ -23,7 +23,7 @@ object PolystatConfig:
   final case class ProcessedConfig(
       filteredAnalyzers: List[EOAnalyzer],
       tempDir: Directory,
-      input: Input,
+      input: Directory,
       fmts: List[OutputFormat],
       output: Output,
   )

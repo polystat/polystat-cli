@@ -81,6 +81,10 @@ object Main extends IOApp:
             lang,
             AnalyzerConfig(inex, input, tmp, fmts, out),
           ) =>
+        val ext = lang match
+          case SupportedLanguage.Java(_, _) => ".java"
+          case SupportedLanguage.Python     => ".py"
+          case SupportedLanguage.EO         => ".eo"
         for
           tempDir <- tmp match
             case Some(path) =>
@@ -96,6 +100,38 @@ object Main extends IOApp:
             .getOrElse(List())
 
           _ <- warnMissingKeys(parsedKeys, EOAnalyzer.analyzers.map(_.ruleId))
+          input <- input match
+            case Input.FromDirectory(dir) => dir.pure[IO]
+            case Input.FromFile(file) =>
+              for
+                singleFileCodeDir <-
+                  (tempDir / "singleFile").unsafeToDirectory.createDirIfDoesntExist
+                singleFileCodePath =
+                  (singleFileCodeDir / (file.filenameNoExt + ext)).unsafeToFile
+                singleFileCodeFile <-
+                  singleFileCodePath.unsafeToFile.createFileIfDoesntExist
+                _ <- readCodeFromFile(ext, file)
+                  .map(_._2)
+                  .through(fs2.text.utf8.encode)
+                  .through(Files[IO].writeAll(singleFileCodePath))
+                  .compile
+                  .drain
+              yield singleFileCodeDir
+            case Input.FromStdin =>
+              for
+                stdinCodeDir <-
+                  (tempDir / "stdin").unsafeToDirectory.createDirIfDoesntExist
+                stdinCodeFilePath =
+                  (stdinCodeDir / ("stdin" + ext)).unsafeToFile
+                stdinCodeFile <- stdinCodeFilePath.createFileIfDoesntExist
+                _ <-
+                  readCodeFromStdin
+                    .through(fs2.text.utf8.encode)
+                    .through(Files[IO].writeAll(stdinCodeFilePath))
+                    .compile
+                    .drain
+              yield stdinCodeDir
+
           processedConfig = ProcessedConfig(
             filteredAnalyzers = filterAnalyzers(inex),
             tempDir = tempDir,
