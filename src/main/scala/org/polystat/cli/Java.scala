@@ -12,11 +12,11 @@ import org.http4s.client.middleware.FollowRedirect
 import org.http4s.ember.client.EmberClientBuilder
 import org.http4s.ember.core.h2.*
 import org.http4s.implicits.*
+import org.polystat.cli.BuildInfo
+import org.polystat.cli.util.InputUtils.*
 
 import sys.process.*
 import PolystatConfig.*
-import InputUtils.*
-import org.polystat.cli.BuildInfo
 
 object Java:
 
@@ -95,6 +95,7 @@ object Java:
       cfg: ProcessedConfig,
   ): IO[Unit] =
     for
+      dirForEO <- (cfg.tempDir / "eo").createDirIfDoesntExist
       _ <- cfg.input match // writing EO files to tempDir
         case Input.FromStdin =>
           for
@@ -107,13 +108,13 @@ object Java:
               j2eoVersion,
               j2eo,
               inputDir = stdinTmp,
-              outputDir = cfg.tempDir,
+              outputDir = dirForEO,
             )
           yield ()
         case Input.FromFile(path) =>
-          runJ2EO(j2eoVersion, j2eo, inputDir = path, outputDir = cfg.tempDir)
+          runJ2EO(j2eoVersion, j2eo, inputDir = path, outputDir = dirForEO)
         case Input.FromDirectory(path) =>
-          runJ2EO(j2eoVersion, j2eo, inputDir = path, outputDir = cfg.tempDir)
+          runJ2EO(j2eoVersion, j2eo, inputDir = path, outputDir = dirForEO)
       // J2EO deletes the tmp directory when there are no files to analyze
       // This causes the subsequent call to EO.analyze to fail, because there is no temp directory.
       // The line below patches this issue by creating the temp directory if it was deleted by J2EO.
@@ -121,10 +122,10 @@ object Java:
         .exists(cfg.tempDir)
         .ifM(
           ifTrue = IO.unit,
-          ifFalse = Files[IO].createDirectory(cfg.tempDir),
+          ifFalse = Files[IO].createDirectories(dirForEO),
         )
       _ <- EO.analyze(
-        cfg.copy(input = Input.FromDirectory(cfg.tempDir))
+        cfg.copy(input = Input.FromDirectory(dirForEO))
       )
     yield ()
 

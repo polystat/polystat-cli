@@ -1,23 +1,24 @@
 package org.polystat.cli
 
-import cats.effect.Sync
 import cats.effect.IO
+import cats.effect.Sync
+import com.jcabi.xml.XML
+import com.jcabi.xml.XMLDocument
 import fs2.io.file.Path
 import higherkindness.droste.data.Fix
+import org.cactoos.Func
+import org.cactoos.io.InputOf
+import org.cactoos.io.OutputTo
+import org.eolang.parser.Spy
+import org.eolang.parser.Syntax
+import org.eolang.parser.Xsline
+import org.polystat.cli.util.InputUtils.*
 import org.polystat.far.FaR
 import org.polystat.odin.analysis.ASTAnalyzer
 import org.polystat.odin.analysis.EOOdinAnalyzer.OdinAnalysisResult
 import org.polystat.odin.core.ast.EOExpr
 import org.polystat.odin.core.ast.EOProg
-import org.eolang.parser.Syntax
-import org.eolang.parser.Xsline
-import org.eolang.parser.Spy
-import org.cactoos.io.OutputTo
-import org.cactoos.io.InputOf
-import org.cactoos.Func
-import com.jcabi.xml.XMLDocument
-import com.jcabi.xml.XML
-import org.polystat.cli.InputUtils.replaceExt
+
 import java.nio.file.Path as JPath
 import scala.jdk.CollectionConverters.*
 
@@ -41,16 +42,23 @@ object Far:
   ): IO[java.util.Collection[String]] =
     IO.delay(new FaR().errors(program(pathToXml), locator))
 
-  def analyze(ruleId: String)(pathToTmpDir: Path)(
-      pathToCode: Path
+  def analyze(
+      ruleId: String,
+      pathToSrcRoot: Path,
+      pathToTmpDir: Path,
+      pathToCode: Path,
   ): IO[OdinAnalysisResult] =
-    val codeFileName: Path = pathToCode.fileName
-    val codeFileNameNoExt: String =
-      codeFileName.toString.splitAt(codeFileName.toString.indexOf("."))._1
-    val pathToXml: JPath =
-      (pathToTmpDir / codeFileName.replaceExt(".xml")).toNioPath
+    val codeFileNameNoExt: String = pathToCode.filenameNoExt
+    val createPathToXml: IO[JPath] =
+      (pathToTmpDir / "xmir").createDirIfDoesntExist.map(tmp =>
+        pathToCode
+          .mount(to = tmp, relativelyTo = pathToSrcRoot)
+          .replaceExt(newExt = ".xml")
+          .toNioPath
+      )
 
     for
+      pathToXml <- createPathToXml
       // parse EO to XMIR
       _ <- IO.delay(
         new Syntax(

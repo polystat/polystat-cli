@@ -1,33 +1,43 @@
 package org.polystat.cli
 
 import cats.effect.IO
-import cats.syntax.foldable.*
-import cats.syntax.traverse.*
+import cats.syntax.all.*
+import fs2.io.file.Path
 import io.circe.syntax.*
+import org.polystat.cli.util.InputUtils.*
 import org.polystat.odin.analysis.ASTAnalyzer
 import org.polystat.odin.analysis.EOOdinAnalyzer
+import org.polystat.odin.analysis.EOOdinAnalyzer.OdinAnalysisResult
 import org.polystat.odin.parser.EoParser.sourceCodeEoParser
 import org.polystat.sarif.AggregatedSarifOutput
 import org.polystat.sarif.SarifOutput
-import fs2.io.file.Path
 
 import PolystatConfig.*
-import InputUtils.*
-import org.polystat.odin.analysis.EOOdinAnalyzer.OdinAnalysisResult
 
 object EO:
 
   def analyze(cfg: ProcessedConfig): IO[Unit] =
-    def runAnalyzers(inputFiles: Vector[(Path, String)]) = inputFiles
-      .traverse { case (codePath, code) =>
-        for
-          _ <- IO.println(s"Analyzing $codePath...")
-          analyzed <- cfg.filteredAnalyzers.traverse(a =>
-            a.analyze(cfg.tempDir)(codePath)(code)
-              .handleError(e => OdinAnalysisResult.AnalyzerFailure(a.ruleId, e))
-          )
-        yield (codePath, analyzed)
-      }
+    def runAnalyzers(
+        inputFiles: Vector[(Path, String)]
+    ): IO[Vector[(Path, List[OdinAnalysisResult])]] =
+      inputFiles
+        .traverse { case (codePath, code) =>
+          for
+            _ <- IO.println(s"Analyzing $codePath...")
+            analyzed <- cfg.filteredAnalyzers.traverse(a =>
+              a.analyze(
+                tmpDir = cfg.tempDir,
+                // TODO: make sure cfg input is always converted to directory
+                pathToSrcRoot =
+                  cfg.input.asInstanceOf[Input.FromDirectory].path,
+                pathToCode = codePath,
+                code = code,
+              ).handleError(e =>
+                OdinAnalysisResult.AnalyzerFailure(a.ruleId, e)
+              )
+            )
+          yield (codePath, analyzed)
+        }
 
     def writeToDirs(
         analyzed: Vector[(Path, List[OdinAnalysisResult])]
@@ -42,7 +52,13 @@ object EO:
             ).json.toString
             cfg.output.dirs.traverse_(out =>
               val outPath =
-                out / "sarif" / codePath.replaceExt(".sarif.json")
+                codePath
+                  .mount(
+                    to = out / "sarif",
+                    relativelyTo =
+                      cfg.input.asInstanceOf[Input.FromDirectory].path,
+                  )
+                  .replaceExt(newExt = ".sarif.json")
               for
                 _ <- IO.println(s"Writing results to $outPath...")
                 _ <- writeOutputTo(outPath)(sarifJson)
@@ -63,17 +79,8 @@ object EO:
         }
       }
 
-    def pathToDisplay(relPath: Path) = cfg.input match
-      case Input.FromDirectory(dir) => dir / relPath
-      // TODO: account for other cases
-      // This should be the same pass that is created when running readCodeFromX
-      case _ => relPath
-
     for
       inputFiles <- readCodeFromInput(".eo", cfg.input).compile.toVector
-        .map(_.map { case (path, results) =>
-          (pathToDisplay(path), results)
-        })
       analyzed <- runAnalyzers(inputFiles)
       _ <- cfg.output.dirs.traverse_ { outDir =>
         for
