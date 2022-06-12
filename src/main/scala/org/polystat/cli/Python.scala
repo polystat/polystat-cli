@@ -13,7 +13,7 @@ object Python:
   def analyze(cfg: ProcessedConfig): IO[Unit] =
     val dirForEO = (cfg.tempDir / "eo").unsafeToDirectory
     for
-      _ <- readCodeFromInput(".py", cfg.input)
+      _ <- readCodeFromDir(".py", cfg.input)
         .evalMap { case (path, code) =>
           for
             maybeCode <- IO(
@@ -22,8 +22,7 @@ object Python:
             pathToEOCode = path
               .mount(
                 to = dirForEO,
-                // TODO: remove asInstanceOf
-                relativelyTo = cfg.input.asInstanceOf[Input.FromDirectory].path,
+                relativelyTo = cfg.input,
               )
               .replaceExt(newExt = ".eo")
             _ <- maybeCode match
@@ -35,7 +34,7 @@ object Python:
         }
         .compile
         .drain
-      _ <- EO.analyze(cfg.copy(input = Input.FromDirectory(dirForEO)))
+      _ <- EO.analyze(cfg.copy(input = dirForEO))
     yield ()
 
 end Python

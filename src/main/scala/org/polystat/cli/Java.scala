@@ -92,25 +92,7 @@ object Java:
   ): IO[Unit] =
     for
       dirForEO <- (cfg.tempDir / "eo").unsafeToDirectory.createDirIfDoesntExist
-      _ <- cfg.input match // writing EO files to tempDir
-        case Input.FromStdin =>
-          for
-            code <- readCodeFromStdin.compile.string
-            stdinTmp <- Files[IO].createTempDirectory.map(path =>
-              (path / "stdin").unsafeToDirectory
-            )
-            _ <- writeOutputTo(stdinTmp)(code)
-            _ <- runJ2EO(
-              j2eoVersion,
-              j2eo,
-              input = stdinTmp,
-              outputDir = dirForEO,
-            )
-          yield ()
-        case Input.FromFile(path) =>
-          runJ2EO(j2eoVersion, j2eo, input = path, outputDir = dirForEO)
-        case Input.FromDirectory(path) =>
-          runJ2EO(j2eoVersion, j2eo, input = path, outputDir = dirForEO)
+      _ <- runJ2EO(j2eoVersion, j2eo, input = cfg.input, outputDir = dirForEO)
       // J2EO deletes the tmp directory when there are no files to analyze
       // This causes the subsequent call to EO.analyze to fail, because there is no temp directory.
       // The line below patches this issue by creating the temp directory if it was deleted by J2EO.
@@ -121,7 +103,7 @@ object Java:
           ifFalse = Files[IO].createDirectories(dirForEO),
         )
       _ <- EO.analyze(
-        cfg.copy(input = Input.FromDirectory(dirForEO))
+        cfg.copy(input = dirForEO)
       )
     yield ()
 

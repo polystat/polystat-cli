@@ -29,8 +29,7 @@ object EO:
               a.analyze(
                 tmpDir = cfg.tempDir,
                 // TODO: make sure cfg input is always converted to directory
-                pathToSrcRoot =
-                  cfg.input.asInstanceOf[Input.FromDirectory].path,
+                pathToSrcRoot = cfg.input,
                 pathToCode = codePath,
                 code = code,
               ).handleError(e =>
@@ -56,8 +55,7 @@ object EO:
                 codePath
                   .mount(
                     to = (out / "sarif").unsafeToDirectory,
-                    relativelyTo =
-                      cfg.input.asInstanceOf[Input.FromDirectory].path,
+                    relativelyTo = cfg.input,
                   )
                   .replaceExt(newExt = ".sarif.json")
               for
@@ -81,7 +79,7 @@ object EO:
       }
 
     for
-      inputFiles <- readCodeFromInput(".eo", cfg.input).compile.toVector
+      inputFiles <- readCodeFromDir(".eo", cfg.input).compile.toVector
       analyzed <- runAnalyzers(inputFiles)
       _ <- cfg.output.dirs.traverse_ { outDir =>
         for

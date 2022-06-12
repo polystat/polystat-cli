@@ -12,6 +12,7 @@ object FileTypes:
 
   given Conversion[Directory, Path] = _.underlying
   object Directory:
+
     def fromPath(path: Path): IO[Option[Directory]] =
       Files[IO]
         .isDirectory(path)
@@ -19,6 +20,7 @@ object FileTypes:
           ifTrue = IO.pure(Some(Directory(path))),
           ifFalse = IO.pure(None),
         )
+
     def fromPathFailFast(path: Path): IO[Directory] =
       fromPath(path).flatMap {
         case Some(dir) => IO.pure(dir)
@@ -55,17 +57,28 @@ object FileTypes:
           ifTrue = IO.pure(Some(File(path))),
           ifFalse = IO.pure(None),
         )
+
     def fromPathFailFast(path: Path): IO[File] =
       fromPath(path).flatMap {
         case Some(file) => IO.pure(file)
         case None =>
           IO.raiseError(new Exception(s"$path must be a regular file!"))
       }
+
     def fromPathUnsafe(path: Path): File = File(path)
+
   extension (file: File)
+    def createFileIfDoesntExist: IO[File] =
+      file.parent match
+        case Some(parent) =>
+          (Files[IO].createDirectories(parent) *> Files[IO].createFile(file))
+            .as(file)
+        case None => Files[IO].createFile(file).as(file)
+
     def filenameNoExt: String =
       val fileName = file.fileName.toString
       fileName.splitAt(fileName.indexOf("."))._1
+
     def replaceExt(newExt: String): File =
       File.fromPathUnsafe(
         Path(
@@ -74,6 +87,7 @@ object FileTypes:
             ._1 + newExt
         )
       )
+
     def mount(to: Directory, relativelyTo: Directory): File =
       val relativePath =
         relativelyTo.absolute.normalize.relativize(file.absolute.normalize)
