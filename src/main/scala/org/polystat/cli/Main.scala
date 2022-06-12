@@ -104,33 +104,32 @@ object Main extends IOApp:
             case Input.FromDirectory(dir) => dir.pure[IO]
             case Input.FromFile(file) =>
               for
-                singleFileCodeDir <-
+                singleFileTmpDir <-
                   (tempDir / "singleFile").unsafeToDirectory.createDirIfDoesntExist
-                singleFileCodePath =
-                  (singleFileCodeDir / (file.filenameNoExt + ext)).unsafeToFile
-                singleFileCodeFile <-
-                  singleFileCodePath.unsafeToFile.createFileIfDoesntExist
+                singleFileTmpPath =
+                  (singleFileTmpDir / (file.filenameNoExt + ext)).unsafeToFile
+                _ <- singleFileTmpPath.unsafeToFile.createFileIfDoesntExist
                 _ <- readCodeFromFile(ext, file)
                   .map(_._2)
                   .through(fs2.text.utf8.encode)
-                  .through(Files[IO].writeAll(singleFileCodePath))
+                  .through(Files[IO].writeAll(singleFileTmpPath))
                   .compile
                   .drain
-              yield singleFileCodeDir
+              yield singleFileTmpDir
             case Input.FromStdin =>
               for
-                stdinCodeDir <-
+                stdinTmpDir <-
                   (tempDir / "stdin").unsafeToDirectory.createDirIfDoesntExist
-                stdinCodeFilePath =
-                  (stdinCodeDir / ("stdin" + ext)).unsafeToFile
-                stdinCodeFile <- stdinCodeFilePath.createFileIfDoesntExist
+                stdinTmpFilePath =
+                  (stdinTmpDir / ("stdin" + ext)).unsafeToFile
+                _ <- stdinTmpFilePath.createFileIfDoesntExist
                 _ <-
                   readCodeFromStdin
                     .through(fs2.text.utf8.encode)
-                    .through(Files[IO].writeAll(stdinCodeFilePath))
+                    .through(Files[IO].writeAll(stdinTmpFilePath))
                     .compile
                     .drain
-              yield stdinCodeDir
+              yield stdinTmpDir
 
           processedConfig = ProcessedConfig(
             filteredAnalyzers = filterAnalyzers(inex),
