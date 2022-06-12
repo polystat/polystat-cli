@@ -8,20 +8,21 @@ import fs2.Stream
 import fs2.io.file.Path
 import org.polystat.cli.EOAnalyzer
 import org.polystat.odin.analysis.ASTAnalyzer
+import org.polystat.cli.util.FileTypes.*
 
 object PolystatConfig:
 
   final case class AnalyzerConfig(
       inex: Option[IncludeExclude],
       input: Input,
-      tmp: Option[Path],
+      tmp: Option[Directory],
       outputFormats: List[OutputFormat],
       output: Output,
   )
 
   final case class ProcessedConfig(
       filteredAnalyzers: List[EOAnalyzer],
-      tempDir: Path,
+      tempDir: Directory,
       input: Input,
       fmts: List[OutputFormat],
       output: Output,
@@ -29,13 +30,13 @@ object PolystatConfig:
 
   enum SupportedLanguage:
     case EO, Python
-    case Java(j2eo: Option[Path], j2eoVersion: Option[String])
+    case Java(j2eo: Option[File], j2eoVersion: Option[String])
   end SupportedLanguage
 
   enum PolystatUsage:
     case Analyze(language: SupportedLanguage, config: AnalyzerConfig)
     case List(config: Boolean)
-    case Misc(version: Boolean, configPath: Option[Path])
+    case Misc(version: Boolean, configPath: Option[File])
   end PolystatUsage
 
   enum IncludeExclude:
@@ -44,8 +45,8 @@ object PolystatConfig:
   end IncludeExclude
 
   enum Input:
-    case FromDirectory(path: Path)
-    case FromFile(path: Path)
+    case FromDirectory(path: Directory)
+    case FromFile(path: File)
     case FromStdin
   end Input
 
@@ -53,8 +54,8 @@ object PolystatConfig:
     case Sarif
 
   final case class Output(
-      dirs: List[Path],
-      files: List[Path],
+      dirs: List[Directory],
+      files: List[File],
       console: Boolean,
   )
 

@@ -17,6 +17,7 @@ import org.polystat.cli.util.InputUtils.*
 
 import sys.process.*
 import PolystatConfig.*
+import org.polystat.cli.util.FileTypes.*
 
 object Java:
 
@@ -63,58 +64,53 @@ object Java:
 
   private def runJ2EO(
       j2eoVersion: Option[String],
-      j2eo: Option[Path],
-      inputDir: Path,
-      outputDir: Path,
+      j2eo: Option[File],
+      input: Directory | File,
+      outputDir: Directory,
   ): IO[Unit] =
     given inferredJ2eoVersion: String =
       j2eoVersion.getOrElse(DEFAULT_J2EO_VERSION)
     val inferredJ2eoPath = j2eo.getOrElse(j2eoPath)
     val command =
-      s"java -jar ${inferredJ2eoPath} -o $outputDir $inputDir"
+      s"java -jar ${inferredJ2eoPath} -o $outputDir $input"
     for
       j2eo <- j2eo
         .map(IO.pure)
         .getOrElse(defaultJ2EO)
-      _ <- Files[IO]
-        .exists(j2eo)
-        .ifM(
-          ifTrue = for
-            _ <- IO.println(s"""Running "$command"...""")
-            _ <- IO.blocking(command.!).void
-          yield (),
-          ifFalse = IO.println(s"""J2EO executable "$j2eo" doesn't exist!"""),
-        )
+      _ <- (for
+        _ <- IO.println(s"""Running "$command"...""")
+        _ <- IO.blocking(command.!).void
+      yield ())
     yield ()
     end for
   end runJ2EO
 
   def analyze(
       j2eoVersion: Option[String],
-      j2eo: Option[Path],
+      j2eo: Option[File],
       cfg: ProcessedConfig,
   ): IO[Unit] =
     for
-      dirForEO <- (cfg.tempDir / "eo").createDirIfDoesntExist
+      dirForEO <- (cfg.tempDir / "eo").unsafeToDirectory.createDirIfDoesntExist
       _ <- cfg.input match // writing EO files to tempDir
         case Input.FromStdin =>
           for
             code <- readCodeFromStdin.compile.string
             stdinTmp <- Files[IO].createTempDirectory.map(path =>
-              path / "stdin.java"
+              (path / "stdin").unsafeToDirectory
             )
             _ <- writeOutputTo(stdinTmp)(code)
             _ <- runJ2EO(
               j2eoVersion,
               j2eo,
-              inputDir = stdinTmp,
+              input = stdinTmp,
               outputDir = dirForEO,
             )
           yield ()
         case Input.FromFile(path) =>
-          runJ2EO(j2eoVersion, j2eo, inputDir = path, outputDir = dirForEO)
+          runJ2EO(j2eoVersion, j2eo, input = path, outputDir = dirForEO)
         case Input.FromDirectory(path) =>
-          runJ2EO(j2eoVersion, j2eo, inputDir = path, outputDir = dirForEO)
+          runJ2EO(j2eoVersion, j2eo, input = path, outputDir = dirForEO)
       // J2EO deletes the tmp directory when there are no files to analyze
       // This causes the subsequent call to EO.analyze to fail, because there is no temp directory.
       // The line below patches this issue by creating the temp directory if it was deleted by J2EO.

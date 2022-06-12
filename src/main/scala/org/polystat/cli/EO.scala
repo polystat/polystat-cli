@@ -11,6 +11,7 @@ import org.polystat.odin.analysis.EOOdinAnalyzer.OdinAnalysisResult
 import org.polystat.odin.parser.EoParser.sourceCodeEoParser
 import org.polystat.sarif.AggregatedSarifOutput
 import org.polystat.sarif.SarifOutput
+import org.polystat.cli.util.FileTypes.*
 
 import PolystatConfig.*
 
@@ -18,8 +19,8 @@ object EO:
 
   def analyze(cfg: ProcessedConfig): IO[Unit] =
     def runAnalyzers(
-        inputFiles: Vector[(Path, String)]
-    ): IO[Vector[(Path, List[OdinAnalysisResult])]] =
+        inputFiles: Vector[(File, String)]
+    ): IO[Vector[(File, List[OdinAnalysisResult])]] =
       inputFiles
         .traverse { case (codePath, code) =>
           for
@@ -40,7 +41,7 @@ object EO:
         }
 
     def writeToDirs(
-        analyzed: Vector[(Path, List[OdinAnalysisResult])]
+        analyzed: Vector[(File, List[OdinAnalysisResult])]
     ): IO[Unit] =
       analyzed.traverse_ { case (codePath, results) =>
         for
@@ -54,7 +55,7 @@ object EO:
               val outPath =
                 codePath
                   .mount(
-                    to = out / "sarif",
+                    to = (out / "sarif").unsafeToDirectory,
                     relativelyTo =
                       cfg.input.asInstanceOf[Input.FromDirectory].path,
                   )
@@ -68,7 +69,7 @@ object EO:
         yield ()
       }
 
-    def writeAggregate(analyzed: Vector[(Path, List[OdinAnalysisResult])]) =
+    def writeAggregate(analyzed: Vector[(File, List[OdinAnalysisResult])]) =
       cfg.output.files.traverse_ { outputPath =>
         cfg.fmts.traverse_ { case OutputFormat.Sarif =>
           for

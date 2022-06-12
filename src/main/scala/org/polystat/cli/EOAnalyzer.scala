@@ -10,13 +10,14 @@ import org.polystat.odin.analysis.EOOdinAnalyzer
 import org.polystat.odin.analysis.EOOdinAnalyzer.OdinAnalysisResult
 import org.polystat.odin.analysis.liskov.Analyzer
 import org.polystat.odin.parser.EoParser.sourceCodeEoParser
+import org.polystat.cli.util.FileTypes.*
 
 trait EOAnalyzer:
   def ruleId: String
   def analyze(
-      tmpDir: Path,
-      pathToSrcRoot: Path,
-      pathToCode: Path,
+      tmpDir: Directory,
+      pathToSrcRoot: Directory,
+      pathToCode: File,
       code: String,
   ): IO[OdinAnalysisResult]
 
@@ -42,12 +43,11 @@ object EOAnalyzer:
 
   def fromOdinAstAnalyzer(_ruleId: String)(a: ASTAnalyzer[IO]): EOAnalyzer =
     new EOAnalyzer:
-
       def ruleId: String = _ruleId
       def analyze(
-          tmpDir: Path,
-          pathToSrcRoot: Path,
-          pathToCode: Path,
+          tmpDir: Directory,
+          pathToSrcRoot: Directory,
+          pathToCode: File,
           code: String,
       ): IO[OdinAnalysisResult] =
         EOOdinAnalyzer
@@ -60,17 +60,18 @@ object EOAnalyzer:
             case ok: OdinAnalysisResult.Ok => ok.copy(ruleId = ruleId)
           }
 
-  def farEOAnalyzer(_ruleId: String): EOAnalyzer = new EOAnalyzer:
-    def ruleId: String = _ruleId
-    def analyze(
-        tmpDir: Path,
-        pathToSrcRoot: Path,
-        pathToCode: Path,
-        code: String,
-    ): IO[OdinAnalysisResult] =
-      Far.analyze(
-        ruleId = ruleId,
-        pathToSrcRoot = pathToSrcRoot,
-        pathToTmpDir = tmpDir,
-        pathToCode = pathToCode,
-      )
+  def farEOAnalyzer(_ruleId: String): EOAnalyzer =
+    new EOAnalyzer:
+      def ruleId: String = _ruleId
+      def analyze(
+          tmpDir: Directory,
+          pathToSrcRoot: Directory,
+          pathToCode: File,
+          code: String,
+      ): IO[OdinAnalysisResult] =
+        Far.analyze(
+          ruleId = ruleId,
+          pathToSrcRoot = pathToSrcRoot,
+          pathToTmpDir = tmpDir,
+          pathToCode = pathToCode,
+        )

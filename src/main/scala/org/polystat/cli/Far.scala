@@ -21,6 +21,7 @@ import org.polystat.odin.core.ast.EOProg
 
 import java.nio.file.Path as JPath
 import scala.jdk.CollectionConverters.*
+import org.polystat.cli.util.FileTypes.*
 
 object Far:
 
@@ -44,13 +45,13 @@ object Far:
 
   def analyze(
       ruleId: String,
-      pathToSrcRoot: Path,
-      pathToTmpDir: Path,
-      pathToCode: Path,
+      pathToSrcRoot: Directory,
+      pathToTmpDir: Directory,
+      pathToCode: File,
   ): IO[OdinAnalysisResult] =
     val codeFileNameNoExt: String = pathToCode.filenameNoExt
     val createPathToXml: IO[JPath] =
-      (pathToTmpDir / "xmir").createDirIfDoesntExist.map(tmp =>
+      (pathToTmpDir / "xmir").unsafeToDirectory.createDirIfDoesntExist.map(tmp =>
         pathToCode
           .mount(to = tmp, relativelyTo = pathToSrcRoot)
           .replaceExt(newExt = ".xml")
