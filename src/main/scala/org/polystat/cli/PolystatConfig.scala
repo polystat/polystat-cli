@@ -6,8 +6,8 @@ import cats.syntax.apply.*
 import com.monovore.decline.Opts
 import fs2.Stream
 import fs2.io.file.Path
-import org.polystat.odin.analysis.ASTAnalyzer
 import org.polystat.cli.EOAnalyzer
+import org.polystat.odin.analysis.ASTAnalyzer
 
 object PolystatConfig:
 

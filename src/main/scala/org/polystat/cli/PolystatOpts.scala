@@ -11,13 +11,13 @@ import com.monovore.decline.Opts
 import fs2.io.file.Files
 import fs2.io.file.Path
 import org.polystat.cli.PolystatConfig.*
+import org.polystat.cli.util.InputUtils.toInput
 
 import java.io.FileNotFoundException
 import java.nio.file.Path as JPath
 
 import IncludeExclude.*
 import Validated.*
-import InputUtils.toInput
 
 object PolystatOpts:
 

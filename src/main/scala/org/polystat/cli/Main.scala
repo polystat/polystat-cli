@@ -11,17 +11,17 @@ import fs2.Stream
 import fs2.io.file.Files
 import fs2.io.file.Path
 import fs2.text.utf8
+import org.polystat.cli.BuildInfo
+import org.polystat.cli.EOAnalyzer.analyzers
+import org.polystat.cli.util.InputUtils.*
 import org.polystat.odin.analysis.ASTAnalyzer
 import org.polystat.odin.analysis.EOOdinAnalyzer.OdinAnalysisResult
 import org.polystat.odin.parser.EoParser.sourceCodeEoParser
 import org.polystat.py2eo.parser.PythonLexer
 import org.polystat.py2eo.transpiler.Transpile
-import org.polystat.cli.BuildInfo
-import org.polystat.cli.EOAnalyzer.analyzers
 
 import PolystatConfig.*
 import IncludeExclude.*
-import InputUtils.*
 object Main extends IOApp:
   override def run(args: List[String]): IO[ExitCode] =
     for exitCode <- CommandIOApp.run(

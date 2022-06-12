@@ -9,18 +9,18 @@ import cats.syntax.parallel.*
 import cats.syntax.traverse.*
 import ciris.ConfigDecoder
 import ciris.ConfigValue
+import com.typesafe.config.Config
 import com.typesafe.config.ConfigFactory
 import com.typesafe.config.ConfigValue as HoconConfigValue
 import fs2.io.file.Path
 import lt.dvim.ciris.Hocon.*
+import org.polystat.cli.util.InputUtils.toInput
 
 import scala.jdk.CollectionConverters.*
 
 import PolystatConfig.*
 import SupportedLanguage.*
 import IncludeExclude.*
-import InputUtils.toInput
-import com.typesafe.config.Config
 
 case class HoconConfig(path: Path):
 
