@@ -44,18 +44,9 @@ object Main extends IOApp:
     )
 
   def filterAnalyzers(
-      availableAnalyzers: List[EOAnalyzer],
-      inex: Option[IncludeExclude],
-  ): IO[List[EOAnalyzer]] =
-    val givenKeys = inex
-      .map {
-        case Include(list) => list.toList
-        case Exclude(list) => list.toList
-      }
-      .getOrElse(List())
-
-    for _ <- warnMissingKeys(givenKeys, availableAnalyzers.map(_.ruleId))
-    yield inex match
+      inex: Option[IncludeExclude]
+  ): List[EOAnalyzer] =
+    inex match
       case Some(Exclude(exclude)) =>
         analyzers.mapFilter { case a =>
           Option.unless(exclude.contains_(a.ruleId))(a)
@@ -89,10 +80,16 @@ object Main extends IOApp:
               IO.println(s"Cleaning ${path.absolute}...") *>
                 path.createDirIfDoesntExist.flatMap(_.clean)
             case None => Files[IO].createTempDirectory
+          parsedKeys = inex
+            .map {
+              case Include(list) => list.toList
+              case Exclude(list) => list.toList
+            }
+            .getOrElse(List())
 
-          filtered <- filterAnalyzers(EOAnalyzer.analyzers, inex)
+          _ <- warnMissingKeys(parsedKeys, EOAnalyzer.analyzers.map(_.ruleId))
           processedConfig = ProcessedConfig(
-            filteredAnalyzers = filtered,
+            filteredAnalyzers = filterAnalyzers(inex),
             tempDir = tempDir,
             output = out,
             input = input,
