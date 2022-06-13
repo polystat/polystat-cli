@@ -9,18 +9,20 @@ import cats.syntax.parallel.*
 import cats.syntax.traverse.*
 import ciris.ConfigDecoder
 import ciris.ConfigValue
+import com.typesafe.config.Config
 import com.typesafe.config.ConfigFactory
 import com.typesafe.config.ConfigValue as HoconConfigValue
 import fs2.io.file.Path
 import lt.dvim.ciris.Hocon.*
+import org.polystat.cli.util.InputUtils.toInput
 
 import scala.jdk.CollectionConverters.*
 
 import PolystatConfig.*
 import SupportedLanguage.*
 import IncludeExclude.*
-import InputUtils.toInput
-import com.typesafe.config.Config
+import org.polystat.cli.util.FileTypes.*
+import ciris.ConfigKey
 
 case class HoconConfig(path: Path):
 
@@ -33,7 +35,7 @@ case class HoconConfig(path: Path):
     val loadConfig: IO[Config] =
       IO.blocking(ConfigFactory.parseFile(path.toNioPath.toFile))
 
-    val parseConfig: IO[ConfigValue[IO, PolystatUsage.Analyze]] =
+    val parseConfig: IO[ConfigValue[IO, IO[PolystatUsage.Analyze]]] =
       loadConfig.map(parsed =>
         given Config = parsed
         val lang = hocon(keys.inputLanguage).as[SupportedLanguage]
@@ -50,10 +52,15 @@ case class HoconConfig(path: Path):
         val outputsConsole =
           hocon(keys.outputsConsole).as[Boolean].default(false)
 
-        val outputs = (outputsDirs, outputsFiles, outputsConsole).parMapN {
-          case (dirs, files, console) =>
-            Output(dirs = dirs, files = files, console = console)
-        }
+        val outputs: ConfigValue[IO, IO[Output]] =
+          (outputsDirs, outputsFiles, outputsConsole).parMapN {
+            case (dirs, files, console) =>
+              for
+                dirs <- dirs.traverse(Directory.fromPathFailFast)
+                files <- files.traverse(File.fromPathFailFast)
+              yield Output(dirs = dirs, files = files, console = console)
+
+          }
 
         val j2eoVersion = hocon(keys.j2eoVersion).as[String].option
         val outputFormats =
@@ -77,7 +84,11 @@ case class HoconConfig(path: Path):
                   outputFormats,
                   lang,
                 ) =>
-              PolystatUsage.Analyze(
+              for
+                j2eo <- j2eo.traverse(File.fromPathFailFast)
+                tmp <- tmp.traverse(Directory.fromPathFailFast)
+                outputs <- outputs
+              yield PolystatUsage.Analyze(
                 language = lang match
                   case Java(_, _) => Java(j2eo, j2eoVersion)
                   case other      => other
@@ -94,7 +105,14 @@ case class HoconConfig(path: Path):
       )
     end parseConfig
 
-    ConfigValue.eval(parseConfig)
+    for
+      parsed <- ConfigValue.eval(parseConfig)
+      validated <- ConfigValue.eval(
+        parsed.map(validated =>
+          ConfigValue.loaded(ConfigKey(keys.toplevel), validated)
+        )
+      )
+    yield validated
   end config
 
 end HoconConfig

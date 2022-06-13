@@ -1,31 +1,46 @@
-import ReleaseTransformations.*
+import ReleaseTransformations._
+import Dependencies._
 
 ThisBuild / scalaVersion := "3.1.2"
 ThisBuild / versionScheme := Some("semver-spec")
 ThisBuild / releaseVersionBump := sbtrelease.Version.Bump.Next
+
+homepage := Some(url("https://github.com/polystat/polystat-cli"))
+licenses := Seq(License.MIT)
+organizationName := "Polystat"
+organization := "org.polystat"
+organizationHomepage := Some(url("https://www.polystat.org/)"))
+developers := List(
+  Developer(
+    id = "nikololiahim",
+    name = "Mikhail Olokin",
+    email = "olomishcak@outlook.com",
+    url = url("https://github.com/nikololiahim"),
+  )
+)
 
 excludeDependencies ++= Seq(
   "org.scalatest" % "scalatest_2.13"
 )
 
 libraryDependencies ++= Seq(
-  "org.typelevel" %% "cats-parse" % "0.3.7",
-  "com.monovore" %% "decline-effect" % "2.2.0",
   "co.fs2" %% "fs2-io" % "3.2.7",
-  "org.polystat.odin" %% "analysis" % "0.4.3",
+  "com.monovore" %% "decline-effect" % "2.2.0",
+  "io.circe" %% "circe-core" % "0.14.1",
   "is.cir" %% "ciris" % "2.3.2",
   "lt.dvim.ciris-hocon" %% "ciris-hocon" % "1.0.1",
   "org.http4s" %% "http4s-ember-client" % "1.0.0-M32",
+  "org.polystat.odin" %% "analysis" % V.odin,
+  "org.polystat.py2eo" % "transpiler" % V.py2eo,
+  "org.polystat" % "far" % V.far,
   "org.scalameta" %% "munit" % "1.0.0-M3" % Test,
-  "io.circe" %% "circe-core" % "0.14.1",
-  "org.polystat.py2eo" % "transpiler" % "0.0.10",
   "org.slf4j" % "slf4j-nop" % "1.7.36",
-  "org.polystat" % "far" % "0.2.0",
+  "org.typelevel" %% "cats-parse" % "0.3.7",
 )
 
 packageOptions := Seq(
   sbt.Package.ManifestAttributes(
-    ("EO-Version", "https://github.com/nikololiahim/polystat-cli/issues/18")
+    ("EO-Version", "https://github.com/polystat/polystat-cli/issues/18")
   )
 )
 
@@ -42,7 +57,21 @@ assembly / assemblyMergeStrategy := {
 }
 
 enablePlugins(BuildInfoPlugin)
-buildInfoKeys := Seq(version)
+buildInfoKeys := Seq(
+  version,
+  organizationHomepage,
+  "farVersion" -> V.far,
+  "j2eoVersion" -> V.j2eo,
+  "odinVersion" -> V.odin,
+  "py2eoVersion" -> V.py2eo,
+  "versionSummary" ->
+    s"""|far = ${V.far}
+        |j2eo = ${V.j2eo}
+        |odin = ${V.odin}
+        |polystat-cli = ${version.value}
+        |py2eo = ${V.py2eo}
+        |""".stripMargin,
+)
 buildInfoPackage := "org.polystat.cli"
 
 Global / excludeLintKeys += nativeImageVersion

@@ -1,5 +1,6 @@
 package org.polystat.cli
 
+import cats.data.NonEmptyList
 import cats.effect.ExitCode
 import cats.effect.IO
 import cats.effect.IOApp
@@ -10,17 +11,19 @@ import fs2.Stream
 import fs2.io.file.Files
 import fs2.io.file.Path
 import fs2.text.utf8
+import org.polystat.cli.BuildInfo
+import org.polystat.cli.EOAnalyzer.analyzers
+import org.polystat.cli.util.InputUtils.*
 import org.polystat.odin.analysis.ASTAnalyzer
 import org.polystat.odin.analysis.EOOdinAnalyzer.OdinAnalysisResult
 import org.polystat.odin.parser.EoParser.sourceCodeEoParser
 import org.polystat.py2eo.parser.PythonLexer
 import org.polystat.py2eo.transpiler.Transpile
-import org.polystat.cli.BuildInfo
-import org.polystat.cli.EOAnalyzer.analyzers
+import org.polystat.cli.util.FileTypes.*
 
 import PolystatConfig.*
 import IncludeExclude.*
-import InputUtils.*
+
 object Main extends IOApp:
   override def run(args: List[String]): IO[ExitCode] =
     for exitCode <- CommandIOApp.run(
@@ -29,13 +32,26 @@ object Main extends IOApp:
       )
     yield exitCode
 
+  def warnMissingKeys(
+      givenKeys: List[String],
+      availableKeys: List[String],
+  ): IO[Unit] =
+    givenKeys.traverse_(rule =>
+      if availableKeys.contains(rule) then IO.unit
+      else
+        IO.println(
+          s"WARNING: The analyzer with the key '$rule' does not exist. " +
+            s"Run 'polystat list' to get the list of the available keys."
+        )
+    )
+
   def filterAnalyzers(
       inex: Option[IncludeExclude]
   ): List[EOAnalyzer] =
     inex match
       case Some(Exclude(exclude)) =>
         analyzers.mapFilter { case a =>
-          Option.when(!exclude.contains_(a.ruleId))(a)
+          Option.unless(exclude.contains_(a.ruleId))(a)
         }
       case Some(Include(include)) =>
         analyzers.mapFilter { case a =>
@@ -52,20 +68,69 @@ object Main extends IOApp:
             IO.println(a.ruleId)
           }
       case PolystatUsage.Misc(version, config) =>
-        if (version) then IO.println(BuildInfo.version)
+        if (version) then IO.println(BuildInfo.versionSummary)
         else
-          readConfigFromFile(config.getOrElse(Path(".polystat.conf")))
-            .flatMap(execute)
+          for
+            configFile <- config match
+              case Some(file) => IO.pure(file)
+              case None       => File.fromPathFailFast(Path(".polystat.conf"))
+            config <- readConfigFromFile(configFile)
+            result <- execute(config)
+          yield result
       case PolystatUsage.Analyze(
             lang,
             AnalyzerConfig(inex, input, tmp, fmts, out),
           ) =>
+        val ext = lang match
+          case SupportedLanguage.Java(_, _) => ".java"
+          case SupportedLanguage.Python     => ".py"
+          case SupportedLanguage.EO         => ".eo"
         for
           tempDir <- tmp match
             case Some(path) =>
               IO.println(s"Cleaning ${path.absolute}...") *>
                 path.createDirIfDoesntExist.flatMap(_.clean)
-            case None => Files[IO].createTempDirectory
+            case None =>
+              Files[IO].createTempDirectory.flatMap(Directory.fromPathFailFast)
+          parsedKeys = inex
+            .map {
+              case Include(list) => list.toList
+              case Exclude(list) => list.toList
+            }
+            .getOrElse(List())
+
+          _ <- warnMissingKeys(parsedKeys, EOAnalyzer.analyzers.map(_.ruleId))
+          input <- input match
+            case Input.FromDirectory(dir) => dir.pure[IO]
+            case Input.FromFile(file) =>
+              for
+                singleFileTmpDir <-
+                  (tempDir / "singleFile").unsafeToDirectory.createDirIfDoesntExist
+                singleFileTmpPath =
+                  (singleFileTmpDir / (file.filenameNoExt + ext)).unsafeToFile
+                _ <- singleFileTmpPath.unsafeToFile.createFileIfDoesntExist
+                _ <- readCodeFromFile(ext, file)
+                  .map(_._2)
+                  .through(fs2.text.utf8.encode)
+                  .through(Files[IO].writeAll(singleFileTmpPath))
+                  .compile
+                  .drain
+              yield singleFileTmpDir
+            case Input.FromStdin =>
+              for
+                stdinTmpDir <-
+                  (tempDir / "stdin").unsafeToDirectory.createDirIfDoesntExist
+                stdinTmpFilePath =
+                  (stdinTmpDir / ("stdin" + ext)).unsafeToFile
+                _ <- stdinTmpFilePath.createFileIfDoesntExist
+                _ <-
+                  readCodeFromStdin
+                    .through(fs2.text.utf8.encode)
+                    .through(Files[IO].writeAll(stdinTmpFilePath))
+                    .compile
+                    .drain
+              yield stdinTmpDir
+
           processedConfig = ProcessedConfig(
             filteredAnalyzers = filterAnalyzers(inex),
             tempDir = tempDir,

@@ -33,7 +33,7 @@ object Sarif:
 
   final case class SarifDriver(
       name: String = "Polystat CLI",
-      informationUri: String = "https://github.com/nikololiahim/polystat-cli",
+      informationUri: String = BuildInfo.organizationHomepage.get.toString,
       semanticVersion: String = BuildInfo.version,
   ) derives Codec.AsObject
 

@@ -12,27 +12,31 @@ import org.http4s.client.middleware.FollowRedirect
 import org.http4s.ember.client.EmberClientBuilder
 import org.http4s.ember.core.h2.*
 import org.http4s.implicits.*
+import org.polystat.cli.BuildInfo
+import org.polystat.cli.util.InputUtils.*
 
 import sys.process.*
 import PolystatConfig.*
-import InputUtils.*
+import org.polystat.cli.util.FileTypes.*
 
 object Java:
 
-  private val DEFAULT_J2EO_PATH = Path("j2eo.jar")
-  val DEFAULT_J2EO_VERSION = "0.5.3"
-  private def j2eoUrl(j2eoVesion: String) =
+  private def j2eoPath(using j2eoVersion: String) = Path(
+    s"j2eo-v$j2eoVersion.jar"
+  )
+  val DEFAULT_J2EO_VERSION = BuildInfo.j2eoVersion
+  private def j2eoUrl(using j2eoVesion: String) =
     s"https://search.maven.org/remotecontent?filepath=org/polystat/j2eo/$j2eoVesion/j2eo-$j2eoVesion.jar"
 
-  private def defaultJ2EO(j2eoVesion: String): IO[Path] =
+  private def defaultJ2EO(using j2eoVesion: String): IO[Path] =
     Files[IO]
-      .exists(DEFAULT_J2EO_PATH)
+      .exists(j2eoPath)
       .ifM(
-        ifTrue = IO.pure(DEFAULT_J2EO_PATH),
-        ifFalse = downloadJ2EO(j2eoVesion),
+        ifTrue = IO.pure(j2eoPath),
+        ifFalse = downloadJ2EO,
       )
 
-  private def downloadJ2EO(j2eoVesion: String): IO[Path] =
+  private def downloadJ2EO(using j2eoVesion: String): IO[Path] =
     EmberClientBuilder
       .default[IO]
       .build
@@ -42,72 +46,53 @@ object Java:
           .run(
             Request[IO](
               GET,
-              uri = Uri.unsafeFromString(j2eoUrl(j2eoVesion)),
+              uri = Uri.unsafeFromString(j2eoUrl),
             )
           )
           .use(resp =>
             IO.println(
-              "j2eo.jar was not found in the current working directory. Downloading..."
+              s"$j2eoPath was not found in the current working directory. Downloading..."
             ) *>
               resp.body
-                .through(Files[IO].writeAll(DEFAULT_J2EO_PATH))
+                .through(Files[IO].writeAll(j2eoPath))
                 .compile
                 .drain
           )
       }
-      .as(DEFAULT_J2EO_PATH)
+      .as(j2eoPath)
   end downloadJ2EO
 
   private def runJ2EO(
       j2eoVersion: Option[String],
-      j2eo: Option[Path],
-      inputDir: Path,
-      outputDir: Path,
+      j2eo: Option[File],
+      input: Directory | File,
+      outputDir: Directory,
   ): IO[Unit] =
+    given inferredJ2eoVersion: String =
+      j2eoVersion.getOrElse(DEFAULT_J2EO_VERSION)
+    val inferredJ2eoPath = j2eo.getOrElse(j2eoPath)
     val command =
-      s"java -jar ${j2eo.getOrElse(DEFAULT_J2EO_PATH)} -o $outputDir $inputDir"
+      s"java -jar ${inferredJ2eoPath} -o $outputDir $input"
     for
       j2eo <- j2eo
         .map(IO.pure)
-        .getOrElse(defaultJ2EO(j2eoVersion.getOrElse(DEFAULT_J2EO_VERSION)))
-      _ <- Files[IO]
-        .exists(j2eo)
-        .ifM(
-          ifTrue = for
-            _ <- IO.println(s"""Running "$command"...""")
-            _ <- IO.blocking(command.!).void
-          yield (),
-          ifFalse = IO.println(s"""J2EO executable "$j2eo" doesn't exist!"""),
-        )
+        .getOrElse(defaultJ2EO)
+      _ <- (for
+        _ <- IO.println(s"""Running "$command"...""")
+        _ <- IO.blocking(command.!).void
+      yield ())
     yield ()
     end for
   end runJ2EO
 
   def analyze(
       j2eoVersion: Option[String],
-      j2eo: Option[Path],
+      j2eo: Option[File],
       cfg: ProcessedConfig,
   ): IO[Unit] =
     for
-      _ <- cfg.input match // writing EO files to tempDir
-        case Input.FromStdin =>
-          for
-            code <- readCodeFromStdin.compile.string
-            stdinTmp <- Files[IO].createTempDirectory.map(path =>
-              path / "stdin.java"
-            )
-            _ <- writeOutputTo(stdinTmp)(code)
-            _ <- runJ2EO(
-              j2eoVersion,
-              j2eo,
-              inputDir = stdinTmp,
-              outputDir = cfg.tempDir,
-            )
-          yield ()
-        case Input.FromFile(path) =>
-          runJ2EO(j2eoVersion, j2eo, inputDir = path, outputDir = cfg.tempDir)
-        case Input.FromDirectory(path) =>
-          runJ2EO(j2eoVersion, j2eo, inputDir = path, outputDir = cfg.tempDir)
+      dirForEO <- (cfg.tempDir / "eo").unsafeToDirectory.createDirIfDoesntExist
+      _ <- runJ2EO(j2eoVersion, j2eo, input = cfg.input, outputDir = dirForEO)
       // J2EO deletes the tmp directory when there are no files to analyze
       // This causes the subsequent call to EO.analyze to fail, because there is no temp directory.
       // The line below patches this issue by creating the temp directory if it was deleted by J2EO.
@@ -115,10 +100,10 @@ object Java:
         .exists(cfg.tempDir)
         .ifM(
           ifTrue = IO.unit,
-          ifFalse = Files[IO].createDirectory(cfg.tempDir),
+          ifFalse = Files[IO].createDirectories(dirForEO),
         )
       _ <- EO.analyze(
-        cfg.copy(input = Input.FromDirectory(cfg.tempDir))
+        cfg.copy(input = dirForEO)
       )
     yield ()
 
