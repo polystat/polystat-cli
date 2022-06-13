@@ -2,6 +2,7 @@ package org.polystat.cli
 
 import cats.effect.IO
 import cats.syntax.all.*
+import cats.data.NonEmptyList
 import fs2.io.file.Path
 import io.circe.syntax.*
 import org.polystat.cli.util.InputUtils.*
@@ -21,23 +22,31 @@ object EO:
     def runAnalyzers(
         inputFiles: Vector[(File, String)]
     ): IO[Vector[(File, List[OdinAnalysisResult])]] =
-      inputFiles
-        .traverse { case (codePath, code) =>
-          for
-            _ <- IO.println(s"Analyzing $codePath...")
-            analyzed <- cfg.filteredAnalyzers.traverse(a =>
-              a.analyze(
-                tmpDir = cfg.tempDir,
-                // TODO: make sure cfg input is always converted to directory
-                pathToSrcRoot = cfg.input,
-                pathToCode = codePath,
-                code = code,
-              ).handleError(e =>
-                OdinAnalysisResult.AnalyzerFailure(a.ruleId, e)
-              )
-            )
-          yield (codePath, analyzed)
-        }
+      for
+        _ <- IO.println(s"Analyzing ${cfg.input}...")
+        analyzed <- EOOdinAnalyzer.analyzeSourceCodeDir[String, IO](
+          NonEmptyList.of(
+            EOOdinAnalyzer.advancedMutualRecursionAnalyzer[IO],
+            EOOdinAnalyzer.directStateAccessAnalyzer[IO],
+          )
+        )(inputFiles.map { case (file, a) => (file.toString, a) }.toMap)(
+          cats.MonadThrow[IO],
+          cats.Parallel[IO],
+          sourceCodeEoParser(),
+        )
+      // cfg.filteredAnalyzers.traverse(a =>
+      //   a.analyze(
+      //     tmpDir = cfg.tempDir,
+      //     pathToSrcRoot = cfg.input,
+      //     pathToCode = codePath,
+      //     code = code,
+      //   ).handleError(e =>
+      //     OdinAnalysisResult.AnalyzerFailure(a.ruleId, e)
+      //   )
+      // )
+      yield analyzed.toVector.map { case (path, results) =>
+        (Path(path).unsafeToFile, results.toList)
+      }
 
     def writeToDirs(
         analyzed: Vector[(File, List[OdinAnalysisResult])]
@@ -69,7 +78,7 @@ object EO:
 
     def writeAggregate(analyzed: Vector[(File, List[OdinAnalysisResult])]) =
       cfg.output.files.traverse_ { outputPath =>
-        cfg.fmts.traverse_ { case OutputFormat.Sarif =>
+        cfg.fmts.parTraverse_ { case OutputFormat.Sarif =>
           for
             _ <- IO.println(s"Writing aggregated output to $outputPath...")
             sariOutput = AggregatedSarifOutput(analyzed).json.toString
