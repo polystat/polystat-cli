@@ -96,12 +96,7 @@ object Java:
       // J2EO deletes the tmp directory when there are no files to analyze
       // This causes the subsequent call to EO.analyze to fail, because there is no temp directory.
       // The line below patches this issue by creating the temp directory if it was deleted by J2EO.
-      _ <- Files[IO]
-        .exists(cfg.tempDir)
-        .ifM(
-          ifTrue = IO.unit,
-          ifFalse = Files[IO].createDirectories(dirForEO),
-        )
+      _ <- cfg.tempDir.toPath.createDirIfDoesntExist
       _ <- EO.analyze(
         cfg.copy(input = dirForEO)
       )

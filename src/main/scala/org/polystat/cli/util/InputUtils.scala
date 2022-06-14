@@ -58,39 +58,39 @@ object InputUtils:
     Stream
       .emit(file)
       .filter(_.extName.endsWith(ext))
-      .flatMap(path =>
+      .flatMap(file =>
         Files[IO]
-          .readAll(path)
+          .readAll(file.toPath)
           .through(utf8.decode)
-          .map(code => (path, code))
+          .map(code => (file, code))
       )
 
   def readCodeFromDir(ext: String, dir: Directory): Stream[IO, (File, String)] =
     Files[IO]
-      .walk(dir)
+      .walk(dir.toPath)
       .evalMapFilter(path =>
         File.fromPath(path).map(_.filter(_.extName.endsWith(ext)))
       )
-      .flatMap(path =>
+      .flatMap(file =>
         Files[IO]
-          .readAll(path)
+          .readAll(file.toPath)
           .through(utf8.decode)
-          .map(code => (path, code))
+          .map(code => (file, code))
       )
 
   def readCodeFromStdin: Stream[IO, String] = stdinUtf8[IO](4096).bufferAll
 
-  def readConfigFromFile(path: File): IO[PolystatUsage.Analyze] =
-    HoconConfig(path).config.load
+  def readConfigFromFile(file: File): IO[PolystatUsage.Analyze] =
+    HoconConfig(file.toPath).config.load
 
-  def writeOutputTo(path: Path)(output: String): IO[Unit] =
+  def writeOutputTo(file: File)(output: String): IO[Unit] =
     for
-      _ <- path.parent
+      _ <- file.toPath.parent
         .map(Files[IO].createDirectories)
         .getOrElse(IO.unit)
       _ <- Stream
         .emits(output.getBytes)
-        .through(Files[IO].writeAll(path))
+        .through(Files[IO].writeAll(file.toPath))
         .compile
         .drain
     yield ()

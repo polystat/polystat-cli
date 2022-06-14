@@ -10,8 +10,8 @@ object FileTypes:
   ):
     override def toString = underlying.toString
     def toPath: Path = underlying
+    def /(s: String): Path = underlying / s
 
-  given Conversion[Directory, Path] = _.underlying
   object Directory:
 
     def fromPath(path: Path): IO[Option[Directory]] =
@@ -25,7 +25,10 @@ object FileTypes:
     def fromPathFailFast(path: Path): IO[Directory] =
       fromPath(path).flatMap {
         case Some(dir) => IO.pure(dir)
-        case None => IO.raiseError(new Exception(s"$path must be a directory!"))
+        case None =>
+          IO.raiseError(
+            new Exception(s"$path is either not a directory or does not exist!")
+          )
       }
 
     def fromPathUnsafe(path: Path): Directory = Directory(path)
@@ -40,8 +43,8 @@ object FileTypes:
   class File private[FileTypes] (private[FileTypes] val underlying: Path):
     override def toString(): String = underlying.toString
     def toPath = underlying
+    def extName = underlying.extName
 
-  given Conversion[File, Path] = _.underlying
   object File:
     def fromPath(path: Path): IO[Option[File]] =
       Files[IO]
@@ -55,7 +58,11 @@ object FileTypes:
       fromPath(path).flatMap {
         case Some(file) => IO.pure(file)
         case None =>
-          IO.raiseError(new Exception(s"$path must be a regular file!"))
+          IO.raiseError(
+            new Exception(
+              s"$path is either not a regular file or does not exist!"
+            )
+          )
       }
 
     def fromPathUnsafe(path: Path): File = File(path)

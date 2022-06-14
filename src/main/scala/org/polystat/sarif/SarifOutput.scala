@@ -9,11 +9,12 @@ import io.circe.Encoder
 import io.circe.Json
 import io.circe.syntax.*
 import org.polystat.odin.analysis.EOOdinAnalyzer.OdinAnalysisResult
+import org.polystat.cli.util.FileTypes.*
 
 import OdinAnalysisResult.*
 import Sarif.*
 
-final case class SarifOutput(filePath: Path, errors: List[OdinAnalysisResult]):
+final case class SarifOutput(filePath: File, errors: List[OdinAnalysisResult]):
   private val sarifRun: SarifRun = SarifOutput.sarifRun(filePath, errors)
 
   val sarif: SarifLog = SarifLog(Seq(sarifRun))
@@ -24,7 +25,7 @@ end SarifOutput
 
 object SarifOutput:
 
-  def sarifRun(filePath: Path, errors: List[OdinAnalysisResult]): SarifRun =
+  def sarifRun(filePath: File, errors: List[OdinAnalysisResult]): SarifRun =
     SarifRun(
       tool = SarifTool(SarifDriver()),
       results = errors.mapFilter(SarifOutput.sarifResult),
@@ -32,7 +33,7 @@ object SarifOutput:
       artifacts = Seq(
         SarifArtifact(location =
           SarifArtifactLocation(uri =
-            filePath.absolute.toNioPath.toUri.toString
+            filePath.toPath.absolute.toNioPath.toUri.toString
           )
         )
       ),

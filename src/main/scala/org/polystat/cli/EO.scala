@@ -84,7 +84,7 @@ object EO:
       _ <- cfg.output.dirs.traverse_ { outDir =>
         for
           _ <- IO.println(s"Cleaning $outDir before writing...")
-          _ <- outDir.createDirIfDoesntExist.flatMap(_.clean)
+          _ <- outDir.toPath.createDirIfDoesntExist.flatMap(_.clean)
         yield ()
       }
       _ <- writeToDirs(analyzed)
