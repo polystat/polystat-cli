@@ -91,7 +91,7 @@ object Java:
       cfg: ProcessedConfig,
   ): IO[Unit] =
     for
-      dirForEO <- (cfg.tempDir / "eo").unsafeToDirectory.createDirIfDoesntExist
+      dirForEO <- (cfg.tempDir / "eo").createDirIfDoesntExist
       _ <- runJ2EO(j2eoVersion, j2eo, input = cfg.input, outputDir = dirForEO)
       // J2EO deletes the tmp directory when there are no files to analyze
       // This causes the subsequent call to EO.analyze to fail, because there is no temp directory.

@@ -50,14 +50,15 @@ object EO:
               results,
             ).json.toString
             cfg.output.dirs.traverse_(out =>
-              val outPath =
-                codePath
-                  .mount(
-                    to = (out / "sarif").unsafeToDirectory,
-                    relativelyTo = cfg.input,
-                  )
-                  .replaceExt(newExt = ".sarif.json")
               for
+                sarifDir <- (out / "sarif").createDirIfDoesntExist
+                outPath =
+                  codePath
+                    .mount(
+                      to = sarifDir,
+                      relativelyTo = cfg.input,
+                    )
+                    .replaceExt(newExt = ".sarif.json")
                 _ <- IO.println(s"Writing results to $outPath...")
                 _ <- writeOutputTo(outPath)(sarifJson)
               yield ()

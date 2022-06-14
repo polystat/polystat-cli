@@ -11,8 +11,8 @@ import org.polystat.py2eo.transpiler.Transpile
 object Python:
 
   def analyze(cfg: ProcessedConfig): IO[Unit] =
-    val dirForEO = (cfg.tempDir / "eo").unsafeToDirectory
     for
+      dirForEO <- (cfg.tempDir / "eo").createDirIfDoesntExist
       _ <- readCodeFromDir(".py", cfg.input)
         .evalMap { case (path, code) =>
           for

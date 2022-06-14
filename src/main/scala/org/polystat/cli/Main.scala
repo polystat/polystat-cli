@@ -141,10 +141,10 @@ object Main extends IOApp:
               case Input.FromFile(file) =>
                 for
                   singleFileTmpDir <-
-                    (tempDir / "singleFile").unsafeToDirectory.createDirIfDoesntExist
+                    (tempDir / "singleFile").createDirIfDoesntExist
                   singleFileTmpPath =
-                    (singleFileTmpDir / (file.filenameNoExt + ext)).unsafeToFile
-                  _ <- singleFileTmpPath.unsafeToFile.createFileIfDoesntExist
+                    singleFileTmpDir / (file.filenameNoExt + ext)
+                  _ <- singleFileTmpPath.createFileIfDoesntExist
                   _ <- readCodeFromFile(ext, file)
                     .map(_._2)
                     .through(fs2.text.utf8.encode)
@@ -155,9 +155,8 @@ object Main extends IOApp:
               case Input.FromStdin =>
                 for
                   stdinTmpDir <-
-                    (tempDir / "stdin").unsafeToDirectory.createDirIfDoesntExist
-                  stdinTmpFilePath =
-                    (stdinTmpDir / ("stdin" + ext)).unsafeToFile
+                    (tempDir / "stdin").createDirIfDoesntExist
+                  stdinTmpFilePath = stdinTmpDir / ("stdin" + ext)
                   _ <- stdinTmpFilePath.createFileIfDoesntExist
                   _ <-
                     readCodeFromStdin

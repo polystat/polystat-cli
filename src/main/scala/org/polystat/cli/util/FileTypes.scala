@@ -9,6 +9,7 @@ object FileTypes:
       private[FileTypes] val underlying: Path
   ):
     override def toString = underlying.toString
+    def toPath: Path = underlying
 
   given Conversion[Directory, Path] = _.underlying
   object Directory:
@@ -30,25 +31,17 @@ object FileTypes:
     def fromPathUnsafe(path: Path): Directory = Directory(path)
 
   extension (dir: Directory)
-    def createDirIfDoesntExist: IO[Directory] =
-      Files[IO]
-        .exists(dir)
-        .ifM(
-          ifTrue = IO.pure(dir),
-          ifFalse = Files[IO].createDirectories(dir).as(dir),
-        )
-
     def clean: IO[Directory] =
       for
-        _ <- Files[IO].deleteRecursively(dir)
-        _ <- Files[IO].createDirectory(dir)
+        _ <- Files[IO].deleteRecursively(dir.toPath)
+        _ <- Files[IO].createDirectory(dir.toPath)
       yield dir
 
   class File private[FileTypes] (private[FileTypes] val underlying: Path):
     override def toString(): String = underlying.toString
+    def toPath = underlying
 
   given Conversion[File, Path] = _.underlying
-
   object File:
     def fromPath(path: Path): IO[Option[File]] =
       Files[IO]
@@ -68,15 +61,8 @@ object FileTypes:
     def fromPathUnsafe(path: Path): File = File(path)
 
   extension (file: File)
-    def createFileIfDoesntExist: IO[File] =
-      file.parent match
-        case Some(parent) =>
-          (Files[IO].createDirectories(parent) *> Files[IO].createFile(file))
-            .as(file)
-        case None => Files[IO].createFile(file).as(file)
-
     def filenameNoExt: String =
-      val fileName = file.fileName.toString
+      val fileName = file.toPath.fileName.toString
       fileName.splitAt(fileName.indexOf("."))._1
 
     def replaceExt(newExt: String): File =
@@ -90,5 +76,6 @@ object FileTypes:
 
     def mount(to: Directory, relativelyTo: Directory): File =
       val relativePath =
-        relativelyTo.absolute.normalize.relativize(file.absolute.normalize)
-      File.fromPathUnsafe(to.normalize / relativePath)
+        relativelyTo.toPath.absolute.normalize
+          .relativize(file.toPath.absolute.normalize)
+      File.fromPathUnsafe(to.toPath.normalize / relativePath)

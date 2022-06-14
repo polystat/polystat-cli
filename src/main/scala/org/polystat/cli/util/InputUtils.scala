@@ -16,6 +16,25 @@ import java.io.FileNotFoundException
 object InputUtils:
 
   extension (path: Path)
+    def createDirIfDoesntExist: IO[Directory] =
+      Directory.fromPath(path).flatMap {
+        case Some(dir) => IO.pure(dir)
+        case None =>
+          Files[IO].createDirectories(path).as(path.unsafeToDirectory)
+      }
+
+    def createFileIfDoesntExist: IO[File] =
+      File.fromPath(path).flatMap {
+        case Some(file) => IO.pure(file)
+        case None =>
+          path.parent match
+            case Some(parent) =>
+              (Files[IO].createDirectories(parent) *> Files[IO]
+                .createFile(path))
+                .as(path.unsafeToFile)
+            case None => Files[IO].createFile(path).as(path.unsafeToFile)
+      }
+
     def toInput: IO[Input] =
       Directory.fromPath(path).flatMap {
         case Some(dir) => IO.pure(Input.FromDirectory(dir))
@@ -49,26 +68,17 @@ object InputUtils:
   def readCodeFromDir(ext: String, dir: Directory): Stream[IO, (File, String)] =
     Files[IO]
       .walk(dir)
-      .filter(_.extName.endsWith(ext))
+      .evalMapFilter(path =>
+        File.fromPath(path).map(_.filter(_.extName.endsWith(ext)))
+      )
       .flatMap(path =>
         Files[IO]
           .readAll(path)
           .through(utf8.decode)
-          .map(code => (path.unsafeToFile, code))
+          .map(code => (path, code))
       )
 
   def readCodeFromStdin: Stream[IO, String] = stdinUtf8[IO](4096).bufferAll
-
-  def readCodeFromInput(ext: String, input: Input): Stream[IO, (File, String)] =
-    input match
-      case Input.FromFile(path) =>
-        readCodeFromFile(ext = ext, file = path)
-      case Input.FromDirectory(path) =>
-        readCodeFromDir(ext = ext, dir = path)
-      case Input.FromStdin =>
-        readCodeFromStdin.map(code =>
-          (Path("stdin" + ext).unsafeToFile, "\n" + code + "\n")
-        )
 
   def readConfigFromFile(path: File): IO[PolystatUsage.Analyze] =
     HoconConfig(path).config.load
