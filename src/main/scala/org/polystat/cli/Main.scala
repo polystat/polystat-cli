@@ -1,6 +1,7 @@
 package org.polystat.cli
 
 import cats.data.NonEmptyList
+import cats.data.ValidatedNel
 import cats.effect.ExitCode
 import cats.effect.IO
 import cats.effect.IOApp
@@ -32,18 +33,56 @@ object Main extends IOApp:
       )
     yield exitCode
 
-  def warnMissingKeys(
+  def findMissingKeys(
       givenKeys: List[String],
       availableKeys: List[String],
+  ): ValidatedNel[ValidationError, Unit] =
+    val missingKeys = givenKeys.filterNot(rule => availableKeys.contains(rule))
+    missingKeys.toNel match
+      case Some(keys) => ValidationError.MissingAnalyzersKeys(keys).invalidNel
+      case None       => ().validNel
+
+  def validateInex(
+      inex: Option[IncludeExclude]
+  ): ValidatedNel[ValidationError, NonEmptyList[EOAnalyzer]] =
+    val filtered = filterAnalyzers(inex).toNel
+    val parsedKeys =
+      inex
+        .map {
+          case Include(list) => list.toList
+          case Exclude(list) => list.toList
+        }
+        .getOrElse(List())
+    (
+      findMissingKeys(parsedKeys, EOAnalyzer.analyzers.map(_.ruleId)),
+      filtered match
+        case Some(filtered) => filtered.valid
+        case None           => ValidationError.NoAnalyzers(inex.get).invalidNel,
+    ).mapN { case (_, filtered) =>
+      filtered
+    }
+
+  def reportValidationErrors(
+      errors: NonEmptyList[ValidationError]
   ): IO[Unit] =
-    givenKeys.traverse_(rule =>
-      if availableKeys.contains(rule) then IO.unit
-      else
-        IO.println(
-          s"WARNING: The analyzer with the key '$rule' does not exist. " +
-            s"Run 'polystat list' to get the list of the available keys."
-        )
-    )
+    errors
+      .traverse_ {
+        case ValidationError.NoAnalyzers(inex) =>
+          val message = inex match
+            case Include(include) =>
+              s"WARNING: The 'includeRules' key with values \"${include.mkString_(", ")}\" excludes all the analyzers, so none were run!"
+            case Exclude(exclude) =>
+              s"WARNING: The 'excludeRules' key with values \"${exclude.mkString_(", ")}\" excludes all the analyzers, so none were run!"
+          IO.println(message)
+
+        case ValidationError.MissingAnalyzersKeys(missing) =>
+          missing.traverse_(rule =>
+            IO.println(
+              s"WARNING: The analyzer with the key '$rule' does not exist. " +
+                s"Run 'polystat list' to get the list of the available keys."
+            )
+          )
+      }
 
   def filterAnalyzers(
       inex: Option[IncludeExclude]
@@ -74,6 +113,7 @@ object Main extends IOApp:
             configFile <- config match
               case Some(file) => IO.pure(file)
               case None       => File.fromPathFailFast(Path(".polystat.conf"))
+            _ <- IO.println(s"Reading configuration from $configFile...")
             config <- readConfigFromFile(configFile)
             result <- execute(config)
           yield result
@@ -85,66 +125,67 @@ object Main extends IOApp:
           case SupportedLanguage.Java(_, _) => ".java"
           case SupportedLanguage.Python     => ".py"
           case SupportedLanguage.EO         => ".eo"
-        for
-          tempDir <- tmp match
-            case Some(path) =>
-              IO.println(s"Cleaning ${path.absolute}...") *>
-                path.createDirIfDoesntExist.flatMap(_.clean)
-            case None =>
-              Files[IO].createTempDirectory.flatMap(Directory.fromPathFailFast)
-          parsedKeys = inex
-            .map {
-              case Include(list) => list.toList
-              case Exclude(list) => list.toList
-            }
-            .getOrElse(List())
 
-          _ <- warnMissingKeys(parsedKeys, EOAnalyzer.analyzers.map(_.ruleId))
-          input <- input match
-            case Input.FromDirectory(dir) => dir.pure[IO]
-            case Input.FromFile(file) =>
-              for
-                singleFileTmpDir <-
-                  (tempDir / "singleFile").unsafeToDirectory.createDirIfDoesntExist
-                singleFileTmpPath =
-                  (singleFileTmpDir / (file.filenameNoExt + ext)).unsafeToFile
-                _ <- singleFileTmpPath.unsafeToFile.createFileIfDoesntExist
-                _ <- readCodeFromFile(ext, file)
-                  .map(_._2)
-                  .through(fs2.text.utf8.encode)
-                  .through(Files[IO].writeAll(singleFileTmpPath))
-                  .compile
-                  .drain
-              yield singleFileTmpDir
-            case Input.FromStdin =>
-              for
-                stdinTmpDir <-
-                  (tempDir / "stdin").unsafeToDirectory.createDirIfDoesntExist
-                stdinTmpFilePath =
-                  (stdinTmpDir / ("stdin" + ext)).unsafeToFile
-                _ <- stdinTmpFilePath.createFileIfDoesntExist
-                _ <-
-                  readCodeFromStdin
+        def analyze(filtered: NonEmptyList[EOAnalyzer]): IO[Unit] =
+          for
+            tempDir <- tmp match
+              case Some(path) =>
+                IO.println(s"Cleaning ${path.absolute}...") *>
+                  path.createDirIfDoesntExist.flatMap(_.clean)
+              case None =>
+                Files[IO].createTempDirectory.flatMap(
+                  Directory.fromPathFailFast
+                )
+            input <- input match
+              case Input.FromDirectory(dir) => dir.pure[IO]
+              case Input.FromFile(file) =>
+                for
+                  singleFileTmpDir <-
+                    (tempDir / "singleFile").unsafeToDirectory.createDirIfDoesntExist
+                  singleFileTmpPath =
+                    (singleFileTmpDir / (file.filenameNoExt + ext)).unsafeToFile
+                  _ <- singleFileTmpPath.unsafeToFile.createFileIfDoesntExist
+                  _ <- readCodeFromFile(ext, file)
+                    .map(_._2)
                     .through(fs2.text.utf8.encode)
-                    .through(Files[IO].writeAll(stdinTmpFilePath))
+                    .through(Files[IO].writeAll(singleFileTmpPath))
                     .compile
                     .drain
-              yield stdinTmpDir
+                yield singleFileTmpDir
+              case Input.FromStdin =>
+                for
+                  stdinTmpDir <-
+                    (tempDir / "stdin").unsafeToDirectory.createDirIfDoesntExist
+                  stdinTmpFilePath =
+                    (stdinTmpDir / ("stdin" + ext)).unsafeToFile
+                  _ <- stdinTmpFilePath.createFileIfDoesntExist
+                  _ <-
+                    readCodeFromStdin
+                      .through(fs2.text.utf8.encode)
+                      .through(Files[IO].writeAll(stdinTmpFilePath))
+                      .compile
+                      .drain
+                yield stdinTmpDir
+            processedConfig =
+              ProcessedConfig(
+                filteredAnalyzers = filtered,
+                tempDir = tempDir,
+                output = out,
+                input = input,
+                fmts = fmts,
+              )
+            _ <-
+              lang match
+                case SupportedLanguage.EO => EO.analyze(processedConfig)
+                case SupportedLanguage.Java(j2eo, j2eoVersion) =>
+                  Java.analyze(j2eoVersion, j2eo, processedConfig)
+                case SupportedLanguage.Python => Python.analyze(processedConfig)
+          yield ()
 
-          processedConfig = ProcessedConfig(
-            filteredAnalyzers = filterAnalyzers(inex),
-            tempDir = tempDir,
-            output = out,
-            input = input,
-            fmts = fmts,
-          )
-          analysisResults <-
-            lang match
-              case SupportedLanguage.EO => EO.analyze(processedConfig)
-              case SupportedLanguage.Java(j2eo, j2eoVersion) =>
-                Java.analyze(j2eoVersion, j2eo, processedConfig)
-              case SupportedLanguage.Python => Python.analyze(processedConfig)
-        yield ()
+        validateInex(inex).fold(
+          errors => reportValidationErrors(errors),
+          filtered => analyze(filtered),
+        )
   end execute
 
 end Main

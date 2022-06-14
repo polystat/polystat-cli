@@ -28,7 +28,6 @@ object EO:
             analyzed <- cfg.filteredAnalyzers.traverse(a =>
               a.analyze(
                 tmpDir = cfg.tempDir,
-                // TODO: make sure cfg input is always converted to directory
                 pathToSrcRoot = cfg.input,
                 pathToCode = codePath,
                 code = code,
@@ -36,7 +35,7 @@ object EO:
                 OdinAnalysisResult.AnalyzerFailure(a.ruleId, e)
               )
             )
-          yield (codePath, analyzed)
+          yield (codePath, analyzed.toList)
         }
 
     def writeToDirs(

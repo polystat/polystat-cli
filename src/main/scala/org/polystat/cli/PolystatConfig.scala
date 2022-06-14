@@ -20,8 +20,12 @@ object PolystatConfig:
       output: Output,
   )
 
+  enum ValidationError:
+    case NoAnalyzers(inex: IncludeExclude)
+    case MissingAnalyzersKeys(keys: NonEmptyList[String])
+
   final case class ProcessedConfig(
-      filteredAnalyzers: List[EOAnalyzer],
+      filteredAnalyzers: NonEmptyList[EOAnalyzer],
       tempDir: Directory,
       input: Directory,
       fmts: List[OutputFormat],
