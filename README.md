@@ -2,8 +2,8 @@
 
 [![Continuous Integration](https://github.com/polystat/polystat-cli/actions/workflows/ci.yml/badge.svg)](https://github.com/polystat/polystat-cli/actions/workflows/ci.yml)
 
+[![Maven Release](https://badgen.net/maven/v/metadata-url/https/repo1.maven.org/maven2/org/polystat/polystat-cli_3/maven-metadata.xml)](https://oss.sonatype.org/content/repositories/releases/org/polystat/polystat-cli_3/)
 ![GitHub](https://img.shields.io/github/license/polystat/polystat-cli)
-![GitHub release (latest by date)](https://img.shields.io/github/v/release/polystat/polystat-cli)
 ![GitHub Release Date](https://img.shields.io/github/release-date/polystat/polystat-cli)
 ![GitHub all releases](https://img.shields.io/github/downloads/polystat/polystat-cli/total)
 # Polystat CLI
@@ -22,7 +22,18 @@ This repository provides an alternative implementation to [Polystat](https://git
 ⚠ WARNING ⚠: The tool is still in the early stages of development, so feature suggestions and bug reports are more than welcome!
 
 # Installation
-The CLI is distributed as a fat jar (can be downloaded from [Github Releases](https://github.com/polystat/polystat-cli/releases)), so you can run without any prerequisites other than the [JRE](https://ru.wikipedia.org/wiki/Java_Runtime_Environment). If you have it installed, you can run `polystat-cli` by just executing:
+## With coursier
+If you have [coursier](https://get-coursier.io/docs/cli-installation) installed, then you can install the latest version of `polystat-cli` by running:
+```
+cs install --channel https://raw.githubusercontent.com/polystat/polystat-cli/master/coursier/polystat.json polystat
+```
+After that, you can simply run:
+```
+$ polystat --help
+```
+
+## Using a "fat" jar
+The CLI is distributed as a "fat" jar (can be downloaded from [Github Releases](https://github.com/polystat/polystat-cli/releases)), so you can run without any prerequisites other than the [JRE](https://ru.wikipedia.org/wiki/Java_Runtime_Environment). If you have it installed, you can run `polystat-cli` by just executing:
 ```
 $ java -jar polystat.jar <args>
 ```
@@ -191,7 +202,7 @@ It's best to run this command in the interactive mode, because you can specify t
 However, for better turnaround time, it's better to tailor the `.polystat.conf` in the repository root for your needs and just run `run`.
 If you want to change the command-line arguments, edit the `.polystat.conf` in the repository root.
 
-The following command can be used to generate the fat JAR file. 
+The following command can be used to generate the "fat" JAR file. 
 ```
 $ sbt assembly
 ```
