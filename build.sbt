@@ -119,7 +119,9 @@ scalacOptions ++= Seq(
 )
 
 lazy val generateDescriptor =
-  taskKey[Unit]("Generate a descriptor that is used by coursier to install polystat-cli.")
+  taskKey[Unit](
+    "Generate a descriptor that is used by coursier to install polystat-cli."
+  )
 
 generateDescriptor := {
   val ver = version.value
@@ -127,18 +129,23 @@ generateDescriptor := {
   val artifactName = name.value
   val descriptor =
     s"""|{
-       |    "repositories": [
-       |        "ivy2Local",
-       |        "central"
-       |    ],
-       |    "dependencies": [
-       |        "${org}:${artifactName}_3:${ver}"
-       |    ]
-       |}
+        |    "polystat": {
+        |        "repositories": [
+        |            "ivy2Local",
+        |            "central"
+        |        ],
+        |        "dependencies": [
+        |            "${org}:${artifactName}_3:${ver}"
+        |        ]
+        |    }
+        |}
        |""".stripMargin
   println(descriptor)
   java.nio.file.Files
-    .write(java.nio.file.Paths.get("coursier/polystat.json"), descriptor.getBytes)
+    .write(
+      java.nio.file.Paths.get("coursier/polystat.json"),
+      descriptor.getBytes,
+    )
 }
 
 commands += Command.args("preRelease", "<arg>") { (state, args) =>
