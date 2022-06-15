@@ -19,6 +19,21 @@ developers := List(
   )
 )
 
+
+sonatypeProfileName := "org.polystat"
+sonatypeCredentialHost := "s01.oss.sonatype.org"
+scmInfo :=
+  Some(
+    ScmInfo(
+      url("https://github.com/polystat/polystat-cli"),
+      "scm:git@github.com:polystat/polystat-cli.git",
+    )
+  )
+publishTo := sonatypePublishToBundle.value
+publishArtifact := true
+releasePublishArtifactsAction := PgpKeys.publishSigned.value
+resolvers += Opts.resolver.sonatypeSnapshots
+
 excludeDependencies ++= Seq(
   "org.scalatest" % "scalatest_2.13"
 )
@@ -101,7 +116,6 @@ scalacOptions ++= Seq(
   "-encoding",
   "UTF-8",
   "-feature",
-  "-language:implicitConversions",
 )
 
 commands += Command.single("preRelease") { (state, nextVersion) =>
@@ -118,6 +132,8 @@ commands += Command.single("preRelease") { (state, nextVersion) =>
           releaseStepTask(assembly),
           commitReleaseVersion,
           tagRelease,
+          releaseStepCommandAndRemaining("publishSigned"),
+          releaseStepCommand("sonatypeBundleRelease"),
           pushChanges,
         )
       ),
