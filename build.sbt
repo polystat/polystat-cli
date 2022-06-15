@@ -169,7 +169,7 @@ commands += Command.args("preRelease", "<arg>") { (state, args) =>
               releaseStepTask(generateDescriptor),
               pushChanges,
             ),
-            usePgpKeyHex(pgpKeyId),
+            pgpSigningKey := Some(pgpKeyId)            
           ),
           state,
         )
