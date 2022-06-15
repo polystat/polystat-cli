@@ -118,36 +118,42 @@ scalacOptions ++= Seq(
   "-feature",
 )
 
-commands += Command.single("preRelease") { (state, nextVersion) =>
-  val newState = Project
-    .extract(state)
-    .appendWithSession(
-      Seq(
-        releaseProcess := Seq(
-          checkSnapshotDependencies,
-          inquireVersions,
-          runClean,
-          runTest,
-          setReleaseVersion,
-          releaseStepTask(assembly),
-          commitReleaseVersion,
-          tagRelease,
-          releaseStepCommandAndRemaining("publishSigned"),
-          releaseStepCommand("sonatypeBundleRelease"),
-          pushChanges,
+commands += Command.args("preRelease", "<arg>") { (state, args) =>
+  args match {
+    case Seq(nextVersion, pgpKeyId) =>
+      val newState = Project
+        .extract(state)
+        .appendWithSession(
+          Seq(
+            releaseProcess := Seq(
+              checkSnapshotDependencies,
+              inquireVersions,
+              runClean,
+              runTest,
+              setReleaseVersion,
+              releaseStepTask(assembly),
+              commitReleaseVersion,
+              tagRelease,
+              releaseStepCommandAndRemaining("publishSigned"),
+              releaseStepCommand("sonatypeBundleRelease"),
+              pushChanges,
+            ),
+            usePgpKeyHex(pgpKeyId),
+          ),
+          state,
         )
-      ),
-      state,
-    )
 
-  if (nextVersion == "next")
-    Command.process("release with-defaults", newState)
-  else
-    Command.process(
-      s"release with-defaults release-version $nextVersion",
-      newState,
-    )
-
+      if (nextVersion == "next")
+        Command.process("release with-defaults", newState)
+      else
+        Command.process(
+          s"release with-defaults release-version $nextVersion",
+          newState,
+        )
+    case other =>
+      println("wrong number of arguments passed!")
+      state
+  }
 }
 
 commands += Command.command("postRelease") { state =>

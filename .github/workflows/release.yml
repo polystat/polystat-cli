@@ -28,11 +28,17 @@ jobs:
           git config user.name "${{ secrets.GIT_USERNAME }}" && 
           git config user.email "${{ secrets.GIT_USER_EMAIL }}"
       - name: Release the specified version
+        env:
+          SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
+          SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
         if: ${{ github.event.inputs.release_version != '' }}
-        run: sbt "preRelease ${{ github.event.inputs.release_version }}"
+        run: sbt "preRelease ${{ github.event.inputs.release_version }} ${{ secrets.GPG_KEY_ID }}"
       - name: Release new version
+        env:
+          SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
+          SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
         if: ${{ github.event.inputs.release_version == '' }}
-        run: sbt "preRelease next"
+        run: sbt "preRelease next ${{ secrets.GPG_KEY_ID }}"
       - name: Latest tag
         uses: actions-ecosystem/action-get-latest-tag@v1
         id: latest-tag
