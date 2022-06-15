@@ -9,6 +9,7 @@ homepage := Some(url("https://github.com/polystat/polystat-cli"))
 licenses := Seq(License.MIT)
 organizationName := "Polystat"
 organization := "org.polystat"
+name := "polystat-cli"
 organizationHomepage := Some(url("https://www.polystat.org/)"))
 developers := List(
   Developer(
@@ -18,7 +19,6 @@ developers := List(
     url = url("https://github.com/nikololiahim"),
   )
 )
-
 
 sonatypeProfileName := "org.polystat"
 sonatypeCredentialHost := "s01.oss.sonatype.org"
@@ -118,6 +118,29 @@ scalacOptions ++= Seq(
   "-feature",
 )
 
+lazy val generateDescriptor =
+  taskKey[Unit]("Generate a descriptor that is used by coursier to install polystat-cli.")
+
+generateDescriptor := {
+  val ver = version.value
+  val org = organization.value
+  val artifactName = name.value
+  val descriptor =
+    s"""|{
+       |    "repositories": [
+       |        "ivy2Local",
+       |        "central"
+       |    ],
+       |    "dependencies": [
+       |        "${org}:${artifactName}_3:${ver}"
+       |    ]
+       |}
+       |""".stripMargin
+  println(descriptor)
+  java.nio.file.Files
+    .write(java.nio.file.Paths.get("coursier/polystat.json"), descriptor.getBytes)
+}
+
 commands += Command.args("preRelease", "<arg>") { (state, args) =>
   args match {
     case Seq(nextVersion, pgpKeyId) =>
@@ -136,6 +159,7 @@ commands += Command.args("preRelease", "<arg>") { (state, args) =>
               tagRelease,
               releaseStepCommandAndRemaining("publishSigned"),
               releaseStepCommand("sonatypeBundleRelease"),
+              releaseStepTask(generateDescriptor),
               pushChanges,
             ),
             usePgpKeyHex(pgpKeyId),

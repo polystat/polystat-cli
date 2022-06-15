@@ -12,4 +12,5 @@ sarif/**
 polystat-x86_64-pc-linux
 out/
 **.json
+!coursier/polystat.json
 hadoop_tmp
