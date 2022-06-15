@@ -23,6 +23,10 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '11'
+      - name: Import GPG Key
+        uses: crazy-max/ghaction-import-gpg@v4
+        with:
+          gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
       - name: Configure local git
         run: >-
           git config user.name "${{ secrets.GIT_USERNAME }}" && 
@@ -32,13 +36,13 @@ jobs:
           SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
           SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
         if: ${{ github.event.inputs.release_version != '' }}
-        run: sbt "preRelease ${{ github.event.inputs.release_version }} ${{ secrets.GPG_KEY_ID }}"
+        run: sbt "preRelease ${{ github.event.inputs.release_version }}"
       - name: Release new version
         env:
           SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
           SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
         if: ${{ github.event.inputs.release_version == '' }}
-        run: sbt "preRelease next ${{ secrets.GPG_KEY_ID }}"
+        run: sbt "preRelease next"
       - name: Latest tag
         uses: actions-ecosystem/action-get-latest-tag@v1
         id: latest-tag

@@ -150,7 +150,7 @@ generateDescriptor := {
 
 commands += Command.args("preRelease", "<arg>") { (state, args) =>
   args match {
-    case Seq(nextVersion, pgpKeyId) =>
+    case Seq(nextVersion) =>
       val newState = Project
         .extract(state)
         .appendWithSession(
@@ -168,8 +168,7 @@ commands += Command.args("preRelease", "<arg>") { (state, args) =>
               releaseStepCommand("sonatypeBundleRelease"),
               releaseStepTask(generateDescriptor),
               pushChanges,
-            ),
-            pgpSigningKey := Some(pgpKeyId)            
+            )
           ),
           state,
         )
