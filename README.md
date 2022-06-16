@@ -21,6 +21,153 @@ This repository provides an alternative implementation to [Polystat](https://git
 
 ⚠ WARNING ⚠: The tool is still in the early stages of development, so feature suggestions and bug reports are more than welcome!
 
+# Defects
+This section describes the defects that the Polystat CLI can detect by analyzing the EO intermediate representation produced by the translators, such as `j2eo` and `py2eo`.
+
+## Division by zero
+The presence of this defect in the program means that some inputs may cause this program to fail with the ArithmeticException.
+
+Comes from: https://github.com/polystat/far
+
+Sample input (simplified EO translation):
+```
++package org.polystat.far
+
+[a b] > fartest
+  add. > @
+    a.div b
+    div.
+      b.div a
+      a
+```
+
+Analyzer output:
+```
+\\perp at {a=\\any, b=0}\n\\perp at {a=0, b=\\any}\n\\perp at {a=0, b=0}
+```
+
+## Unanticipated mutual recursion
+Comes from: https://github.com/polystat/odin
+
+Unanticipated mutual recursion happens when a subclass redefines some of the methods of the superclass in such a way that one of the methods of the superclass becomes mutually-recursive with one of the redefined methods.
+
+Sample input (simplified EO translation):
+
+```
+[] > a 
+  b > @ 
+  [self] > f 
+    self > @ 
+[] > b 
+  [] > d 
+    a > @
+  [self] > g 
+    self > @ 
+[] > c 
+  [] > e 
+    a > @ 
+    [self] > h 
+      self.f self > @ 
+[] > t 
+  c.e > @ 
+  [self] > f 
+    self.h self > @ 
+```
+
+Analyzer output:
+
+```
+t: 
+  t.h (was last redefined in "c.e") ->
+  t.f ->
+  t.h (was last redefined in "c.e")
+```
+
+## Unjustified assumptions about methods of superclasses
+If the superclass contains this defect, this means that the inlining of one its
+the methods is not safe, because doing so may lead to breaking changes in its subclasses. 
+
+Comes from: https://github.com/polystat/odin
+
+Sample input (simplified EO translation):
+
+```
+[] > base
+  [self x] > f
+    seq > @
+      assert (x.less 9)
+      x.add 1
+  [self x] > g
+    seq > @
+      assert ((self.f self (x.add 1)).less 10)
+      22
+[] > derived
+  base > @
+  [self x] > f
+    seq > @
+      assert (5.less x)
+      x.sub 1
+```
+
+Analyzer output:
+
+```
+Inlining calls in method g is not safe: doing so may break the behaviour of subclasses!
+```
+
+## Direct Access to the Base Class State
+This defect means that the analyzed program contains the parts where the fields of the object are accessed directly. This probably means that the object with such fields breaks the incapsulation by exposing some of its private fields. 
+
+Comes from: https://github.com/polystat/odin
+
+
+Sample input (simplified EO translation):
+
+```
+[] > a
+  memory > state
+  [self new_state] > update_state
+    self.state.write new_state > @
+[] > b
+  a > @
+  [self new_state] > change_state_plus_two
+    self.state.write (new_state.add 2) > @
+```
+
+Analyzer output:
+
+```
+Method 'change_state_plus_two' of object 'b' directly accesses state 'state' of base class 'a'
+```
+
+## Violation of the Liskov substitution principle
+This defect means that some parts of the code violate the [Liskov substitution principle](https://en.wikipedia.org/wiki/Liskov_substitution_principle).
+
+Comes from: https://github.com/polystat/odin
+
+Sample input (simplified EO translation):
+
+```
+[] > base
+  [self x] > f
+    seq > @
+      assert (x.less 9)
+      x.add 1
+[] > derived
+  base > @
+  [self x] > f
+    seq > @
+      assert (x.greater 9)
+      x.sub 1
+```
+
+Analyzer output:
+
+```
+Method f of object derived violates the Liskov substitution principle as compared to version in parent object base
+```
+
+
 # Installation
 ## With coursier
 If you have [coursier](https://get-coursier.io/docs/cli-installation) installed, then you can install the latest version of `polystat-cli` by running:
@@ -128,16 +275,19 @@ polystat [--version] [--help] [--config <path>]
 polystat list [--config | -c]
 ```
 ## Input configuration
-* The subcommand specifies which files should be analyzed (`.eo`, `.java` or `.py`). More languages can be added in the future. 
-* Analyzes the input files in the `--in` directory. If `--in` is not specified, defaults to reading the input language code from stdin. 
-* `--in` can also accept a path which leads to a file. In this case, only the specified file will be analyzed. 
-* The temporary files produced by analyzers are to be stored in `--tmp` directory.  If `--tmp` is not specified, temporary files will be stored in the OS-created tempdir. Each target language may have a different structure of the files in the temporary directory. It is assumed that the `path` supplied by `--tmp` points to an empty directory. If not, the contents of the `path` will be purged. If the `--tmp` option is specified but the directory it points to does not exist, it will be created. 
+* The subcommand (`eo`, `java` or `python`) specifies which files should be analyzed (`.eo`, `.java` or `.py`). More languages can be added in the future. 
+* `--in <file>` specifies the location of the source code to be analyzed. It can be either a directory with the files in the input language or a single file in the input language. If `--in` is not specified, defaults to reading the input language code from stdin.
+* `--tmp <path>` specifies the path to the directory where the temporary files produced by analyzers are to be stored.  If `--tmp` is not specified, temporary files will be stored in the OS-created tempdir. It is assumed that the `path` supplied by `--tmp` points to an empty directory. If not, the contents of the `path` will be purged. If the `--tmp` option is specified but the directory it points to does not exist, it will be created. 
+* The structure of the temporary directory is roughly as follows:
+  * `<path>/eo` contains the generated `.eo` files.
+  * `<path>/xmir` contains the generated `.xml` XMIR files (if any). 
+  * `<path>/stdin` contains the files with the code read from stdin (if any).
 
 ## Configuration options
 * <a name="inex"></a>`--include` and `--exclude` respectively define which rules should be included/excluded from the analysis run. These options are mutually exclusive, so specifying both should not be valid. If neither option is specified, all the available analyzers will be run. The list of available rule specifiers can be found via `polystat list` command.
-* `--j2eo` option allows users to specify the path to the j2eo executable jar. If it's not specified, it looks for one in the current working diretory. 
+* `--j2eo` (available only when running `polystat java`) option allows users to specify the path to the j2eo executable jar. If it's not specified, it looks for one in the current working diretory. 
 If it's not present in the current working directory, download one from Maven Central (for now, the version is hardcoded to be 0.4.0).
-* `--j2eo-version` option allows users to specify which version of `j2eo` should be downloaded.
+* `--j2eo-version` (available only when running `polystat java`) option allows users to specify which version of `j2eo` should be downloaded.
 
 ## Output configuration
 * `--sarif` option means that the command will produce the output in the [SARIF](https://docs.oasis-open.org/sarif/sarif/v2.1.0/sarif-v2.1.0.html) format in addition to output in other formats (if any). 
@@ -154,11 +304,12 @@ If it's not present in the current working directory, download one from Maven Ce
 * `--to console` specifies whether the output should be written to console. The specification doesn't prevent the user from specifying multiple instances of this option. In this case, the output will be written to console as if just one instance of `--to console` was present. If it's not present the output is not written to console. 
 
 ## `polystat list`
-* If `--config` or `-c` is specified, prints to console the description of all the possible configuration keys for the HOCON config file. If not, prints the specifiers for all the available analyzer rules. 
+* If no options are provided, prints the specifiers for all the available analyzer rules. 
+* If `--config` or `-c` is specified, prints to console the descriptions of all the possible configuration keys for the HOCON config file.
 
 ## Other Options
-* `--version` prints the version of the CLI tool, maybe with some additional information.
-* `--help` displays some informative help message for commands.
+* `--version` prints the version of `polystat-cli`, maybe with some additional information.
+* `--help` displays some informative help messages for commands.
 * `--config <path>` allows to configure Polystat from the specified HOCON config file. If not specified, reads configs from the file `.polystat.conf` in the current working directory.
 
 # Configuration File
