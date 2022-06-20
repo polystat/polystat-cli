@@ -59,7 +59,7 @@ object Far:
             relativelyTo = pathToSrcRoot,
           )
           .createFileIfDoesntExist
-      yield pathToCode.toPath.toNioPath
+      yield pathToCode.toNioPath
 
     for
       pathToXml <- createPathToXml
@@ -67,7 +67,7 @@ object Far:
       _ <- IO.delay(
         new Syntax(
           codeFileNameNoExt,
-          new InputOf(pathToCode.toPath.toNioPath),
+          new InputOf(pathToCode.toNioPath),
           new OutputTo(pathToXml),
         ).parse()
       )

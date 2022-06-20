@@ -3,6 +3,7 @@ package org.polystat.cli.util
 import fs2.io.file.Path
 import cats.effect.IO
 import fs2.io.file.Files
+import java.nio.file.Path as JPath
 
 object FileTypes:
   final class Directory private[FileTypes] (
@@ -10,6 +11,7 @@ object FileTypes:
   ):
     override def toString = underlying.toString
     def toPath: Path = underlying
+    def toNioPath: JPath = underlying.toNioPath
     def /(s: String): Path = underlying / s
     def clean: IO[Directory] =
       for
@@ -44,6 +46,7 @@ object FileTypes:
   final class File private[FileTypes] (private[FileTypes] val underlying: Path):
     override def toString(): String = underlying.toString
     def toPath = underlying
+    def toNioPath: JPath = underlying.toNioPath
     def extName = underlying.extName
     def filenameNoExt: String =
       val fileName = underlying.fileName.toString
