@@ -50,6 +50,12 @@ object InputUtils:
           }
       }
 
+    def mount(to: Directory, relativelyTo: Directory): Path =
+      val relativePath =
+        relativelyTo.toPath.absolute.normalize
+          .relativize(path.absolute.normalize)
+      to.toPath.normalize / relativePath
+
     def unsafeToDirectory: Directory = Directory.fromPathUnsafe(path)
     def unsafeToFile: File = File.fromPathUnsafe(path)
   end extension
@@ -84,17 +90,11 @@ object InputUtils:
     HoconConfig(file.toPath).config.load
 
   def writeOutputTo(file: File)(output: String): IO[Unit] =
-    for
-      _ <- file.toPath.parent
-        .map(Files[IO].createDirectories)
-        .getOrElse(IO.unit)
-      _ <- Stream
-        .emits(output.getBytes)
-        .through(Files[IO].writeAll(file.toPath))
-        .compile
-        .drain
-    yield ()
-    end for
+    Stream
+      .emits(output.getBytes)
+      .through(Files[IO].writeAll(file.toPath))
+      .compile
+      .drain
   end writeOutputTo
 
 end InputUtils
