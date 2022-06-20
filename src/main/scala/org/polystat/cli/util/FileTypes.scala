@@ -36,6 +36,9 @@ object FileTypes:
           )
       }
 
+    def createTempDirectory: IO[Directory] =
+      Files[IO].createTempDirectory.map(Directory(_))
+
     def fromPathUnsafe(path: Path): Directory = Directory(path)
 
   final class File private[FileTypes] (private[FileTypes] val underlying: Path):

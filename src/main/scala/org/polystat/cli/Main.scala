@@ -132,10 +132,7 @@ object Main extends IOApp:
               case Some(dir) =>
                 IO.println(s"Cleaning ${dir.toPath.absolute}...") *>
                   dir.clean
-              case None =>
-                Files[IO].createTempDirectory.flatMap(
-                  Directory.fromPathFailFast
-                )
+              case None => Directory.createTempDirectory
             input <- input match
               case Input.FromDirectory(dir) => dir.pure[IO]
               case Input.FromFile(file) =>
