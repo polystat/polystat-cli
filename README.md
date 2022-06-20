@@ -27,7 +27,7 @@ This section describes the defects that the Polystat CLI can detect by analyzing
 ## Division by zero
 The presence of this defect in the program means that some inputs may cause this program to fail with the ArithmeticException.
 
-Comes from: https://github.com/polystat/far
+Comes from: [polystat/far](https://github.com/polystat/far)
 
 Sample input (simplified EO translation):
 ```
@@ -47,7 +47,7 @@ Analyzer output:
 ```
 
 ## Unanticipated mutual recursion
-Comes from: https://github.com/polystat/odin
+Comes from: [polsytat/odin](https://github.com/polystat/odin#mutual-recursion-analyzer)
 
 Unanticipated mutual recursion happens when a subclass redefines some of the methods of the superclass in such a way that one of the methods of the superclass becomes mutually-recursive with one of the redefined methods.
 
@@ -87,7 +87,7 @@ t:
 If the superclass contains this defect, this means that the inlining of one its
 the methods is not safe, because doing so may lead to breaking changes in its subclasses. 
 
-Comes from: https://github.com/polystat/odin
+Comes from: [polystat/odin](https://github.com/polystat/polystat-cli#unjustified-assumptions-about-methods-of-superclasses)
 
 Sample input (simplified EO translation):
 
@@ -118,7 +118,7 @@ Inlining calls in method g is not safe: doing so may break the behaviour of subc
 ## Direct Access to the Base Class State
 This defect means that the analyzed program contains the parts where the fields of the object are accessed directly. This probably means that the object with such fields breaks the incapsulation by exposing some of its private fields. 
 
-Comes from: https://github.com/polystat/odin
+Comes from: [polystat/odin](https://github.com/polystat/odin#direct-access-to-the-base-class-state-analyzer)
 
 
 Sample input (simplified EO translation):
@@ -141,9 +141,9 @@ Method 'change_state_plus_two' of object 'b' directly accesses state 'state' of 
 ```
 
 ## Violation of the Liskov substitution principle
-This defect means that some parts of the code violate the [Liskov substitution principle](https://en.wikipedia.org/wiki/Liskov_substitution_principle).
+This defect means that some parts of the code violate the [Liskov substitution principle](https://github.com/polystat/odin#liskov-substitution-principle-violation-analyzer).
 
-Comes from: https://github.com/polystat/odin
+Comes from: [polystat/odin](https://github.com/polystat/odin#liskov-substitution-principle-violation-analyzer)
 
 Sample input (simplified EO translation):
 
