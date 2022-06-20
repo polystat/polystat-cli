@@ -51,13 +51,15 @@ object Far:
   ): IO[OdinAnalysisResult] =
     val codeFileNameNoExt: String = pathToCode.filenameNoExt
     val createPathToXml: IO[JPath] =
-      (pathToTmpDir / "xmir").createDirIfDoesntExist.map(tmp =>
-        pathToCode
-          .mount(to = tmp, relativelyTo = pathToSrcRoot)
-          .replaceExt(newExt = ".xml")
-          .toPath
-          .toNioPath
-      )
+      for
+        xmirTmpDir <- (pathToTmpDir / "xmir").createDirIfDoesntExist
+        pathToCode <- pathToCode.toPath
+          .mount(
+            to = xmirTmpDir,
+            relativelyTo = pathToSrcRoot,
+          )
+          .createFileIfDoesntExist
+      yield pathToCode.toPath.toNioPath
 
     for
       pathToXml <- createPathToXml

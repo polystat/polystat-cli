@@ -52,13 +52,14 @@ object EO:
             cfg.output.dirs.traverse_(out =>
               for
                 sarifDir <- (out / "sarif").createDirIfDoesntExist
-                outPath =
-                  codePath
+                outPath <-
+                  codePath.toPath
                     .mount(
                       to = sarifDir,
                       relativelyTo = cfg.input,
                     )
-                    .replaceExt(newExt = ".sarif.json")
+                    .createFileIfDoesntExist
+                    .map(_.replaceExt(newExt = ".sarif.json"))
                 _ <- IO.println(s"Writing results to $outPath...")
                 _ <- writeOutputTo(outPath)(sarifJson)
               yield ()

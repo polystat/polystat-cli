@@ -14,21 +14,22 @@ object Python:
     for
       dirForEO <- (cfg.tempDir / "eo").createDirIfDoesntExist
       _ <- readCodeFromDir(".py", cfg.input)
-        .evalMap { case (path, code) =>
+        .evalMap { case (file, code) =>
           for
             maybeCode <- IO(
-              Transpile(path.filenameNoExt, code)
+              Transpile(file.filenameNoExt, code)
             )
-            pathToEOCode = path
+            pathToEOCode <- file.toPath
               .mount(
                 to = dirForEO,
                 relativelyTo = cfg.input,
               )
-              .replaceExt(newExt = ".eo")
+              .createFileIfDoesntExist
+              .map(_.replaceExt(newExt = ".eo"))
             _ <- maybeCode match
               case Some(code) =>
                 writeOutputTo(pathToEOCode)(code)
-              case None => IO.println(s"Couldn't analyze $path...")
+              case None => IO.println(s"Couldn't analyze $file...")
           yield ()
           end for
         }
