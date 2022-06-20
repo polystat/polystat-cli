@@ -24,31 +24,6 @@ This repository provides an alternative implementation to [Polystat](https://git
 # Defects
 This section describes the defects that the Polystat CLI can detect by analyzing the EO intermediate representation produced by the translators, such as `j2eo` and `py2eo`.
 
-## Division by zero
-The presence of this defect in the program means that some inputs may cause this program to fail with the ArithmeticException.
-
-Comes from: [polystat/far](https://github.com/polystat/far)
-
-__WARNING__: The FaR analyzer is not fully-integrated with J2EO translator so the defect detection may not work correctly. 
-
-
-Sample input (simplified EO translation):
-```
-+package org.polystat.far
-
-[a b] > fartest
-  add. > @
-    a.div b
-    div.
-      b.div a
-      a
-```
-
-Analyzer output:
-```
-\\perp at {a=\\any, b=0}\n\\perp at {a=0, b=\\any}\n\\perp at {a=0, b=0}
-```
-
 ## Unanticipated mutual recursion
 Comes from: [polsytat/odin](https://github.com/polystat/odin#mutual-recursion-analyzer)
 
@@ -85,6 +60,195 @@ public class Test {
     }
 }
 ```
+
+<details>
+
+<summary>
+
+Translation to EO (`j2eo` v0.5.3)</summary>
+```
+# 2022-06-20T16:48:51.454871657
+# j2eo team
++alias stdlib.lang.class__Object
++alias stdlib.primitives.prim__int
++alias org.eolang.gray.cage
+
+[] > class__Base
+  class__Object > super
+  super > @
+  [] > new
+    [] > this
+      class__Object.new > super
+      super > @
+      "class__Base" > className
+      [this] > init
+        seq > @
+          d568221876
+        [] > d568221876
+          this.x.write > @
+            i_s1353070773
+        [] > i_s1353070773
+          l825658265 > @
+        [] > l825658265
+          prim__int.constructor_2 > @
+            prim__int.new
+            0
+      prim__int.constructor_1 > x
+        prim__int.new
+      # getX :: null -> int
+      [this] > getX
+        seq > @
+          s204715855
+        [] > s204715855
+          s_r1888442711 > @
+        [] > s_r1888442711
+          x > @
+      # n :: int -> void
+      [this v] > n
+        seq > @
+          s550402284
+        [] > s550402284
+          s_r1438098656.write > @
+            s_r1594199808
+        [] > s_r1438098656
+          x > @
+        [] > s_r1594199808
+          v > @
+      # o :: int -> void
+      [this v] > o
+        seq > @
+          s1769190683
+        [] > s1769190683
+          this.n > @
+            this
+            s_r1201484275
+        [] > s_r1201484275
+          v > @
+      # m :: int -> void
+      [this v] > m
+        seq > @
+          s1089418272
+        [] > s1089418272
+          this.o > @
+            this
+            s_r1233990028
+        [] > s_r1233990028
+          v > @
+    seq > @
+      this
+  # null :: null -> void
+  [this] > constructor
+    seq > @
+      initialization
+      s1509791656
+      this
+    [] > initialization
+      this.init > @
+        this
+    [] > s1509791656
+      super.constructor > @
+        this.super
+
+[] > class__Derived
+  class__Base > super
+  super > @
+  [] > new
+    [] > this
+      class__Base.new > super
+      super > @
+      "class__Derived" > className
+      [this] > init
+        seq > @
+          TRUE
+      # n :: int -> void
+      [this v] > n
+        seq > @
+          s257608164
+        [] > s257608164
+          this.m > @
+            this
+            s_r306115458
+        [] > s_r306115458
+          v > @
+      # l :: int -> void
+      [this v] > l
+        seq > @
+          s230643635
+        [] > s230643635
+          this.n > @
+            this
+            s_r944427387
+        [] > s_r944427387
+          v > @
+    seq > @
+      this
+  # null :: null -> void
+  [this] > constructor
+    seq > @
+      initialization
+      s1636182655
+      this
+    [] > initialization
+      this.init > @
+        this
+    [] > s1636182655
+      super.constructor > @
+        this.super
+
+[] > class__Test
+  class__Object > super
+  super > @
+  [] > new
+    [] > this
+      class__Object.new > super
+      super > @
+      "class__Test" > className
+      [this] > init
+        seq > @
+          TRUE
+    seq > @
+      this
+  # main :: String[] -> void
+  [args] > main
+    seq > @
+      d71399214
+      s1390869998
+    cage > derivedInstance
+    [] > d71399214
+      derivedInstance.write > @
+        i_s1932831450
+    [] > i_s1932831450
+      inst496729294 > @
+    [] > inst496729294
+      class__Derived.constructor > @
+        class__Derived.new
+    [] > s1390869998
+      derivedInstance.l > @
+        derivedInstance
+        l1820383114
+    [] > l1820383114
+      prim__int.constructor_2 > @
+        prim__int.new
+        10
+  # null :: null -> void
+  [this] > constructor
+    seq > @
+      initialization
+      s1645547422
+      this
+    [] > initialization
+      this.init > @
+        this
+    [] > s1645547422
+      super.constructor > @
+        this.super
+
+[args...] > main
+  class__Test.main > @
+    *
+```
+</details>
+
 
 Analyzer output:
 
@@ -154,6 +318,282 @@ public class Test {
 }
 ```
 
+
+<details>
+
+<summary>
+
+Translation to EO (`j2eo` v0.5.3)</summary>
+```
+# 2022-06-20T16:48:51.476031558
+# j2eo team
++alias stdlib.lang.class__Object
++alias stdlib.primitives.prim__int
++alias org.eolang.gray.cage
+
+[] > class__Parent
+  class__Object > super
+  super > @
+  [] > new
+    [] > this
+      class__Object.new > super
+      super > @
+      "class__Parent" > className
+      [this] > init
+        seq > @
+          TRUE
+      # f :: int -> int
+      [this x] > f
+        seq > @
+          d2012330741
+          s1437654187
+          s936292831
+        prim__int.constructor_1 > t
+          prim__int.new
+        [] > d2012330741
+          t.write > @
+            i_s1101184763
+        [] > i_s1101184763
+          b1816147548 > @
+        [] > b1816147548
+          s_r2079179914.sub > @
+            l20049680
+        [] > s_r2079179914
+          x > @
+        [] > l20049680
+          prim__int.constructor_2 > @
+            prim__int.new
+            5
+        [] > s1437654187
+          p951050903.if > @
+            TRUE
+            []
+              "AssertionError" > msg
+        [] > p951050903
+          b770947228 > @
+        [] > b770947228
+          s_r590646109.greater > @
+            l1882349076
+        [] > s_r590646109
+          t > @
+        [] > l1882349076
+          prim__int.constructor_2 > @
+            prim__int.new
+            0
+        [] > s936292831
+          s_r130668770 > @
+        [] > s_r130668770
+          x > @
+      # g :: int -> int
+      [this y] > g
+        seq > @
+          s2151717
+        [] > s2151717
+          m_i1644231115 > @
+        [] > m_i1644231115
+          this.f > @
+            this
+            s_r537066525
+        [] > s_r537066525
+          y > @
+      # gg :: int -> int
+      [this y2] > gg
+        seq > @
+          s1766145591
+        [] > s1766145591
+          m_i1867139015 > @
+        [] > m_i1867139015
+          this.g > @
+            this
+            s_r182531396
+        [] > s_r182531396
+          y2 > @
+      # ggg :: int -> int
+      [this y3] > ggg
+        seq > @
+          s1026871825
+        [] > s1026871825
+          m_i2109798150 > @
+        [] > m_i2109798150
+          this.gg > @
+            this
+            s_r1074389766
+        [] > s_r1074389766
+          y3 > @
+      # h :: int -> int
+      [this z] > h
+        seq > @
+          s1136768342
+        [] > s1136768342
+          s_r1484673893 > @
+        [] > s_r1484673893
+          z > @
+    seq > @
+      this
+  # null :: null -> void
+  [this] > constructor
+    seq > @
+      initialization
+      s587003819
+      this
+    [] > initialization
+      this.init > @
+        this
+    [] > s587003819
+      super.constructor > @
+        this.super
+
+[] > class__Child
+  class__Parent > super
+  super > @
+  [] > new
+    [] > this
+      class__Parent.new > super
+      super > @
+      "class__Child" > className
+      [this] > init
+        seq > @
+          TRUE
+      # f :: int -> int
+      [this y] > f
+        seq > @
+          s769798433
+        [] > s769798433
+          s_r1665620686 > @
+        [] > s_r1665620686
+          y > @
+      # h :: int -> int
+      [this z] > h
+        seq > @
+          s1233705144
+        [] > s1233705144
+          m_i202125197 > @
+        [] > m_i202125197
+          this.ggg > @
+            this
+            s_r811301908
+        [] > s_r811301908
+          z > @
+    seq > @
+      this
+  # null :: null -> void
+  [this] > constructor
+    seq > @
+      initialization
+      s1762902523
+      this
+    [] > initialization
+      this.init > @
+        this
+    [] > s1762902523
+      super.constructor > @
+        this.super
+
+[] > class__Test
+  class__Object > super
+  super > @
+  [] > new
+    [] > this
+      class__Object.new > super
+      super > @
+      "class__Test" > className
+      [this] > init
+        seq > @
+          TRUE
+    seq > @
+      this
+  # main :: String[] -> void
+  [args] > main
+    seq > @
+      d1725008249
+      d402115881
+      s361398902
+      s2044215423
+      s1313916817
+      s1487500813
+      s1231156911
+      s1708169732
+    prim__int.constructor_1 > x
+      prim__int.new
+    [] > d1725008249
+      x.write > @
+        i_s197964393
+    [] > i_s197964393
+      l1620890840 > @
+    [] > l1620890840
+      prim__int.constructor_2 > @
+        prim__int.new
+        10
+    cage > p
+    [] > d402115881
+      p.write > @
+        i_s2106000623
+    [] > i_s2106000623
+      inst330739404 > @
+    [] > inst330739404
+      class__Parent.constructor > @
+        class__Parent.new
+    [] > s361398902
+      p.g > @
+        p
+        s_r1010670443
+    [] > s_r1010670443
+      x > @
+    [] > s2044215423
+      s_r1606304070.sub_equal > @
+        l510063093
+    [] > s_r1606304070
+      x > @
+    [] > l510063093
+      prim__int.constructor_2 > @
+        prim__int.new
+        5
+    [] > s1313916817
+      p.h > @
+        p
+        s_r1966124444
+    [] > s_r1966124444
+      x > @
+    [] > s1487500813
+      s_r1911152052.write > @
+        inst961409111
+    [] > s_r1911152052
+      p > @
+    [] > inst961409111
+      Child.constructor > @
+        Child.new
+    [] > s1231156911
+      p.g > @
+        p
+        s_r1525409936
+    [] > s_r1525409936
+      x > @
+    [] > s1708169732
+      p.h > @
+        p
+        s_r868815265
+    [] > s_r868815265
+      x > @
+  # null :: null -> void
+  [this] > constructor
+    seq > @
+      initialization
+      s1977310713
+      this
+    [] > initialization
+      this.init > @
+        this
+    [] > s1977310713
+      super.constructor > @
+        this.super
+
+[args...] > main
+  class__Test.main > @
+    *
+```
+</details>
+
+
 Analyzer output:
 
 ```
@@ -166,7 +606,7 @@ This defect means that the analyzed program contains the parts where the fields 
 
 Comes from: [polystat/odin](https://github.com/polystat/odin#direct-access-to-the-base-class-state-analyzer)
 
-__WARNING__: With the current latest version of `j2eo` (v0.5.3), the direct state access defect does is not detected. It should work when [j2eo#114](https://github.com/polystat/j2eo/issues/114) is fixed. 
+__WARNING__: With the current latest version of `j2eo` (v0.5.3), the direct state access defect is not detected. It should work when [j2eo#114](https://github.com/polystat/j2eo/issues/114) is fixed. 
 
 Sample input (simplified EO translation):
 
@@ -218,6 +658,160 @@ public class Test {
 
 ```
 
+<details>
+
+<summary>
+
+Translation to EO (`j2eo` v0.5.3)</summary>
+```
+# 2022-06-20T16:48:51.463254529
+# j2eo team
++alias stdlib.lang.class__Object
++alias stdlib.primitives.prim__int
++alias org.eolang.gray.cage
+
+[] > class__Parent
+  class__Object > super
+  super > @
+  [] > new
+    [] > this
+      class__Object.new > super
+      super > @
+      "class__Parent" > className
+      [this] > init
+        seq > @
+          TRUE
+      # f :: int -> int
+      [this x] > f
+        seq > @
+          s873610597
+        [] > s873610597
+          s_r1497845528 > @
+        [] > s_r1497845528
+          x > @
+      # g :: int -> int
+      [this x] > g
+        seq > @
+          s1710989308
+        [] > s1710989308
+          m_i1047087935 > @
+        [] > m_i1047087935
+          this.f > @
+            this
+            s_r464887938
+        [] > s_r464887938
+          x > @
+    seq > @
+      this
+  # null :: null -> void
+  [this] > constructor
+    seq > @
+      initialization
+      s2020152163
+      this
+    [] > initialization
+      this.init > @
+        this
+    [] > s2020152163
+      super.constructor > @
+        this.super
+
+[] > class__Child
+  class__Parent > super
+  super > @
+  [] > new
+    [] > this
+      class__Parent.new > super
+      super > @
+      "class__Child" > className
+      [this] > init
+        seq > @
+          TRUE
+      # f :: int -> int
+      [this y] > f
+        seq > @
+          s1104443373
+        [] > s1104443373
+          b898694235 > @
+        [] > b898694235
+          l60292059.div > @
+            s_r869601985
+        [] > l60292059
+          prim__int.constructor_2 > @
+            prim__int.new
+            10
+        [] > s_r869601985
+          y > @
+    seq > @
+      this
+  # null :: null -> void
+  [this] > constructor
+    seq > @
+      initialization
+      s1365008457
+      this
+    [] > initialization
+      this.init > @
+        this
+    [] > s1365008457
+      super.constructor > @
+        this.super
+
+[] > class__Test
+  class__Object > super
+  super > @
+  [] > new
+    [] > this
+      class__Object.new > super
+      super > @
+      "class__Test" > className
+      [this] > init
+        seq > @
+          TRUE
+    seq > @
+      this
+  # main :: String[] -> void
+  [args] > main
+    seq > @
+      d1671179293
+      s1985836631
+    cage > childInstance
+    [] > d1671179293
+      childInstance.write > @
+        i_s1609124502
+    [] > i_s1609124502
+      inst1144068272 > @
+    [] > inst1144068272
+      class__Child.constructor > @
+        class__Child.new
+    [] > s1985836631
+      childInstance.f > @
+        childInstance
+        l1948471365
+    [] > l1948471365
+      prim__int.constructor_2 > @
+        prim__int.new
+        10
+  # null :: null -> void
+  [this] > constructor
+    seq > @
+      initialization
+      s1636506029
+      this
+    [] > initialization
+      this.init > @
+        this
+    [] > s1636506029
+      super.constructor > @
+        this.super
+
+[args...] > main
+  class__Test.main > @
+    *
+```
+</details>
+
+
 Analyzer output:
 
 ```
@@ -225,6 +819,31 @@ Method f of object this violates the Liskov substitution principle as compared t
 Method g of object this violates the Liskov substitution principle as compared to version in parent object new
 ```
 
+
+## Division by zero
+The presence of this defect in the program means that some inputs may cause this program to fail with the ArithmeticException.
+
+Comes from: [polystat/far](https://github.com/polystat/far)
+
+__WARNING__: The FaR analyzer is not fully-integrated with J2EO translator so the defect detection may not work correctly. 
+
+
+Sample input (simplified EO translation):
+```
++package org.polystat.far
+
+[a b] > fartest
+  add. > @
+    a.div b
+    div.
+      b.div a
+      a
+```
+
+Analyzer output:
+```
+\\perp at {a=\\any, b=0}\n\\perp at {a=0, b=\\any}\n\\perp at {a=0, b=0}
+```
 
 # <a name="installation"></a> Installation
 ## With coursier
