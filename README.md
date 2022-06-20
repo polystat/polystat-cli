@@ -29,6 +29,9 @@ The presence of this defect in the program means that some inputs may cause this
 
 Comes from: [polystat/far](https://github.com/polystat/far)
 
+__WARNING__: The FaR analyzer is not fully-integrated with J2EO translator so the defect detection may not work correctly. 
+
+
 Sample input (simplified EO translation):
 ```
 +package org.polystat.far
@@ -51,36 +54,52 @@ Comes from: [polsytat/odin](https://github.com/polystat/odin#mutual-recursion-an
 
 Unanticipated mutual recursion happens when a subclass redefines some of the methods of the superclass in such a way that one of the methods of the superclass becomes mutually-recursive with one of the redefined methods.
 
-Sample input (simplified EO translation):
+Sample input (Java):
 
-```
-[] > a 
-  b > @ 
-  [self] > f 
-    self > @ 
-[] > b 
-  [] > d 
-    a > @
-  [self] > g 
-    self > @ 
-[] > c 
-  [] > e 
-    a > @ 
-    [self] > h 
-      self.f self > @ 
-[] > t 
-  c.e > @ 
-  [self] > f 
-    self.h self > @ 
+```java
+class Base {
+    private int x = 0;
+    public int getX() { return x; }
+    public void n(int v) {
+        x = v;
+    }
+    public void o(int v) {
+        this.n(v);
+    }
+    public void m(int v) { 
+        this.o(v); 
+    }
+}
+class Derived extends Base {
+    public void n(int v) {
+        this.m(v);
+    }
+    public void l(int v) {
+        this.n(v);
+    }
+}
+public class Test {
+    public static void main(String[] args) {
+        Derived derivedInstance = new Derived();
+        derivedInstance.l(10);
+    }
+}
 ```
 
 Analyzer output:
 
 ```
-t: 
-  t.h (was last redefined in "c.e") ->
-  t.f ->
-  t.h (was last redefined in "c.e")
+class__Derived.new: 
+    class__Derived.new.m (was last redefined in "class__Base.new.this") -> 
+    class__Derived.new.o (was last redefined in "class__Base.new.this") -> 
+    class__Derived.new.n (was last redefined in "class__Derived.new.this") -> 
+    class__Derived.new.m (was last redefined in "class__Base.new.this")
+
+class__Derived.new.this: 
+  class__Derived.new.this.m (was last redefined in "class__Base.new.this") ->
+  class__Derived.new.this.o (was last redefined in "class__Base.new.this") ->
+  class__Derived.new.this.n ->
+  class__Derived.new.this.m (was last redefined in "class__Base.new.this")
 ```
 
 ## Unjustified assumptions about methods of superclasses
@@ -89,30 +108,57 @@ the methods is not safe, because doing so may lead to breaking changes in its su
 
 Comes from: [polystat/odin](https://github.com/polystat/polystat-cli#unjustified-assumptions-about-methods-of-superclasses)
 
-Sample input (simplified EO translation):
+Sample input (Java):
 
-```
-[] > base
-  [self x] > f
-    seq > @
-      assert (x.less 9)
-      x.add 1
-  [self x] > g
-    seq > @
-      assert ((self.f self (x.add 1)).less 10)
-      22
-[] > derived
-  base > @
-  [self x] > f
-    seq > @
-      assert (5.less x)
-      x.sub 1
+```java
+class Parent {
+    public int f(int x) {
+        int t = x - 5;
+        assert(t > 0);
+        return x;
+    }
+    public int g(int y) {
+        return this.f(y);
+    }
+    public int gg(int y2) {
+        return this.g(y2);
+    }
+    public int ggg(int y3) {
+        return this.gg(y3);
+    }
+    public int h(int z) {
+        return z;
+    }
+}
+class Child extends Parent {
+    @Override
+    public int f(int y) {
+        return y;
+    }
+    @Override
+    public int h(int z) {
+        return this.ggg(z);
+    }
+};
+public class Test {
+    public static void main(String[] args) {
+        int x = 10;
+        Parent p = new Parent();
+        p.g(x);
+        x -= 5;
+        p.h(x);
+        p = new Child();
+        p.g(x);
+        p.h(x);
+    }
+}
 ```
 
 Analyzer output:
 
 ```
 Inlining calls in method g is not safe: doing so may break the behaviour of subclasses!
+Inlining calls in method ggg is not safe: doing so may break the behaviour of subclasses!
 ```
 
 ## Direct Access to the Base Class State
@@ -120,6 +166,7 @@ This defect means that the analyzed program contains the parts where the fields 
 
 Comes from: [polystat/odin](https://github.com/polystat/odin#direct-access-to-the-base-class-state-analyzer)
 
+__WARNING__: With the current latest version of `j2eo` (v0.5.3), the direct state access defect does is not detected. It should work when [j2eo#114](https://github.com/polystat/j2eo/issues/114) is fixed. 
 
 Sample input (simplified EO translation):
 
@@ -145,30 +192,41 @@ This defect means that some parts of the code violate the [Liskov substitution p
 
 Comes from: [polystat/odin](https://github.com/polystat/odin#liskov-substitution-principle-violation-analyzer)
 
-Sample input (simplified EO translation):
+Sample input (Java):
 
-```
-[] > base
-  [self x] > f
-    seq > @
-      assert (x.less 9)
-      x.add 1
-[] > derived
-  base > @
-  [self x] > f
-    seq > @
-      assert (x.greater 9)
-      x.sub 1
+```java
+class Parent {
+    public int f(int x) {
+        return x;
+    }
+    public int g(int x) {
+        return this.f(x);
+    }
+}
+class Child extends Parent {
+    @Override
+    public int f(int y) {
+        return 10/y;
+    }
+}
+public class Test {
+    public static void main(String[] args) {
+        Parent childInstance = new Child();
+        childInstance.f(10);
+    }
+}
+
 ```
 
 Analyzer output:
 
 ```
-Method f of object derived violates the Liskov substitution principle as compared to version in parent object base
+Method f of object this violates the Liskov substitution principle as compared to version in parent object this
+Method g of object this violates the Liskov substitution principle as compared to version in parent object new
 ```
 
 
-# Installation
+# <a name="installation"></a> Installation
 ## With coursier
 If you have [coursier](https://get-coursier.io/docs/cli-installation) installed, then you can install the latest version of `polystat-cli` by running:
 ```
@@ -247,6 +305,38 @@ $ polystat java --in src/main/java --console
 $ polystat eo --in tmp --sarif --to dir=polystat_out
 ```
 
+# Running on big projects (hadoop)
+1. Clone the Hadoop `git` repository:
+```sh
+git clone https://github.com/apache/hadoop
+```
+2. Create the file `.polystat.conf` with the following contents:
+```ini
+polystat {
+    lang = java
+    input = hadoop
+    tempDir = hadoop_tmp
+    outputFormats = [sarif]
+    outputs = {
+        dirs = [hadoop_out],
+        files = [hadoop.json]
+    }
+}
+```
+3. Run `polystat-cli` without arguments: 
+```
+$ polystat
+```
+or
+```
+$ java -jar polystat.jar
+```
+depending on which [installation method](#installation) you chose.
+
+Executing these commands should create the following files:
+1. `hadoop_tmp` should store all the temporary files produced by translators and analyzers.
+2. `hadoop_out` should contain the produced `.sarif.json` files. Each `.sarif.json` file corresponds to a single `.java` file in the repository.
+3. `hadoop.json` should contain the aggregated SARIF output for all the files in the repository. This `.json` file contains a single [`sarifLog`](https://docs.oasis-open.org/sarif/sarif/v2.1.0/os/sarif-v2.1.0-os.html#_Toc34317478) object. This object has a property called [`runs`](https://docs.oasis-open.org/sarif/sarif/v2.1.0/os/sarif-v2.1.0-os.html#_Toc34317482), which is an array of `run` objects. Each [`run`](https://docs.oasis-open.org/sarif/sarif/v2.1.0/os/sarif-v2.1.0-os.html#_Toc34317484) object contains the name of the analyzed file and the [`results`](https://docs.oasis-open.org/sarif/sarif/v2.1.0/os/sarif-v2.1.0-os.html#_Toc34317507) property, which holds the results of all the analyzers that completed successfully. 
 
 # <a name="full"></a> Full Usage Specification
 This section covers all the options available in the CLI interface and their meanings. 
