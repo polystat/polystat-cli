@@ -63,10 +63,9 @@ public class Test {
 
 <details>
 
-<summary>
-
-Translation to EO (`j2eo` v0.5.3)</summary>
-```
+<summary>Show translation to EO (generated with J2EO v0.5.3)</summary>
+   
+```python
 # 2022-06-20T16:48:51.454871657
 # j2eo team
 +alias stdlib.lang.class__Object
