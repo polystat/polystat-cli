@@ -15,6 +15,8 @@ import com.typesafe.config.ConfigValue as HoconConfigValue
 import fs2.io.file.Path
 import lt.dvim.ciris.Hocon.*
 import org.polystat.cli.util.InputUtils.toInput
+import org.polystat.cli.util.InputUtils.createDirIfDoesntExist
+import org.polystat.cli.util.InputUtils.createFileIfDoesntExist
 
 import scala.jdk.CollectionConverters.*
 
@@ -23,6 +25,7 @@ import SupportedLanguage.*
 import IncludeExclude.*
 import org.polystat.cli.util.FileTypes.*
 import ciris.ConfigKey
+import fs2.io.file.Files
 
 case class HoconConfig(path: Path):
 
@@ -80,8 +83,7 @@ case class HoconConfig(path: Path):
                   outputFormats,
                   lang,
                 ) =>
-              for
-                j2eo <- j2eo.traverse(File.fromPathFailFast)
+              for j2eo <- j2eo.traverse(File.fromPathFailFast)
               yield PolystatUsage.Analyze(
                 language = lang match
                   case Java(_, _) => Java(j2eo, j2eoVersion)
