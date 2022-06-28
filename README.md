@@ -1,12 +1,16 @@
 ![logo](https://camo.githubusercontent.com/249d7357b20b54fb522bb75c82902fb6ae47d894c36015aba2c7b7f23a39b65d/68747470733a2f2f7777772e706f6c79737461742e6f72672f6c6f676f2e737667)
 
 [![Continuous Integration](https://github.com/polystat/polystat-cli/actions/workflows/ci.yml/badge.svg)](https://github.com/polystat/polystat-cli/actions/workflows/ci.yml)
+[![Hits-of-Code](https://hitsofcode.com/github/polystat/polystat-cli)](https://hitsofcode.com/view/github/polystat/polystat-cli)
+![Lines of code](https://img.shields.io/tokei/lines/github/polystat/polystat-cli)
 
 [![Maven Release](https://badgen.net/maven/v/metadata-url/https/repo1.maven.org/maven2/org/polystat/polystat-cli_3/maven-metadata.xml)](https://oss.sonatype.org/content/repositories/releases/org/polystat/polystat-cli_3/)
 ![GitHub](https://img.shields.io/github/license/polystat/polystat-cli)
 ![GitHub Release Date](https://img.shields.io/github/release-date/polystat/polystat-cli)
 ![GitHub all releases](https://img.shields.io/github/downloads/polystat/polystat-cli/total)
+
 # Polystat CLI
+
 This repository provides an alternative implementation to [Polystat](https://github.com/polystat/polystat). This tool's objective is to extend the functionality of the original implementation. These extensions include:
 * A precise [specification](#full) for the command-line interface. 
 * A configuration file that is not tied to the command-line interface.  
