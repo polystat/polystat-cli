@@ -18,7 +18,7 @@ This repository provides an alternative implementation to [Polystat](https://git
     * Automatic downloading of the specified version from Maven Central
     * If you have `j2eo` installed locally, you can provide a path to it via a configuration option.
 * The [SARIF](https://docs.oasis-open.org/sarif/sarif/v2.1.0/os/sarif-v2.1.0-os.html) output of the analyzers can be produced in the following two forms:
-    * A **directory** with the `.sarif.json` files, where each SARIF file corresponds to the file in the input directory. 
+    * A **directory** with the `.sarif` files, where each SARIF file corresponds to the file in the input directory. 
     * An **single file** where the outputs of the analyzers for all the analyzed files are aggregated in a single SARIF JSON object. 
 
 ...and many minor quality-of-life improvements. 
@@ -957,7 +957,7 @@ depending on which [installation method](#installation) you chose.
 
 Executing these commands should create the following files:
 1. `hadoop_tmp` should store all the temporary files produced by translators and analyzers.
-2. `hadoop_out` should contain the produced `.sarif.json` files. Each `.sarif.json` file corresponds to a single `.java` file in the repository.
+2. `hadoop_out` should contain the produced `.sarif` files. Each `.sarif` file corresponds to a single `.java` file in the repository.
 3. `hadoop.json` should contain the aggregated SARIF output for all the files in the repository. This `.json` file contains a single [`sarifLog`](https://docs.oasis-open.org/sarif/sarif/v2.1.0/os/sarif-v2.1.0-os.html#_Toc34317478) object. This object has a property called [`runs`](https://docs.oasis-open.org/sarif/sarif/v2.1.0/os/sarif-v2.1.0-os.html#_Toc34317482), which is an array of `run` objects. Each [`run`](https://docs.oasis-open.org/sarif/sarif/v2.1.0/os/sarif-v2.1.0-os.html#_Toc34317484) object contains the name of the analyzed file and the [`results`](https://docs.oasis-open.org/sarif/sarif/v2.1.0/os/sarif-v2.1.0-os.html#_Toc34317507) property, which holds the results of all the analyzers that completed successfully. 
 
 # <a name="full"></a> Full Usage Specification
@@ -1006,7 +1006,7 @@ If it's not present in the current working directory, download one from Maven Ce
 * `--to { console | dir=<path>| file=<path> }` is a repeatable option that specifies where the output should be written. If this option is not specified, no output is produced. 
 * `--to dir=<path>` means that the files will be written to the given path. The path is assumed to be an empty directory. If it is not, its contents will be purged. If the `path` is specified but the directory it points to does not exist, it will be created. 
     * If an additional output format is specified (e.g. `--sarif`), then the files created by the analyzer will be written in the respective subdirectory. For example, in case of `--sarif`,  the SARIF files will be located in `path/sarif/`. The console output is not written anywhere. Therefore, if none of the output format options (e.g. `--sarif`) are specified, no files are produced. 
-    * The output format options (e.g. `--sarif`) also determine the extension of the output files. In case of `--sarif` the extension would be `.sarif.json`.
+    * The output format options (e.g. `--sarif`) also determine the extension of the output files. In case of `--sarif` the extension would be `.sarif`.
     * If `--in` option specifies a directory, the structure of the output directory will be similar to the structure of the input directory. 
     * If `--in` specifies a single file, the file with the analysis output for this file will be written to the output directory. 
     * If `--in` is not specified, the generated file will be called `stdin` + the relevant extension. 
