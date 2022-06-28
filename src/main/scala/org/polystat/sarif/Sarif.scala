@@ -10,7 +10,7 @@ object Sarif:
 
   final val SARIF_VERSION = "2.1.0"
   final val SARIF_SCHEMA =
-    "https://json.schemastore.org/sarif-2.1.0-rtm.5.json"
+    "https://schemastore.azurewebsites.net/schemas/json/sarif-2.1.0-rtm.4.json"
 
   final case class SarifLog(
       runs: Seq[SarifRun],
