@@ -23,17 +23,30 @@ object InputUtils:
           Files[IO].createDirectories(path).as(path.unsafeToDirectory)
       }
 
+    def replaceExt(newExt: String): Path =
+      val pathString = path.toString
+      Path(
+        pathString
+          .splitAt(pathString.lastIndexOf("."))
+          ._1 + newExt
+      )
+
+    def replaceExtThenCreateFile(newExt: String): IO[File] =
+      path.replaceExt(newExt).createFileIfDoesntExist
+
     def createFileIfDoesntExist: IO[File] =
-      File.fromPath(path).flatMap {
-        case Some(file) => IO.pure(file)
-        case None =>
-          path.parent match
-            case Some(parent) =>
-              (Files[IO].createDirectories(parent) *> Files[IO]
-                .createFile(path))
-                .as(path.unsafeToFile)
-            case None => Files[IO].createFile(path).as(path.unsafeToFile)
-      }
+      File
+        .fromPath(path)
+        .flatMap {
+          case Some(file) => IO.pure(file)
+          case None =>
+            path.parent match
+              case Some(parent) =>
+                (Files[IO].createDirectories(parent) *>
+                  Files[IO].createFile(path))
+              case None => Files[IO].createFile(path)
+        }
+        .as(path.unsafeToFile)
 
     def toInput: IO[Input] =
       Directory.fromPath(path).flatMap {

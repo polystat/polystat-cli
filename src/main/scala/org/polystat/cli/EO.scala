@@ -58,8 +58,7 @@ object EO:
                       to = sarifDir,
                       relativelyTo = cfg.input,
                     )
-                    .createFileIfDoesntExist
-                    .map(_.replaceExt(newExt = ".sarif.json"))
+                    .replaceExtThenCreateFile(newExt = ".sarif.json")
                 _ <- IO.println(s"Writing results to $outPath...")
                 _ <- writeOutputTo(outPath)(sarifJson)
               yield ()

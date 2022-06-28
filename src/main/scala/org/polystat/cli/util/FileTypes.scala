@@ -52,15 +52,6 @@ object FileTypes:
       val fileName = underlying.fileName.toString
       fileName.splitAt(fileName.indexOf("."))._1
 
-    def replaceExt(newExt: String): File =
-      File.fromPathUnsafe(
-        Path(
-          underlying.toString
-            .splitAt(underlying.toString.lastIndexOf("."))
-            ._1 + newExt
-        )
-      )
-
   object File:
     def fromPath(path: Path): IO[Option[File]] =
       Files[IO]

@@ -24,8 +24,7 @@ object Python:
                 to = dirForEO,
                 relativelyTo = cfg.input,
               )
-              .createFileIfDoesntExist
-              .map(_.replaceExt(newExt = ".eo"))
+              .replaceExtThenCreateFile(newExt = ".eo")
             _ <- maybeCode match
               case Some(code) =>
                 writeOutputTo(pathToEOCode)(code)
