@@ -59,7 +59,7 @@ object EO:
                       to = sarifDir,
                       relativelyTo = cfg.input,
                     )
-                    .replaceExtThenCreateFile(newExt = ".sarif.json")
+                    .replaceExtThenCreateFile(newExt = ".sarif")
                 _ <- IO.println(s"Writing results to $outPath...")
                 _ <- writeOutputTo(outPath)(sarifJson)
               yield ()

@@ -14,3 +14,5 @@ out/
 **.json
 !coursier/polystat.json
 hadoop_tmp
+**.jar
+!native-image-configs/*.json

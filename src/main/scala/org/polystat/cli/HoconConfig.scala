@@ -8,12 +8,14 @@ import cats.syntax.functor.*
 import cats.syntax.parallel.*
 import cats.syntax.traverse.*
 import ciris.ConfigDecoder
+import ciris.ConfigKey
 import ciris.ConfigValue
 import com.typesafe.config.Config
 import com.typesafe.config.ConfigFactory
 import com.typesafe.config.ConfigValue as HoconConfigValue
 import fs2.io.file.Path
 import lt.dvim.ciris.Hocon.*
+import org.polystat.cli.util.FileTypes.*
 import org.polystat.cli.util.InputUtils.toInput
 
 import scala.jdk.CollectionConverters.*
@@ -21,8 +23,6 @@ import scala.jdk.CollectionConverters.*
 import PolystatConfig.*
 import SupportedLanguage.*
 import IncludeExclude.*
-import org.polystat.cli.util.FileTypes.*
-import ciris.ConfigKey
 
 case class HoconConfig(path: Path):
 
@@ -80,8 +80,7 @@ case class HoconConfig(path: Path):
                   outputFormats,
                   lang,
                 ) =>
-              for
-                j2eo <- j2eo.traverse(File.fromPathFailFast)
+              for j2eo <- j2eo.traverse(File.fromPathFailFast)
               yield PolystatUsage.Analyze(
                 language = lang match
                   case Java(_, _) => Java(j2eo, j2eoVersion)
