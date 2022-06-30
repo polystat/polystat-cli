@@ -52,14 +52,10 @@ case class HoconConfig(path: Path):
         val outputsConsole =
           hocon(keys.outputsConsole).as[Boolean].default(false)
 
-        val outputs: ConfigValue[IO, IO[Output]] =
+        val outputs: ConfigValue[IO, Output] =
           (outputsDirs, outputsFiles, outputsConsole).parMapN {
             case (dirs, files, console) =>
-              for
-                dirs <- dirs.traverse(Directory.fromPathFailFast)
-                files <- files.traverse(File.fromPathFailFast)
-              yield Output(dirs = dirs, files = files, console = console)
-
+              Output(dirs = dirs, files = files, console = console)
           }
 
         val j2eoVersion = hocon(keys.j2eoVersion).as[String].option
@@ -87,7 +83,6 @@ case class HoconConfig(path: Path):
               for
                 j2eo <- j2eo.traverse(File.fromPathFailFast)
                 tmp <- tmp.traverse(Directory.fromPathFailFast)
-                outputs <- outputs
               yield PolystatUsage.Analyze(
                 language = lang match
                   case Java(_, _) => Java(j2eo, j2eoVersion)

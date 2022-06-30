@@ -39,7 +39,8 @@ object EO:
         }
 
     def writeToDirs(
-        analyzed: Vector[(File, List[OdinAnalysisResult])]
+        dirs: List[Directory],
+        analyzed: Vector[(File, List[OdinAnalysisResult])],
     ): IO[Unit] =
       analyzed.traverse_ { case (codePath, results) =>
         for
@@ -49,7 +50,7 @@ object EO:
               codePath,
               results,
             ).json.toString
-            cfg.output.dirs.traverse_(out =>
+            dirs.traverse_(out =>
               for
                 sarifDir <- (out / "sarif").createDirIfDoesntExist
                 outPath <-
@@ -67,13 +68,16 @@ object EO:
         yield ()
       }
 
-    def writeAggregate(analyzed: Vector[(File, List[OdinAnalysisResult])]) =
-      cfg.output.files.traverse_ { outputPath =>
+    def writeAggregate(
+        files: List[File],
+        analyzed: Vector[(File, List[OdinAnalysisResult])],
+    ) =
+      files.traverse_ { outputFile =>
         cfg.fmts.traverse_ { case OutputFormat.Sarif =>
           for
-            _ <- IO.println(s"Writing aggregated output to $outputPath...")
+            _ <- IO.println(s"Writing aggregated output to $outputFile...")
             sariOutput = AggregatedSarifOutput(analyzed).json.toString
-            _ <- writeOutputTo(outputPath)(sariOutput)
+            _ <- writeOutputTo(outputFile)(sariOutput)
           yield ()
         }
       }
@@ -81,14 +85,16 @@ object EO:
     for
       inputFiles <- readCodeFromDir(".eo", cfg.input).compile.toVector
       analyzed <- runAnalyzers(inputFiles)
-      _ <- cfg.output.dirs.traverse_ { outDir =>
+      outputDirs <- cfg.output.dirs.traverse { outputPath =>
         for
-          _ <- IO.println(s"Cleaning $outDir before writing...")
-          _ <- outDir.toPath.createDirIfDoesntExist.flatMap(_.clean)
-        yield ()
+          outputDir <- outputPath.createDirIfDoesntExist
+          _ <- IO.println(s"Cleaning $outputDir before writing...")
+          _ <- outputDir.clean
+        yield outputDir
       }
-      _ <- writeToDirs(analyzed)
-      _ <- writeAggregate(analyzed)
+      outputFiles <- cfg.output.files.traverse(_.createFileIfDoesntExist)
+      _ <- writeToDirs(outputDirs, analyzed)
+      _ <- writeAggregate(outputFiles, analyzed)
     yield ()
     end for
   end analyze

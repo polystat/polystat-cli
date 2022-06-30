@@ -58,8 +58,8 @@ object PolystatConfig:
     case Sarif
 
   final case class Output(
-      dirs: List[Directory],
-      files: List[File],
+      dirs: List[Path],
+      files: List[Path],
       console: Boolean,
   )
 

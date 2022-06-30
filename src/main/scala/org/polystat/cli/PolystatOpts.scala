@@ -190,7 +190,7 @@ object PolystatOpts:
     def defaultMetavar: String = "console | dir=<path> | file=<path>"
   end given
 
-  def files: Opts[IO[Output]] = Opts
+  def files: Opts[Output] = Opts
     .options[OutputArg](
       long = "to",
       help = "Create output files in the specified path",
@@ -198,22 +198,15 @@ object PolystatOpts:
     .orEmpty
     .map(args =>
       val initialState =
-        IO.pure(Output(dirs = List(), files = List(), console = false))
+        Output(dirs = List(), files = List(), console = false)
       args.foldLeft(initialState) { case (acc, arg) =>
-        for
-          acc <- acc
-          newAcc <- arg match
-            case OutputArg.File(path) =>
-              File
-                .fromPathFailFast(path)
-                .map(file => acc.copy(files = acc.files.prepended(file)))
-            case OutputArg.Directory(path) =>
-              Directory
-                .fromPathFailFast(path)
-                .map(dir => acc.copy(dirs = acc.dirs.prepended(dir)))
-            case OutputArg.Console =>
-              IO.pure(if acc.console then acc else acc.copy(console = true))
-        yield newAcc
+        arg match
+          case OutputArg.File(path) =>
+            acc.copy(files = acc.files.prepended(path))
+          case OutputArg.Directory(path) =>
+            acc.copy(dirs = acc.dirs.prepended(path))
+          case OutputArg.Console =>
+            if acc.console then acc else acc.copy(console = true)
       }
     )
 
@@ -223,7 +216,6 @@ object PolystatOpts:
         for
           in <- in
           tmp <- tmp.traverse(Directory.fromPathFailFast)
-          out <- out
         yield AnalyzerConfig(inex, in, tmp, outputFormats, out)
     }
 
