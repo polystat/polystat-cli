@@ -213,9 +213,7 @@ object PolystatOpts:
   def analyzerConfig: Opts[IO[AnalyzerConfig]] =
     (inex, in, tmp, outputFormats, files).mapN {
       case (inex, in, tmp, outputFormats, out) =>
-        for
-          in <- in
-          tmp <- tmp.traverse(Directory.fromPathFailFast)
+        for in <- in
         yield AnalyzerConfig(inex, in, tmp, outputFormats, out)
     }
 

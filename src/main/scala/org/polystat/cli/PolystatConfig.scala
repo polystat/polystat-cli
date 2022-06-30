@@ -15,7 +15,7 @@ object PolystatConfig:
   final case class AnalyzerConfig(
       inex: Option[IncludeExclude],
       input: Input,
-      tmp: Option[Directory],
+      tmp: Option[Path],
       outputFormats: List[OutputFormat],
       output: Output,
   )

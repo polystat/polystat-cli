@@ -129,9 +129,9 @@ object Main extends IOApp:
         def analyze(filtered: NonEmptyList[EOAnalyzer]): IO[Unit] =
           for
             tempDir <- tmp match
-              case Some(dir) =>
-                IO.println(s"Cleaning ${dir.toPath.absolute}...") *>
-                  dir.clean
+              case Some(path) =>
+                IO.println(s"Cleaning ${path.absolute}...") *>
+                  path.createDirIfDoesntExist.flatMap(_.clean)
               case None => Directory.createTempDirectory
             input <- input match
               case Input.FromDirectory(dir) => dir.pure[IO]

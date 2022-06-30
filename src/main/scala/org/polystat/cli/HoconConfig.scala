@@ -82,7 +82,6 @@ case class HoconConfig(path: Path):
                 ) =>
               for
                 j2eo <- j2eo.traverse(File.fromPathFailFast)
-                tmp <- tmp.traverse(Directory.fromPathFailFast)
               yield PolystatUsage.Analyze(
                 language = lang match
                   case Java(_, _) => Java(j2eo, j2eoVersion)
