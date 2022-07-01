@@ -16,3 +16,4 @@ out/
 hadoop_tmp
 **.jar
 !native-image-configs/*.json
+**.sarif
