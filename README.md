@@ -10,6 +10,27 @@
 ![GitHub all releases](https://img.shields.io/github/downloads/polystat/polystat-cli/total)
 
 # Polystat CLI
+- [Polystat CLI](#polystat-cli)
+- [Defects](#defects)
+  - [Unanticipated mutual recursion](#unanticipated-mutual-recursion)
+  - [Unjustified assumptions about methods of superclasses](#unjustified-assumptions-about-methods-of-superclasses)
+  - [Direct Access to the Base Class State](#direct-access-to-the-base-class-state)
+  - [Violation of the Liskov substitution principle](#violation-of-the-liskov-substitution-principle)
+  - [Division by zero](#division-by-zero)
+- [Installation](#installation)
+  - [With coursier](#with-coursier)
+  - [Using a "fat" jar](#using-a-fat-jar)
+- [Basic usage](#basic)
+- [Running on big projects (hadoop)](#running-on-big-projects-hadoop)
+- [Full Usage Specification](#full)
+  - [Notation](#notation)
+  - [Input configuration](#input-configuration)
+  - [Configuration options](#configuration-options)
+  - [Output configuration](#output-configuration)
+  - [`polystat list`](#polystat-list)
+  - [Other Options](#other-options)
+- [Configuration File](#configuration-file)
+- [Development](#development)
 
 This repository provides an alternative implementation to [Polystat](https://github.com/polystat/polystat). This tool's objective is to extend the functionality of the original implementation. These extensions include:
 * A precise [specification](#full) for the command-line interface. 
@@ -26,10 +47,14 @@ This repository provides an alternative implementation to [Polystat](https://git
 ⚠ WARNING ⚠: The tool is still in the early stages of development, so feature suggestions and bug reports are more than welcome!
 
 # Defects
+
 This section describes the defects that the Polystat CLI can detect by analyzing the EO intermediate representation produced by the translators, such as `j2eo` and `py2eo`.
 
 ## Unanticipated mutual recursion
-Comes from: [polsytat/odin](https://github.com/polystat/odin#mutual-recursion-analyzer)
+
+[(Back to TOC)](#polystat-cli)
+
+Comes from: [polystat/odin](https://github.com/polystat/odin#mutual-recursion-analyzer)
 
 Unanticipated mutual recursion happens when a subclass redefines some of the methods of the superclass in such a way that one of the methods of the superclass becomes mutually-recursive with one of the redefined methods.
 
@@ -270,6 +295,9 @@ class__Derived.new.this:
 ```
 
 ## Unjustified assumptions about methods of superclasses
+
+[(Back to TOC)](#polystat-cli)
+
 If the superclass contains this defect, this means that the inlining of one its
 the methods is not safe, because doing so may lead to breaking changes in its subclasses. 
 
@@ -326,7 +354,7 @@ public class Test {
 
 <summary>
 
-Translation to EO (`j2eo` v0.5.3)</summary>
+Show translation to EO (generated with J2EO v0.5.3)</summary>
 ```
 # 2022-06-20T16:48:51.476031558
 # j2eo team
@@ -605,32 +633,131 @@ Inlining calls in method ggg is not safe: doing so may break the behaviour of su
 ```
 
 ## Direct Access to the Base Class State
+
+[(Back to TOC)](#polystat-cli)
+
 This defect means that the analyzed program contains the parts where the fields of the object are accessed directly. This probably means that the object with such fields breaks the incapsulation by exposing some of its private fields. 
 
 Comes from: [polystat/odin](https://github.com/polystat/odin#direct-access-to-the-base-class-state-analyzer)
 
-__WARNING__: With the current latest version of `j2eo` (v0.5.3), the direct state access defect is not detected. It should work when [j2eo#114](https://github.com/polystat/j2eo/issues/114) is fixed. 
+__WARNING__: With the current latest version of `j2eo` (v0.5.3), the direct state access defect is not detected. It should work when [j2eo#114](https://github.com/polystat/j2eo/issues/114) is fixed.
 
-Sample input (simplified EO translation):
+__UPDATE__: Odin v0.4.5 introduced a workaround that made the Direct State Access defect detectable in some cases. 
 
+Sample input (Java):
+
+```java
+class A {
+    protected int state = 0;
+};
+
+class B extends A {
+    public int n(int x) {
+        return this.state + x;
+    }
+}
 ```
-[] > a
-  memory > state
-  [self new_state] > update_state
-    self.state.write new_state > @
-[] > b
-  a > @
-  [self new_state] > change_state_plus_two
-    self.state.write (new_state.add 2) > @
+<details>
+<summary>
+
+Show translation to EO (generated with J2EO v0.5.3)</summary>
+```python
+# 2022-07-01T15:16:39.276365661
+# j2eo team
++alias stdlib.lang.class__Object
++alias stdlib.primitives.prim__int
+
+[] > class__A
+  class__Object > super
+  super > @
+  [] > new
+    [] > this
+      class__Object.new > super
+      super > @
+      "class__A" > className
+      [this] > init
+        seq > @
+          d580718781
+        [] > d580718781
+          this.state.write > @
+            i_s1840976765
+        [] > i_s1840976765
+          l436532993 > @
+        [] > l436532993
+          prim__int.constructor_2 > @
+            prim__int.new
+            0
+      prim__int.constructor_1 > state
+        prim__int.new
+    seq > @
+      this
+  # null :: null -> void
+  [this] > constructor
+    seq > @
+      initialization
+      s511717113
+      this
+    [] > initialization
+      this.init > @
+        this
+    [] > s511717113
+      super.constructor > @
+        this.super
+
+[] > class__B
+  class__A > super
+  super > @
+  [] > new
+    [] > this
+      class__A.new > super
+      super > @
+      "class__B" > className
+      [this] > init
+        seq > @
+          TRUE
+      # n :: int -> int
+      [this x] > n
+        seq > @
+          s1219161283
+        [] > s1219161283
+          b1552978964 > @
+        [] > b1552978964
+          f_a355790875.add > @
+            s_r2028017635
+        [] > f_a355790875
+          t782378927.state > @
+        [] > t782378927
+          this > @
+        [] > s_r2028017635
+          x > @
+    seq > @
+      this
+  # null :: null -> void
+  [this] > constructor
+    seq > @
+      initialization
+      s454325163
+      this
+    [] > initialization
+      this.init > @
+        this
+    [] > s454325163
+      super.constructor > @
+        this.super
 ```
+</details>
+
 
 Analyzer output:
 
 ```
-Method 'change_state_plus_two' of object 'b' directly accesses state 'state' of base class 'a'
+Method 'n' of object 'class__B.new.this' directly accesses state 'state' of base class 'class__A.new.this'
 ```
 
 ## Violation of the Liskov substitution principle
+
+[(Back to TOC)](#polystat-cli)
+
 This defect means that some parts of the code violate the [Liskov substitution principle](https://github.com/polystat/odin#liskov-substitution-principle-violation-analyzer).
 
 Comes from: [polystat/odin](https://github.com/polystat/odin#liskov-substitution-principle-violation-analyzer)
@@ -665,7 +792,7 @@ public class Test {
 
 <summary>
 
-Translation to EO (`j2eo` v0.5.3)</summary>
+Show translation to EO (generated with J2EO v0.5.3)</summary>
 ```
 # 2022-06-20T16:48:51.463254529
 # j2eo team
@@ -824,6 +951,9 @@ Method g of object this violates the Liskov substitution principle as compared t
 
 
 ## Division by zero
+
+[(Back to TOC)](#polystat-cli)
+
 The presence of this defect in the program means that some inputs may cause this program to fail with the ArithmeticException.
 
 Comes from: [polystat/far](https://github.com/polystat/far)
@@ -849,6 +979,9 @@ Analyzer output:
 ```
 
 # <a name="installation"></a> Installation
+
+[(Back to TOC)](#polystat-cli)
+
 ## With coursier
 If you have [coursier](https://get-coursier.io/docs/cli-installation) installed, then you can install the latest version of `polystat-cli` by running:
 ```
@@ -876,6 +1009,8 @@ More about the arguments you can pass can be found [here](#basic) and [here](#fu
 
 
 # <a name="basic"></a> Basic usage
+
+[(Back to TOC)](#polystat-cli)
 
 * If no arguments are provided to `polystat`, it will read the configuration from the [HOCON](https://github.com/lightbend/config/blob/main/HOCON.md) config file in the current working directory. The default name for this file is `.polystat.conf` in the current working directory.
 
@@ -928,6 +1063,9 @@ $ polystat eo --in tmp --sarif --to dir=polystat_out
 ```
 
 # Running on big projects (hadoop)
+
+[(Back to TOC)](#polystat-cli)
+
 1. Clone the Hadoop `git` repository:
 ```sh
 git clone https://github.com/apache/hadoop
@@ -961,6 +1099,9 @@ Executing these commands should create the following files:
 3. `hadoop.json` should contain the aggregated SARIF output for all the files in the repository. This `.json` file contains a single [`sarifLog`](https://docs.oasis-open.org/sarif/sarif/v2.1.0/os/sarif-v2.1.0-os.html#_Toc34317478) object. This object has a property called [`runs`](https://docs.oasis-open.org/sarif/sarif/v2.1.0/os/sarif-v2.1.0-os.html#_Toc34317482), which is an array of `run` objects. Each [`run`](https://docs.oasis-open.org/sarif/sarif/v2.1.0/os/sarif-v2.1.0-os.html#_Toc34317484) object contains the name of the analyzed file and the [`results`](https://docs.oasis-open.org/sarif/sarif/v2.1.0/os/sarif-v2.1.0-os.html#_Toc34317507) property, which holds the results of all the analyzers that completed successfully. 
 
 # <a name="full"></a> Full Usage Specification
+
+[(Back to TOC)](#polystat-cli)
+
 This section covers all the options available in the CLI interface and their meanings. 
 
 ## Notation
@@ -1025,6 +1166,8 @@ If it's not present in the current working directory, download one from Maven Ce
 * `--config <path>` allows to configure Polystat from the specified HOCON config file. If not specified, reads configs from the file `.polystat.conf` in the current working directory.
 
 # Configuration File
+[(Back to TOC)](#polystat-cli)
+
 This section covers all the keys that can be used in the HOCON configuration files. The most relevant version of the information presented in this section can be printed to console by running:
 ```
 $ polystat list --config
@@ -1050,6 +1193,9 @@ The example of the working config file can be found [here](.polystat.conf).
 * `polystat.outputs.files` - a list of files to write aggregated output to. 
 
 # Development
+
+[(Back to TOC)](#polystat-cli)
+
 Polystat CLI is an sbt Scala project. In order to build the project you need the following:
   * [JDK](https://ru.wikipedia.org/wiki/Java_Development_Kit) 8+
   * [sbt](https://www.scala-sbt.org/) 1.6.2
