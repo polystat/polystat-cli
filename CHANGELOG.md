@@ -1,19 +1,9 @@
-## Polystat v0.1.11
+## Polystat v0.1.12
 
-In this release `polystat-cli` is published to Maven Central! We have also added a coursier descriptor to the repository so that `polystat-cli` can be installed and managed by [coursier](https://get-coursier.io/)! To install `polystat-cli` with coursier, run the following command:
-```
-cs install --channel https://raw.githubusercontent.com/polystat/polystat-cli/master/coursier/polystat.json polystat
-```
+This release introduced the following changes:
 
-After that you should be able to just run `polystat-cli` as follows:
-```
-$ polystat -v
-...
-polystat-cli = 0.1.11
-...
-```
-
-Besides, the analysis procedure is no longer run if the filtering options (i.e. `excludeRules` / `includeRules`) exclude all the analyzers. Instead, a warning message is printed:
-```
-WARNING: The 'includeRules' key with values "liskov" excludes all the analyzers, so none were run!
-```
+* `odin` was updated to v0.4.5. This change allows the detection of the Direct State Access defects. 
+* `py2eo` was updated to v0.0.14.
+* `polystat-cli`:
+    * The generated SARIF output was changed slightly to be viewable with the [VSCode SARIF extension](https://marketplace.visualstudio.com/items?itemName=MS-SarifVSCode.sarif-viewer). (thanks to @br4ch1st0chr0n3)
+    * The output directories and temporary directories that were specified either on the command line or in the config file are now created automatically if they don't exist. 
