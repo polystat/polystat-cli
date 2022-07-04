@@ -1,7 +1,8 @@
 import ReleaseTransformations._
 import Dependencies._
+import scala.sys.process._
 
-ThisBuild / scalaVersion := "3.1.2"
+ThisBuild / scalaVersion := "3.2.0-RC1"
 ThisBuild / versionScheme := Some("semver-spec")
 ThisBuild / releaseVersionBump := sbtrelease.Version.Bump.Next
 
@@ -118,6 +119,14 @@ scalacOptions ++= Seq(
   "-feature",
 )
 
+lazy val addDescriptorChanges = taskKey[Unit](
+  "git add descriptor changes"
+)
+
+addDescriptorChanges := {
+  "git add coursier/polystat.json".!
+}
+
 lazy val generateDescriptor =
   taskKey[Unit](
     "Generate a descriptor that is used by coursier to install polystat-cli."
@@ -162,11 +171,12 @@ commands += Command.args("preRelease", "<arg>") { (state, args) =>
               runTest,
               setReleaseVersion,
               releaseStepTask(assembly),
+              releaseStepTask(generateDescriptor),
+              releaseStepTask(addDescriptorChanges),
               commitReleaseVersion,
               tagRelease,
               releaseStepCommandAndRemaining("publishSigned"),
               releaseStepCommand("sonatypeBundleRelease"),
-              releaseStepTask(generateDescriptor),
               pushChanges,
             )
           ),

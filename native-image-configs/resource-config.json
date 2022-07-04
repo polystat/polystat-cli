@@ -2,11 +2,107 @@
   "resources":{
   "includes":[
     {
+      "pattern":"\\QMETA-INF/MANIFEST.MF\\E"
+    }, 
+    {
+      "pattern":"\\QMETA-INF/services/javax.xml.transform.TransformerFactory\\E"
+    }, 
+    {
+      "pattern":"\\QMETA-INF/services/org.slf4j.spi.SLF4JServiceProvider\\E"
+    }, 
+    {
+      "pattern":"\\QXMIR.xsd\\E"
+    }, 
+    {
+      "pattern":"\\Qcom/jcabi/xml/strip.xsl\\E"
+    }, 
+    {
       "pattern":"\\Qlibrary.properties\\E"
+    }, 
+    {
+      "pattern":"\\Qlog4j.properties\\E"
+    }, 
+    {
+      "pattern":"\\Qnet/sf/saxon/data/categories.xml\\E"
+    }, 
+    {
+      "pattern":"\\Qorg/eolang/parser/_datas.xsl\\E"
+    }, 
+    {
+      "pattern":"\\Qorg/eolang/parser/_each.xsl\\E"
+    }, 
+    {
+      "pattern":"\\Qorg/eolang/parser/_funcs.xsl\\E"
+    }, 
+    {
+      "pattern":"\\Qorg/eolang/parser/add-default-package.xsl\\E"
+    }, 
+    {
+      "pattern":"\\Qorg/eolang/parser/add-refs.xsl\\E"
+    }, 
+    {
+      "pattern":"\\Qorg/eolang/parser/errors/broken-aliases.xsl\\E"
+    }, 
+    {
+      "pattern":"\\Qorg/eolang/parser/errors/broken-refs.xsl\\E"
+    }, 
+    {
+      "pattern":"\\Qorg/eolang/parser/errors/data-objects.xsl\\E"
+    }, 
+    {
+      "pattern":"\\Qorg/eolang/parser/errors/duplicate-aliases.xsl\\E"
+    }, 
+    {
+      "pattern":"\\Qorg/eolang/parser/errors/duplicate-names.xsl\\E"
+    }, 
+    {
+      "pattern":"\\Qorg/eolang/parser/errors/global-nonames.xsl\\E"
+    }, 
+    {
+      "pattern":"\\Qorg/eolang/parser/errors/many-free-attributes.xsl\\E"
+    }, 
+    {
+      "pattern":"\\Qorg/eolang/parser/errors/middle-varargs.xsl\\E"
+    }, 
+    {
+      "pattern":"\\Qorg/eolang/parser/errors/noname-attributes.xsl\\E"
+    }, 
+    {
+      "pattern":"\\Qorg/eolang/parser/errors/not-empty-atoms.xsl\\E"
+    }, 
+    {
+      "pattern":"\\Qorg/eolang/parser/errors/same-line-names.xsl\\E"
+    }, 
+    {
+      "pattern":"\\Qorg/eolang/parser/errors/self-naming.xsl\\E"
+    }, 
+    {
+      "pattern":"\\Qorg/eolang/parser/errors/unknown-names.xsl\\E"
+    }, 
+    {
+      "pattern":"\\Qorg/eolang/parser/errors/unused-aliases.xsl\\E"
+    }, 
+    {
+      "pattern":"\\Qorg/eolang/parser/expand-aliases.xsl\\E"
+    }, 
+    {
+      "pattern":"\\Qorg/eolang/parser/resolve-aliases.xsl\\E"
+    }, 
+    {
+      "pattern":"\\Qorg/eolang/parser/vars-float-up.xsl\\E"
+    }, 
+    {
+      "pattern":"\\Qorg/eolang/parser/wrap-method-calls.xsl\\E"
     }, 
     {
       "pattern":"\\Qorg/slf4j/impl/StaticLoggerBinder.class\\E"
     }
   ]},
-  "bundles":[]
+  "bundles":[{
+      "name":"com.sun.org.apache.xerces.internal.impl.xpath.regex.message",
+      "locales":[
+        "", 
+        "und"
+      ]
+    }]
 }

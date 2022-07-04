@@ -5,7 +5,7 @@
             "central"
         ],
         "dependencies": [
-            "org.polystat:polystat-cli_3:0.1.11"
+            "org.polystat:polystat-cli_3:0.1.12"
         ]
     }
 }

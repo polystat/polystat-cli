@@ -18,6 +18,33 @@
   "name":"[J"
 },
 {
+  "name":"[Lap.parser.IFormula;"
+},
+{
+  "name":"[Lap.parser.ITerm;"
+},
+{
+  "name":"[Lap.terfor.ConstantTerm;"
+},
+{
+  "name":"[Lap.terfor.conjunctions.Conjunction;"
+},
+{
+  "name":"[Lap.terfor.conjunctions.Quantifier$ALL$;"
+},
+{
+  "name":"[Lap.terfor.conjunctions.Quantifier$EX$;"
+},
+{
+  "name":"[Lap.terfor.linearcombination.LinearCombination;"
+},
+{
+  "name":"[Lap.terfor.preds.Atom;"
+},
+{
+  "name":"[Lap.terfor.preds.Predicate;"
+},
+{
   "name":"[Lcats.parse.Parser0;"
 },
 {
@@ -45,6 +72,12 @@
   "name":"[Ljavax.management.openmbean.CompositeData;"
 },
 {
+  "name":"[Lscala.Option;"
+},
+{
+  "name":"[Lscala.Tuple3;"
+},
+{
   "name":"[Lscala.util.Either;"
 },
 {
@@ -55,6 +88,10 @@
 },
 {
   "name":"[Z"
+},
+{
+  "name":"ap.theories.strings.SeqStringTheoryBuilder",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
 },
 {
   "name":"cats.Later",
@@ -103,6 +140,19 @@
 {
   "name":"cats.parse.Parser0",
   "fields":[{"name":"0bitmap$1"}]
+},
+{
+  "name":"com.jcabi.log.MulticolorLayout",
+  "queryAllPublicMethods":true,
+  "methods":[
+    {"name":"<init>","parameterTypes":[] }, 
+    {"name":"setConversionPattern","parameterTypes":["java.lang.String"] }
+  ]
+},
+{
+  "name":"com.jcabi.log.TextDecor",
+  "queryAllDeclaredConstructors":true,
+  "methods":[{"name":"<init>","parameterTypes":["java.lang.Object"] }]
 },
 {
   "name":"com.sun.crypto.provider.AESCipher$General",
@@ -185,6 +235,26 @@
   "queryAllPublicConstructors":true
 },
 {
+  "name":"com.sun.org.apache.xerces.internal.impl.dv.xs.ExtendedSchemaDVFactoryImpl",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.sun.org.apache.xerces.internal.impl.dv.xs.SchemaDVFactoryImpl",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.sun.org.apache.xerces.internal.jaxp.DocumentBuilderFactoryImpl",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.sun.org.apache.xerces.internal.jaxp.SAXParserFactoryImpl",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.sun.org.apache.xpath.internal.functions.FuncLast",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
   "name":"fs2.Chunk$",
   "fields":[{"name":"0bitmap$2"}]
 },
@@ -219,6 +289,9 @@
 {
   "name":"io.circe.Encoder$",
   "fields":[{"name":"0bitmap$1"}]
+},
+{
+  "name":"java.beans.PropertyVetoException"
 },
 {
   "name":"java.lang.Boolean",
@@ -256,6 +329,18 @@
   "fields":[{"name":"TYPE"}]
 },
 {
+  "name":"java.lang.Object",
+  "queryAllPublicMethods":true
+},
+{
+  "name":"java.lang.Runtime",
+  "methods":[{"name":"version","parameterTypes":[] }]
+},
+{
+  "name":"java.lang.Runtime$Version",
+  "methods":[{"name":"major","parameterTypes":[] }]
+},
+{
   "name":"java.lang.Short",
   "fields":[{"name":"TYPE"}]
 },
@@ -265,6 +350,14 @@
 },
 {
   "name":"java.lang.String"
+},
+{
+  "name":"java.lang.Thread",
+  "methods":[{"name":"getContextClassLoader","parameterTypes":[] }]
+},
+{
+  "name":"java.lang.ThreadLocal",
+  "queriedMethods":[{"name":"remove","parameterTypes":[] }]
 },
 {
   "name":"java.lang.Void",
@@ -339,6 +432,9 @@
   "name":"java.security.KeyStoreSpi"
 },
 {
+  "name":"java.security.MessageDigestSpi"
+},
+{
   "name":"java.security.SecureRandomParameters"
 },
 {
@@ -394,6 +490,9 @@
   "methods":[{"name":"<init>","parameterTypes":["sun.security.x509.X500Name"] }]
 },
 {
+  "name":"javax.xml.transform.stax.StAXResult"
+},
+{
   "name":"jdk.management.jfr.ConfigurationInfo",
   "queryAllPublicMethods":true
 },
@@ -416,6 +515,186 @@
 {
   "name":"jdk.management.jfr.SettingDescriptorInfo",
   "queryAllPublicMethods":true
+},
+{
+  "name":"net.sf.saxon.Configuration",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"net.sf.saxon.functions.BooleanFn",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"net.sf.saxon.functions.Contains",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"net.sf.saxon.functions.ContextItemAccessorFunction",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"net.sf.saxon.functions.Count",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"net.sf.saxon.functions.Empty",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"net.sf.saxon.functions.Exists",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"net.sf.saxon.functions.GenerateId_1",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"net.sf.saxon.functions.Matches",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"net.sf.saxon.functions.Name_1",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"net.sf.saxon.functions.NotFn",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"net.sf.saxon.functions.PositionAndLast$Last",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"net.sf.saxon.functions.PositionAndLast$Position",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"net.sf.saxon.functions.RegexFunctionSansFlags",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"net.sf.saxon.functions.Reverse",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"net.sf.saxon.functions.StartsWith",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"net.sf.saxon.functions.StringJoin",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"net.sf.saxon.functions.String_1",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"net.sf.saxon.functions.Subsequence_3",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"net.sf.saxon.functions.Tokenize_1",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"net.sf.saxon.functions.Tokenize_3",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.apache.log4j.Appender"
+},
+{
+  "name":"org.apache.log4j.Category"
+},
+{
+  "name":"org.apache.log4j.CategoryKey"
+},
+{
+  "name":"org.apache.log4j.ConsoleAppender",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.apache.log4j.EnhancedPatternLayout",
+  "queryAllPublicMethods":true
+},
+{
+  "name":"org.apache.log4j.Layout",
+  "queryAllPublicMethods":true
+},
+{
+  "name":"org.apache.log4j.Logger"
+},
+{
+  "name":"org.apache.log4j.MDC",
+  "fields":[
+    {"name":"java1"}, 
+    {"name":"mdc"}, 
+    {"name":"tlm"}
+  ]
+},
+{
+  "name":"org.apache.log4j.helpers.Loader"
+},
+{
+  "name":"org.apache.log4j.pattern.ClassNamePatternConverter"
+},
+{
+  "name":"org.apache.log4j.pattern.DatePatternConverter"
+},
+{
+  "name":"org.apache.log4j.pattern.FileDatePatternConverter"
+},
+{
+  "name":"org.apache.log4j.pattern.FileLocationPatternConverter"
+},
+{
+  "name":"org.apache.log4j.pattern.FullLocationPatternConverter"
+},
+{
+  "name":"org.apache.log4j.pattern.IntegerPatternConverter"
+},
+{
+  "name":"org.apache.log4j.pattern.LevelPatternConverter",
+  "methods":[{"name":"newInstance","parameterTypes":["java.lang.String[]"] }]
+},
+{
+  "name":"org.apache.log4j.pattern.LineLocationPatternConverter"
+},
+{
+  "name":"org.apache.log4j.pattern.LineSeparatorPatternConverter",
+  "methods":[{"name":"newInstance","parameterTypes":["java.lang.String[]"] }]
+},
+{
+  "name":"org.apache.log4j.pattern.LoggerPatternConverter",
+  "methods":[{"name":"newInstance","parameterTypes":["java.lang.String[]"] }]
+},
+{
+  "name":"org.apache.log4j.pattern.MessagePatternConverter",
+  "methods":[{"name":"newInstance","parameterTypes":["java.lang.String[]"] }]
+},
+{
+  "name":"org.apache.log4j.pattern.MethodLocationPatternConverter"
+},
+{
+  "name":"org.apache.log4j.pattern.NDCPatternConverter"
+},
+{
+  "name":"org.apache.log4j.pattern.PropertiesPatternConverter"
+},
+{
+  "name":"org.apache.log4j.pattern.RelativeTimePatternConverter"
+},
+{
+  "name":"org.apache.log4j.pattern.SequenceNumberPatternConverter"
+},
+{
+  "name":"org.apache.log4j.pattern.ThreadPatternConverter"
+},
+{
+  "name":"org.apache.log4j.pattern.ThrowableInformationPatternConverter"
+},
+{
+  "name":"org.apache.log4j.spi.OptionHandler"
 },
 {
   "name":"org.http4s.Header$Raw$",
@@ -668,8 +947,119 @@
   "fields":[{"name":"0bitmap$6"}]
 },
 {
+  "name":"org.polystat.cli.HoconConfig$",
+  "fields":[{"name":"0bitmap$1"}]
+},
+{
+  "name":"org.polystat.sarif.Sarif$SarifArtifact$",
+  "fields":[{"name":"0bitmap$6"}]
+},
+{
+  "name":"org.polystat.sarif.Sarif$SarifArtifact$$anon$3",
+  "fields":[{"name":"0bitmap$5"}]
+},
+{
+  "name":"org.polystat.sarif.Sarif$SarifArtifactLocation$",
+  "fields":[{"name":"0bitmap$18"}]
+},
+{
+  "name":"org.polystat.sarif.Sarif$SarifArtifactLocation$$anon$9",
+  "fields":[{"name":"0bitmap$17"}]
+},
+{
+  "name":"org.polystat.sarif.Sarif$SarifDriver$",
+  "fields":[{"name":"0bitmap$10"}]
+},
+{
+  "name":"org.polystat.sarif.Sarif$SarifDriver$$anon$5",
+  "fields":[{"name":"0bitmap$9"}]
+},
+{
+  "name":"org.polystat.sarif.Sarif$SarifException$",
+  "fields":[{"name":"0bitmap$26"}]
+},
+{
+  "name":"org.polystat.sarif.Sarif$SarifException$$anon$15",
+  "fields":[{"name":"0bitmap$25"}]
+},
+{
+  "name":"org.polystat.sarif.Sarif$SarifInvocation$",
+  "fields":[{"name":"0bitmap$22"}]
+},
+{
+  "name":"org.polystat.sarif.Sarif$SarifInvocation$$anon$13",
+  "fields":[{"name":"0bitmap$21"}]
+},
+{
+  "name":"org.polystat.sarif.Sarif$SarifLocation$",
+  "fields":[{"name":"0bitmap$14"}]
+},
+{
+  "name":"org.polystat.sarif.Sarif$SarifLocation$$anon$7",
+  "fields":[{"name":"0bitmap$13"}]
+},
+{
+  "name":"org.polystat.sarif.Sarif$SarifLog$",
+  "fields":[{"name":"0bitmap$2"}]
+},
+{
+  "name":"org.polystat.sarif.Sarif$SarifLog$$anon$1",
+  "fields":[{"name":"0bitmap$1"}]
+},
+{
+  "name":"org.polystat.sarif.Sarif$SarifMessage$",
+  "fields":[{"name":"0bitmap$20"}]
+},
+{
+  "name":"org.polystat.sarif.Sarif$SarifMessage$$anon$12",
+  "fields":[{"name":"0bitmap$19"}]
+},
+{
+  "name":"org.polystat.sarif.Sarif$SarifNotification$",
+  "fields":[{"name":"0bitmap$24"}]
+},
+{
+  "name":"org.polystat.sarif.Sarif$SarifNotification$$anon$14",
+  "fields":[{"name":"0bitmap$23"}]
+},
+{
+  "name":"org.polystat.sarif.Sarif$SarifReportingDescriptor$",
+  "fields":[{"name":"0bitmap$28"}]
+},
+{
+  "name":"org.polystat.sarif.Sarif$SarifReportingDescriptor$$anon$16",
+  "fields":[{"name":"0bitmap$27"}]
+},
+{
+  "name":"org.polystat.sarif.Sarif$SarifResult$",
+  "fields":[{"name":"0bitmap$12"}]
+},
+{
+  "name":"org.polystat.sarif.Sarif$SarifResult$$anon$6",
+  "fields":[{"name":"0bitmap$11"}]
+},
+{
+  "name":"org.polystat.sarif.Sarif$SarifRun$",
+  "fields":[{"name":"0bitmap$4"}]
+},
+{
+  "name":"org.polystat.sarif.Sarif$SarifRun$$anon$2",
+  "fields":[{"name":"0bitmap$3"}]
+},
+{
+  "name":"org.polystat.sarif.Sarif$SarifTool$",
+  "fields":[{"name":"0bitmap$8"}]
+},
+{
+  "name":"org.polystat.sarif.Sarif$SarifTool$$anon$4",
+  "fields":[{"name":"0bitmap$7"}]
+},
+{
   "name":"org.typelevel.ci.package$CIStringSyntax",
   "fields":[{"name":"0bitmap$1"}]
+},
+{
+  "name":"org.w3c.dom.Document"
 },
 {
   "name":"scodec.bits.ByteVector",
@@ -787,6 +1177,10 @@
 },
 {
   "name":"sun.security.rsa.RSAPSSSignature",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"sun.security.rsa.RSASignature$SHA1withRSA",
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
 {
