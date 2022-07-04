@@ -35,7 +35,8 @@ releasePublishArtifactsAction := PgpKeys.publishSigned.value
 resolvers += Opts.resolver.sonatypeSnapshots
 
 excludeDependencies ++= Seq(
-  "org.scalatest" % "scalatest_2.13"
+  "org.scalatest" % "scalatest_2.13",
+  "org.scala-lang.modules" % "scala-xml_3",
 )
 
 libraryDependencies ++= Seq(
@@ -52,6 +53,10 @@ libraryDependencies ++= Seq(
   "org.slf4j" % "slf4j-nop" % "1.7.36",
   "org.typelevel" %% "cats-parse" % "0.3.7",
 )
+
+libraryDependencies ++= Seq(
+  "io.get-coursier" %% "coursier" % "2.1.0-M6-26-gcec901e9a"
+).map(_.cross(CrossVersion.for3Use2_13))
 
 packageOptions := Seq(
   sbt.Package.ManifestAttributes(

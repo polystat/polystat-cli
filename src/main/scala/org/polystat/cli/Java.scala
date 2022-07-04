@@ -18,17 +18,19 @@ import org.polystat.cli.util.InputUtils.*
 import sys.process.*
 import PolystatConfig.*
 import org.polystat.cli.util.FileTypes.*
+import coursier.`package`.{Organization, Module, ModuleName}
+import coursier.{Fetch, Dependency}
+import coursier.cache.FileCache
 
 object Java:
-
   private def j2eoPath(using j2eoVersion: String) = Path(
-    s"j2eo-v$j2eoVersion.jar"
+    s"https/repo1.maven.org/maven2/org/polystat/j2eo/${j2eoVersion}/j2eo-${j2eoVersion}.jar"
   )
   val DEFAULT_J2EO_VERSION = BuildInfo.j2eoVersion
-  private def j2eoUrl(using j2eoVesion: String) =
-    s"https://search.maven.org/remotecontent?filepath=org/polystat/j2eo/$j2eoVesion/j2eo-$j2eoVesion.jar"
+  private def j2eoUrl(using j2eoVersion: String) =
+    s"https://search.maven.org/remotecontent?filepath=org/polystat/j2eo/$j2eoVersion/j2eo-$j2eoVersion.jar"
 
-  private def defaultJ2EO(using j2eoVesion: String): IO[Path] =
+  private def defaultJ2EO(using j2eoVersion: String): IO[Path] =
     Files[IO]
       .exists(j2eoPath)
       .ifM(
@@ -36,31 +38,21 @@ object Java:
         ifFalse = downloadJ2EO,
       )
 
-  private def downloadJ2EO(using j2eoVesion: String): IO[Path] =
-    EmberClientBuilder
-      .default[IO]
-      .build
-      .map(client => FollowRedirect(2, _ => true)(client))
-      .use[Unit] { client =>
-        client
-          .run(
-            Request[IO](
-              GET,
-              uri = Uri.unsafeFromString(j2eoUrl),
-            )
+  private def downloadJ2EO(using j2eoVersion: String): IO[Path] =
+    val localCache = FileCache().withLocation(java.io.File("."))
+    IO.delay(
+      Fetch(localCache)
+        .addDependencies(
+          Dependency(
+            Module(
+              organization = Organization("org.polystat"),
+              name = ModuleName("j2eo"),
+            ),
+            version = j2eoVersion,
           )
-          .use(resp =>
-            IO.println(
-              s"$j2eoPath was not found in the current working directory. Downloading..."
-            ) *>
-              resp.body
-                .through(Files[IO].writeAll(j2eoPath))
-                .compile
-                .drain
-          )
-      }
-      .as(j2eoPath)
-  end downloadJ2EO
+        )
+        .run()
+    ).as(j2eoPath)
 
   private def runJ2EO(
       j2eoVersion: Option[String],
