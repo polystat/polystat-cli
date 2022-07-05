@@ -40,18 +40,17 @@ excludeDependencies ++= Seq(
 )
 
 libraryDependencies ++= Seq(
-  "co.fs2" %% "fs2-io" % "3.2.7",
-  "com.monovore" %% "decline-effect" % "2.2.0",
-  "io.circe" %% "circe-core" % "0.14.1",
+  "co.fs2" %% "fs2-io" % "3.2.9",
+  "com.monovore" %% "decline-effect" % "2.3.0",
+  "io.circe" %% "circe-core" % "0.14.2",
   "is.cir" %% "ciris" % "2.3.2",
   "lt.dvim.ciris-hocon" %% "ciris-hocon" % "1.0.1",
   "org.http4s" %% "http4s-ember-client" % "1.0.0-M32",
   "org.polystat.odin" %% "analysis" % V.odin,
   "org.polystat.py2eo" % "transpiler" % V.py2eo,
   "org.polystat" % "far" % V.far,
-  "org.scalameta" %% "munit" % "1.0.0-M3" % Test,
+  "org.scalameta" %% "munit" % "1.0.0-M6" % Test,
   "org.slf4j" % "slf4j-nop" % "1.7.36",
-  "org.typelevel" %% "cats-parse" % "0.3.7",
 )
 
 packageOptions := Seq(
