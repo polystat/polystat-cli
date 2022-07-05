@@ -22,6 +22,7 @@
   - [Using a "fat" jar](#using-a-fat-jar)
 - [Basic usage](#basic)
 - [Running on big projects (hadoop)](#running-on-big-projects-hadoop)
+  - [Results](#results)
 - [Full Usage Specification](#full)
   - [Notation](#notation)
   - [Input configuration](#input-configuration)
@@ -1097,6 +1098,25 @@ Executing these commands should create the following files:
 1. `hadoop_tmp` should store all the temporary files produced by translators and analyzers.
 2. `hadoop_out` should contain the produced `.sarif` files. Each `.sarif` file corresponds to a single `.java` file in the repository.
 3. `hadoop.json` should contain the aggregated SARIF output for all the files in the repository. This `.json` file contains a single [`sarifLog`](https://docs.oasis-open.org/sarif/sarif/v2.1.0/os/sarif-v2.1.0-os.html#_Toc34317478) object. This object has a property called [`runs`](https://docs.oasis-open.org/sarif/sarif/v2.1.0/os/sarif-v2.1.0-os.html#_Toc34317482), which is an array of `run` objects. Each [`run`](https://docs.oasis-open.org/sarif/sarif/v2.1.0/os/sarif-v2.1.0-os.html#_Toc34317484) object contains the name of the analyzed file and the [`results`](https://docs.oasis-open.org/sarif/sarif/v2.1.0/os/sarif-v2.1.0-os.html#_Toc34317507) property, which holds the results of all the analyzers that completed successfully. 
+
+## Results:
+[(Back to TOC)](#polystat-cli)
+
+To battle-test our prototype analyzer, we have paired
+it with J2EO transpiler (from Java to EO) and created
+polystat-cli — a command line tool for running polystat with different settings and different transpilers. We have
+used J2EO v0.5.3, odin v0.4.5, FaR v0.2.0. Using J2EO and
+Polystat with all five analyzers turned on takes about one hour
+of processing on a computer with 2.4GHz 8-Core Intel Core
+i9 processor and 32 GB 2667 MHz DDR4 memory running
+macOS 12.4. The result is as follows:
+1) 10378 Java files have been translated successfully and no
+defects have been detected by Polystat;
+2) 2054 Java files have been translated incorrectly by J2EO
+(invalid syntax);
+3) 433 Java files have been translated by J2EO without
+appropriate import information, so Polystat could not resolve some of the identifiers used to properly analyze
+the code.
 
 # <a name="full"></a> Full Usage Specification
 
