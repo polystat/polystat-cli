@@ -2,7 +2,7 @@ import ReleaseTransformations._
 import Dependencies._
 import scala.sys.process._
 
-ThisBuild / scalaVersion := "3.2.0-RC1"
+ThisBuild / scalaVersion := "3.2.0-RC3"
 ThisBuild / versionScheme := Some("semver-spec")
 ThisBuild / releaseVersionBump := sbtrelease.Version.Bump.Next
 
@@ -40,6 +40,7 @@ excludeDependencies ++= Seq(
 )
 
 libraryDependencies ++= Seq(
+  "org.latestbit" %% "circe-tagged-adt-codec" % "0.10.1",
   "co.fs2" %% "fs2-io" % "3.2.9",
   "com.monovore" %% "decline-effect" % "2.3.0",
   "io.circe" %% "circe-core" % "0.14.2",

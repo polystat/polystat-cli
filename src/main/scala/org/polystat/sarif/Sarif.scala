@@ -5,6 +5,8 @@ import io.circe.Decoder
 import io.circe.Encoder
 import io.circe.Json
 import org.polystat.cli.BuildInfo
+import org.latestbit.circe.adt.codec.JsonTaggedAdt
+import JsonTaggedAdt.*
 
 object Sarif:
 
@@ -57,39 +59,27 @@ object Sarif:
       uri: String
   ) derives Codec.AsObject
 
-  enum SarifLevel:
+  enum SarifLevel derives PureEncoderWithConfig, PureDecoderWithConfig:
     case ERROR, NONE
 
-  given Encoder[SarifLevel] with
-    final def apply(a: SarifLevel): Json = a match
-      case SarifLevel.ERROR => Json.fromString("error")
-      case SarifLevel.NONE  => Json.fromString("none")
-  end given
+  given PureConfig[SarifLevel] =
+    PureConfig.Values[SarifLevel](
+      mappings = Map(
+        "error" -> tagged[SarifLevel.ERROR.type],
+        "none" -> tagged[SarifLevel.NONE.type],
+      )
+    )
 
-  given Decoder[SarifLevel] with
-    def apply(c: io.circe.HCursor): Decoder.Result[SarifLevel] =
-      c.get[String]("level").map {
-        case "error" => SarifLevel.ERROR
-        case "none"  => SarifLevel.NONE
-      }
-  end given
-
-  enum SarifKind:
+  enum SarifKind derives PureEncoderWithConfig, PureDecoderWithConfig:
     case FAIL, PASS
 
-  given Encoder[SarifKind] with
-    final def apply(a: SarifKind): Json = a match
-      case SarifKind.PASS => Json.fromString("pass")
-      case SarifKind.FAIL => Json.fromString("fail")
-  end given
-
-  given Decoder[SarifKind] with
-    def apply(c: io.circe.HCursor): Decoder.Result[SarifKind] =
-      c.get[String]("kind").map {
-        case "pass" => SarifKind.PASS
-        case "fail" => SarifKind.FAIL
-      }
-  end given
+  given PureConfig[SarifKind] =
+    PureConfig.Values[SarifKind](
+      mappings = Map(
+        "fail" -> tagged[SarifKind.FAIL.type],
+        "pass" -> tagged[SarifKind.PASS.type],
+      )
+    )
 
   final case class SarifMessage(text: String) derives Codec.AsObject
 
