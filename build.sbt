@@ -2,7 +2,7 @@ import ReleaseTransformations._
 import Dependencies._
 import scala.sys.process._
 
-ThisBuild / scalaVersion := "3.2.0-RC3"
+ThisBuild / scalaVersion := "3.2.0"
 ThisBuild / versionScheme := Some("semver-spec")
 ThisBuild / releaseVersionBump := sbtrelease.Version.Bump.Next
 
@@ -41,10 +41,10 @@ excludeDependencies ++= Seq(
 
 libraryDependencies ++= Seq(
   "org.latestbit" %% "circe-tagged-adt-codec" % "0.10.1",
-  "co.fs2" %% "fs2-io" % "3.2.9",
+  "co.fs2" %% "fs2-io" % "3.2.12",
   "com.monovore" %% "decline-effect" % "2.3.0",
-  "io.circe" %% "circe-core" % "0.14.2",
-  "is.cir" %% "ciris" % "2.3.2",
+  "io.circe" %% "circe-core" % "0.15.0-M1",
+  "is.cir" %% "ciris" % "2.3.3",
   "lt.dvim.ciris-hocon" %% "ciris-hocon" % "1.0.1",
   "org.http4s" %% "http4s-ember-client" % "1.0.0-M32",
   "org.polystat.odin" %% "analysis" % V.odin,
@@ -148,7 +148,7 @@ generateDescriptor := {
         |        ]
         |    }
         |}
-       |""".stripMargin
+        |""".stripMargin
   println(descriptor)
   java.nio.file.Files
     .write(
