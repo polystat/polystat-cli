@@ -1,0 +1,4 @@
++package org.eolang
+
+[] > div0
+  100.div 0 > @
