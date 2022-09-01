@@ -164,12 +164,11 @@ object PolystatOpts:
   private enum OutputArg:
     case File(path: Path)
     case Directory(path: Path)
-    case Console
   end OutputArg
 
   private given Argument[OutputArg] with
     def read(string: String): ValidatedNel[String, OutputArg] =
-      val KVArg = "(.*)=(.*)".r
+      val KVArg = "(.+)=(.+)".r
       string match
         case KVArg(key, value) =>
           key match
@@ -183,38 +182,44 @@ object PolystatOpts:
                 .map(path => OutputArg.File(Path.fromNioPath(path)))
             case other =>
               Validated.invalidNel(s"Unknown key in `--to` option: $other")
-        case "console" => Validated.valid(OutputArg.Console)
-        case other     => Validated.invalidNel(s"Unknown argument: $string")
+        case other => Validated.invalidNel(s"Unknown argument: $string")
       end match
     end read
-    def defaultMetavar: String = "console | dir=<path> | file=<path>"
+    def defaultMetavar: String = "dir=<path> | file=<path>"
   end given
 
-  def files: Opts[Output] = Opts
+  private def quiet: Opts[Boolean] = Opts
+    .flag(
+      long = "quiet",
+      help = "Disables console output.",
+      short = "q",
+    )
+    .orFalse
+
+  private def outputFiles: Opts[List[OutputArg]] = Opts
     .options[OutputArg](
       long = "to",
       help = "Create output files in the specified path",
     )
     .orEmpty
-    .map(args =>
-      val initialState =
-        Output(dirs = List(), files = List(), console = false)
-      args.foldLeft(initialState) { case (acc, arg) =>
-        arg match
-          case OutputArg.File(path) =>
-            acc.copy(files = acc.files.prepended(path))
-          case OutputArg.Directory(path) =>
-            acc.copy(dirs = acc.dirs.prepended(path))
-          case OutputArg.Console =>
-            if acc.console then acc else acc.copy(console = true)
-      }
-    )
+
+  def to: Opts[Output] = (outputFiles, quiet).mapN { case (outputArgs, quiet) =>
+    val notQuiet = !quiet
+    val initialState = Output(dirs = List(), files = List(), console = notQuiet)
+    outputArgs.foldLeft(initialState) { case (acc, arg) =>
+      arg match
+        case OutputArg.File(path) =>
+          acc.copy(files = acc.files.prepended(path))
+        case OutputArg.Directory(path) =>
+          acc.copy(dirs = acc.dirs.prepended(path))
+    }
+  }
 
   def analyzerConfig: Opts[IO[AnalyzerConfig]] =
-    (inex, in, tmp, outputFormats, files).mapN {
-      case (inex, in, tmp, outputFormats, out) =>
+    (inex, in, tmp, outputFormats, to).mapN {
+      case (inex, in, tmp, outputFormats, to) =>
         for in <- in
-        yield AnalyzerConfig(inex, in, tmp, outputFormats, out)
+        yield AnalyzerConfig(inex, in, tmp, outputFormats, to)
     }
 
 end PolystatOpts

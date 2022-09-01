@@ -9,10 +9,9 @@ object FileTypes:
   final class Directory private[FileTypes] (
       private[FileTypes] val underlying: Path
   ):
+    export underlying.{toNioPath, /}
     override def toString = underlying.toString
     def toPath: Path = underlying
-    def toNioPath: JPath = underlying.toNioPath
-    def /(s: String): Path = underlying / s
     def clean: IO[Directory] =
       for
         _ <- Files[IO].deleteRecursively(underlying)
@@ -44,10 +43,9 @@ object FileTypes:
     def fromPathUnsafe(path: Path): Directory = Directory(path)
 
   final class File private[FileTypes] (private[FileTypes] val underlying: Path):
+    export underlying.{toNioPath, extName}
     override def toString(): String = underlying.toString
     def toPath = underlying
-    def toNioPath: JPath = underlying.toNioPath
-    def extName = underlying.extName
     def filenameNoExt: String =
       val fileName = underlying.fileName.toString
       fileName.splitAt(fileName.indexOf("."))._1
