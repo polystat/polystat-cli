@@ -1,9 +1,11 @@
 package org.polystat.cli
 
+import cats.data.NonEmptyList as Nel
 import cats.effect.IO
 import cats.syntax.all.*
 import fs2.io.file.Path
 import io.circe.syntax.*
+import org.polystat.cli.util.FileTypes.*
 import org.polystat.cli.util.InputUtils.*
 import org.polystat.odin.analysis.ASTAnalyzer
 import org.polystat.odin.analysis.EOOdinAnalyzer
@@ -11,11 +13,43 @@ import org.polystat.odin.analysis.EOOdinAnalyzer.OdinAnalysisResult
 import org.polystat.odin.parser.EoParser.sourceCodeEoParser
 import org.polystat.sarif.AggregatedSarifOutput
 import org.polystat.sarif.SarifOutput
-import org.polystat.cli.util.FileTypes.*
 
 import PolystatConfig.*
 
 object EO:
+
+  private def displayResult(
+      result: OdinAnalysisResult,
+      indentDepth: Int,
+  ): String =
+    def indent(d: Int) = "\n" + "  " * d
+    val indent1 = indent(indentDepth)
+    val indent2 = indent(indentDepth + 1)
+    val messages: Nel[String] = result match
+      case OdinAnalysisResult.Ok(ruleId) =>
+        Nel.one(s"""$indent1$ruleId: OK.""")
+      case OdinAnalysisResult.DefectsDetected(ruleId, defects) =>
+        defects.map(msg => s"""$indent2$msg""").prepend(s"$indent1$ruleId:")
+      case OdinAnalysisResult.AnalyzerFailure(ruleId, reason) =>
+        val reasonLines = reason.getMessage.trim
+          .split(scala.util.Properties.lineSeparator)
+          .map("  " * (indentDepth + 1) + "-- " + _)
+          .mkString(scala.util.Properties.lineSeparator)
+        Nel.one(
+          s"""$indent1$ruleId: Analyzer failed with the following reason:\n${reasonLines}"""
+        )
+
+    messages.mkString_("")
+
+  private def displayAnalyzed(
+      analyzed: Vector[(File, List[OdinAnalysisResult])]
+  ): IO[Unit] =
+    analyzed.traverse_ { case (file, results) =>
+      IO.println(
+        s"""$file:${results.map(res => displayResult(res, 1)).mkString}
+          """.stripMargin
+      )
+    }
 
   def analyze(cfg: ProcessedConfig): IO[Unit] =
     def runAnalyzers(
@@ -43,9 +77,7 @@ object EO:
         analyzed: Vector[(File, List[OdinAnalysisResult])],
     ): IO[Unit] =
       analyzed.traverse_ { case (codePath, results) =>
-        for
-          _ <- if cfg.output.console then IO.println(analyzed) else IO.unit
-          _ <- cfg.fmts.traverse_ { case OutputFormat.Sarif =>
+        for _ <- cfg.fmts.traverse_ { case OutputFormat.Sarif =>
             val sarifJson = SarifOutput(
               codePath,
               results,
@@ -95,6 +127,7 @@ object EO:
       outputFiles <- cfg.output.files.traverse(_.createFileIfDoesntExist)
       _ <- writeToDirs(outputDirs, analyzed)
       _ <- writeAggregate(outputFiles, analyzed)
+      _ <- if cfg.output.console then displayAnalyzed(analyzed) else IO.unit
     yield ()
     end for
   end analyze
