@@ -53,7 +53,7 @@ jobs:
           tag_name: ${{ steps.latest-tag.outputs.tag }}
           body_path: CHANGELOG.md
           files: |
-            target/scala-3.1.2/polystat.jar
+            target/scala-3.2.0/polystat.jar
   # build-binaries:
   #   needs: pre-release
   #   runs-on: ${{ matrix.os }}
