@@ -42,7 +42,7 @@ excludeDependencies ++= Seq(
 libraryDependencies ++= Seq(
   "org.latestbit" %% "circe-tagged-adt-codec" % "0.10.1",
   "co.fs2" %% "fs2-io" % "3.2.12",
-  "com.monovore" %% "decline-effect" % "2.3.0",
+  "com.monovore" %% "decline-effect" % "2.4.1",
   "io.circe" %% "circe-core" % "0.15.0-M1",
   "is.cir" %% "ciris" % "2.3.3",
   "lt.dvim.ciris-hocon" %% "ciris-hocon" % "1.0.1",
