@@ -50,7 +50,7 @@ libraryDependencies ++= Seq(
   "org.polystat.odin" %% "analysis" % V.odin,
   "org.polystat.py2eo" % "transpiler" % V.py2eo,
   "org.polystat" % "far" % V.far,
-  "org.scalameta" %% "munit" % "1.0.0-M6" % Test,
+  "org.scalameta" %% "munit" % "1.0.0-M11" % Test,
   "org.slf4j" % "slf4j-nop" % "1.7.36",
 )
 
