@@ -46,7 +46,7 @@ libraryDependencies ++= Seq(
   "io.circe" %% "circe-core" % "0.15.0-M1",
   "is.cir" %% "ciris" % "2.3.3",
   "lt.dvim.ciris-hocon" %% "ciris-hocon" % "1.0.1",
-  "org.http4s" %% "http4s-ember-client" % "1.0.0-M32",
+  "org.http4s" %% "http4s-ember-client" % "1.0.0-M41",
   "org.polystat.odin" %% "analysis" % V.odin,
   "org.polystat.py2eo" % "transpiler" % V.py2eo,
   "org.polystat" % "far" % V.far,
