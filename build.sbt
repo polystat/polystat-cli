@@ -2,7 +2,7 @@ import ReleaseTransformations._
 import Dependencies._
 import scala.sys.process._
 
-ThisBuild / scalaVersion := "3.2.0"
+ThisBuild / scalaVersion := "3.2.2"
 ThisBuild / versionScheme := Some("semver-spec")
 ThisBuild / releaseVersionBump := sbtrelease.Version.Bump.Next
 
