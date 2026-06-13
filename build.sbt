@@ -51,7 +51,7 @@ libraryDependencies ++= Seq(
   "org.polystat.py2eo" % "transpiler" % V.py2eo,
   "org.polystat" % "far" % V.far,
   "org.scalameta" %% "munit" % "1.0.0-M6" % Test,
-  "org.slf4j" % "slf4j-nop" % "1.7.36",
+  "org.slf4j" % "slf4j-nop" % "2.0.18",
 )
 
 packageOptions := Seq(
