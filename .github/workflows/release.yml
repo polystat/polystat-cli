@@ -48,7 +48,7 @@ jobs:
         id: latest-tag
       - name: Github Release
         id: gh_release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ steps.latest-tag.outputs.tag }}
           body_path: CHANGELOG.md
