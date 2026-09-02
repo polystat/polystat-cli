@@ -1,0 +1,82 @@
+# 2022-07-01T15:16:39.276365661
+# j2eo team
++alias stdlib.lang.class__Object
++alias stdlib.primitives.prim__int
+
+[] > class__A
+  class__Object > super
+  super > @
+  [] > new
+    [] > this
+      class__Object.new > super
+      super > @
+      "class__A" > className
+      [this] > init
+        seq > @
+          d580718781
+        [] > d580718781
+          this.state.write > @
+            i_s1840976765
+        [] > i_s1840976765
+          l436532993 > @
+        [] > l436532993
+          prim__int.constructor_2 > @
+            prim__int.new
+            0
+      prim__int.constructor_1 > state
+        prim__int.new
+    seq > @
+      this
+  # null :: null -> void
+  [this] > constructor
+    seq > @
+      initialization
+      s511717113
+      this
+    [] > initialization
+      this.init > @
+        this
+    [] > s511717113
+      super.constructor > @
+        this.super
+
+[] > class__B
+  class__A > super
+  super > @
+  [] > new
+    [] > this
+      class__A.new > super
+      super > @
+      "class__B" > className
+      [this] > init
+        seq > @
+          TRUE
+      # n :: int -> int
+      [this x] > n
+        seq > @
+          s1219161283
+        [] > s1219161283
+          b1552978964 > @
+        [] > b1552978964
+          f_a355790875.add > @
+            s_r2028017635
+        [] > f_a355790875
+          t782378927.state > @
+        [] > t782378927
+          this > @
+        [] > s_r2028017635
+          x > @
+    seq > @
+      this
+  # null :: null -> void
+  [this] > constructor
+    seq > @
+      initialization
+      s454325163
+      this
+    [] > initialization
+      this.init > @
+        this
+    [] > s454325163
+      super.constructor > @
+        this.super
