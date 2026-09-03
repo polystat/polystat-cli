@@ -25,10 +25,10 @@ object Java:
     s"j2eo-v$j2eoVersion.jar"
   )
   val DEFAULT_J2EO_VERSION = BuildInfo.j2eoVersion
-  private def j2eoUrl(using j2eoVesion: String) =
-    s"https://search.maven.org/remotecontent?filepath=org/polystat/j2eo/$j2eoVesion/j2eo-$j2eoVesion.jar"
+  private def j2eoUrl(using j2eoVersion: String) =
+    s"https://search.maven.org/remotecontent?filepath=org/polystat/j2eo/$j2eoVersion/j2eo-$j2eoVersion.jar"
 
-  private def defaultJ2EO(using j2eoVesion: String): IO[Path] =
+  private def defaultJ2EO(using j2eoVersion: String): IO[Path] =
     Files[IO]
       .exists(j2eoPath)
       .ifM(
@@ -36,7 +36,7 @@ object Java:
         ifFalse = downloadJ2EO,
       )
 
-  private def downloadJ2EO(using j2eoVesion: String): IO[Path] =
+  private def downloadJ2EO(using j2eoVersion: String): IO[Path] =
     EmberClientBuilder
       .default[IO]
       .build

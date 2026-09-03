@@ -360,8 +360,9 @@ And then simply run it like:
 polystat <args>
 ```
 
-More about the arguments you can pass can be found [here](#basic-usage) and
-[here](#full-usage-specification).
+More about the arguments you can pass is written in
+[basic usage](#basic-usage) and
+[full usage specification](#full-usage-specification).
 
 ## Basic usage
 
@@ -566,7 +567,7 @@ polystat list [--config | -c]
   be found via `polystat list` command.
 - `--j2eo` (available only when running `polystat java`) option allows users to
   specify the path to the j2eo executable jar. If it's not specified, it looks
-  for one in the current working diretory. If it's not present in the current
+  for one in the current working directory. If it's not present in the current
   working directory, download one from Maven Central (for now, the version is
   hardcoded to be 0.4.0).
 - `--j2eo-version` (available only when running `polystat java`) option allows
@@ -637,7 +638,7 @@ can be printed to console by running:
 polystat list --config
 ```
 
-The example of the working config file can be found [here](.polystat.conf).
+See an example of the working [config file](.polystat.conf).
 
 - `polystat.lang` - the type of input files which will be analyzed. This key
   must be present. Possible values:

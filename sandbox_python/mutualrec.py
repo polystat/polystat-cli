@@ -1,5 +1,5 @@
 class c:
-    def f(self, x): 
+    def f(self, x):
         return x
     def g(self, x):
         return self.f(x)

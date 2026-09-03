@@ -1,11 +1,11 @@
 {
-    "polystat": {
-        "repositories": [
-            "ivy2Local",
-            "central"
-        ],
-        "dependencies": [
-            "org.polystat:polystat-cli_3:0.2.0"
-        ]
-    }
+  "polystat": {
+    "dependencies": [
+      "org.polystat:polystat-cli_3:0.2.0"
+    ],
+    "repositories": [
+      "ivy2Local",
+      "central"
+    ]
+  }
 }

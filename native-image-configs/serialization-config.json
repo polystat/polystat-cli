@@ -1,6 +1,4 @@
 {
-  "types":[
-  ],
-  "lambdaCapturingTypes":[
-  ]
+  "lambdaCapturingTypes": [],
+  "types": []
 }

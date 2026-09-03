@@ -1,51 +1,124 @@
 [
-{
-  "name":"[Lcom.sun.management.internal.DiagnosticCommandArgumentInfo;"
-},
-{
-  "name":"[Lcom.sun.management.internal.DiagnosticCommandInfo;"
-},
-{
-  "name":"com.sun.management.internal.DiagnosticCommandArgumentInfo",
-  "methods":[{"name":"<init>","parameterTypes":["java.lang.String","java.lang.String","java.lang.String","java.lang.String","boolean","boolean","boolean","int"] }]
-},
-{
-  "name":"com.sun.management.internal.DiagnosticCommandInfo",
-  "methods":[{"name":"<init>","parameterTypes":["java.lang.String","java.lang.String","java.lang.String","java.lang.String","java.lang.String","java.lang.String","boolean","java.util.List"] }]
-},
-{
-  "name":"java.lang.Boolean",
-  "methods":[{"name":"getBoolean","parameterTypes":["java.lang.String"] }]
-},
-{
-  "name":"java.lang.ClassLoader",
-  "methods":[
-    {"name":"getPlatformClassLoader","parameterTypes":[] }, 
-    {"name":"loadClass","parameterTypes":["java.lang.String"] }
-  ]
-},
-{
-  "name":"java.util.Arrays",
-  "methods":[{"name":"asList","parameterTypes":["java.lang.Object[]"] }]
-},
-{
-  "name":"jdk.internal.loader.ClassLoaders$PlatformClassLoader"
-},
-{
-  "name":"org.graalvm.jniutils.JNIExceptionWrapperEntryPoints",
-  "methods":[{"name":"getClassName","parameterTypes":["java.lang.Class"] }]
-},
-{
-  "name":"sun.management.VMManagementImpl",
-  "fields":[
-    {"name":"compTimeMonitoringSupport"}, 
-    {"name":"currentThreadCpuTimeSupport"}, 
-    {"name":"objectMonitorUsageSupport"}, 
-    {"name":"otherThreadCpuTimeSupport"}, 
-    {"name":"remoteDiagnosticCommandsSupport"}, 
-    {"name":"synchronizerUsageSupport"}, 
-    {"name":"threadAllocatedMemorySupport"}, 
-    {"name":"threadContentionMonitoringSupport"}
-  ]
-}
+  {
+    "name": "[Lcom.sun.management.internal.DiagnosticCommandArgumentInfo;"
+  },
+  {
+    "name": "[Lcom.sun.management.internal.DiagnosticCommandInfo;"
+  },
+  {
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": [
+          "java.lang.String",
+          "java.lang.String",
+          "java.lang.String",
+          "java.lang.String",
+          "boolean",
+          "boolean",
+          "boolean",
+          "int"
+        ]
+      }
+    ],
+    "name": "com.sun.management.internal.DiagnosticCommandArgumentInfo"
+  },
+  {
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": [
+          "java.lang.String",
+          "java.lang.String",
+          "java.lang.String",
+          "java.lang.String",
+          "java.lang.String",
+          "java.lang.String",
+          "boolean",
+          "java.util.List"
+        ]
+      }
+    ],
+    "name": "com.sun.management.internal.DiagnosticCommandInfo"
+  },
+  {
+    "methods": [
+      {
+        "name": "getBoolean",
+        "parameterTypes": [
+          "java.lang.String"
+        ]
+      }
+    ],
+    "name": "java.lang.Boolean"
+  },
+  {
+    "methods": [
+      {
+        "name": "getPlatformClassLoader",
+        "parameterTypes": []
+      },
+      {
+        "name": "loadClass",
+        "parameterTypes": [
+          "java.lang.String"
+        ]
+      }
+    ],
+    "name": "java.lang.ClassLoader"
+  },
+  {
+    "methods": [
+      {
+        "name": "asList",
+        "parameterTypes": [
+          "java.lang.Object[]"
+        ]
+      }
+    ],
+    "name": "java.util.Arrays"
+  },
+  {
+    "name": "jdk.internal.loader.ClassLoaders$PlatformClassLoader"
+  },
+  {
+    "methods": [
+      {
+        "name": "getClassName",
+        "parameterTypes": [
+          "java.lang.Class"
+        ]
+      }
+    ],
+    "name": "org.graalvm.jniutils.JNIExceptionWrapperEntryPoints"
+  },
+  {
+    "fields": [
+      {
+        "name": "compTimeMonitoringSupport"
+      },
+      {
+        "name": "currentThreadCpuTimeSupport"
+      },
+      {
+        "name": "objectMonitorUsageSupport"
+      },
+      {
+        "name": "otherThreadCpuTimeSupport"
+      },
+      {
+        "name": "remoteDiagnosticCommandsSupport"
+      },
+      {
+        "name": "synchronizerUsageSupport"
+      },
+      {
+        "name": "threadAllocatedMemorySupport"
+      },
+      {
+        "name": "threadContentionMonitoringSupport"
+      }
+    ],
+    "name": "sun.management.VMManagementImpl"
+  }
 ]

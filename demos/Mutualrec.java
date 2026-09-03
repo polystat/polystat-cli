@@ -1,3 +1,7 @@
+/*
+ * SPDX-FileCopyrightText: Copyright (c) 2022 Polystat
+ * SPDX-License-Identifier: MIT
+ */
 class Base {
     private int x = 0;
     public int getX() { return x; }
@@ -7,8 +11,8 @@ class Base {
     public void o(int v) {
         this.n(v);
     }
-    public void m(int v) { 
-        this.o(v); 
+    public void m(int v) {
+        this.o(v);
     }
 }
 class Derived extends Base {

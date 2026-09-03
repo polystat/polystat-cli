@@ -1,7 +1,5 @@
 # SPDX-FileCopyrightText: Copyright (c) 2022 Polystat
 # SPDX-License-Identifier: MIT
 
-[files]
-extend-exclude = [
-
-]
+[default.extend-words]
+inex = "inex"

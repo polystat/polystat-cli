@@ -139,22 +139,22 @@ object HoconConfig:
                        |$toplevel.$j2eo
                        |    Specifies the path to the J2EO executable.
                        |    If not specified, defaults to looking for j2eo.jar in the current working directory.
-                       |    If it's not found, downloads it from maven central. The download only happens when this key is NOT provided. 
+                       |    If it's not found, downloads it from maven central. The download only happens when this key is NOT provided.
                        |$toplevel.$input
-                       |    How the files are supplied to the analyzer. 
+                       |    How the files are supplied to the analyzer.
                        |    Can be either a path to a directory, path to a file, or absent. If absent, the code is read from standard input.
                        |$toplevel.$tempDir
-                       |    The path to a directory where temporary analysis file will be stored. 
+                       |    The path to a directory where temporary analysis file will be stored.
                        |    If not specified, defaults to an OS-generated temporary directory.
                        |$toplevel.$outputTo
-                       |    The path to a directory where the results of the analysis are stored. 
+                       |    The path to a directory where the results of the analysis are stored.
                        |    If not specified, the results will be printed to console.
                        |$toplevel.$outputFormats
-                       |    The formats for which output is generated. 
+                       |    The formats for which output is generated.
                        |    If it's an empty list or not specified, no output files are produced.
-                       |$toplevel.$includeRules | $toplevel.$excludeRules 
+                       |$toplevel.$includeRules | $toplevel.$excludeRules
                        |    Which rules should be included in / excluded from the analysis.
-                       |    If both are specified, $toplevel.$includeRules takes precedence. 
+                       |    If both are specified, $toplevel.$includeRules takes precedence.
                        |    The list of available rule specifiers can be found by running:
                        |        polystat.jar list
                        |$toplevel.$outputsConsole
@@ -162,7 +162,7 @@ object HoconConfig:
                        |$toplevel.$outputsDirs
                        |    A list of directories to write files to.
                        |$toplevel.$outputsFiles
-                       |    A list of files to write aggregated output to. 
+                       |    A list of files to write aggregated output to.
                        |
                        |""".stripMargin
   end keys

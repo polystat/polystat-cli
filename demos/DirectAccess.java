@@ -1,3 +1,7 @@
+/*
+ * SPDX-FileCopyrightText: Copyright (c) 2022 Polystat
+ * SPDX-License-Identifier: MIT
+ */
 class A {
     protected int state = 0;
 };

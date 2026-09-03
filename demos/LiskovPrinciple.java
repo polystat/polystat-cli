@@ -1,3 +1,7 @@
+/*
+ * SPDX-FileCopyrightText: Copyright (c) 2022 Polystat
+ * SPDX-License-Identifier: MIT
+ */
 class Parent {
     public int f(int x) {
         return x;

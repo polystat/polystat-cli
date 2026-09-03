@@ -21,7 +21,7 @@ class HoconConfigTests extends munit.FunSuite:
   )
 
   private val testcases = List(
-    // TODO: fix test later
+    // This test wants a fix
     // ConfigTestCase(
     //   label = "example config",
     //   cfg = """|polystat {

@@ -46,11 +46,11 @@ object PolystatOpts:
     name = "java",
     help = "Analyze Java files",
   ) {
-    (analyzerConfig, j2eo, j2eoVersion).mapN((conf, j2eo, j2eoVesion) =>
+    (analyzerConfig, j2eo, j2eoVersion).mapN((conf, j2eo, j2eoVersion) =>
       conf.flatMap(conf =>
         for j2eo <- j2eo.traverse(File.fromPathFailFast)
         yield PolystatUsage.Analyze(
-          SupportedLanguage.Java(j2eo, j2eoVesion),
+          SupportedLanguage.Java(j2eo, j2eoVersion),
           conf,
         )
       )

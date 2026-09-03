@@ -24,7 +24,7 @@ trait EOAnalyzer:
 object EOAnalyzer:
 
   val analyzers: List[EOAnalyzer] =
-    // TODO: remove ruleIds from Odin analyzers
+    // The ruleIds want to go away from Odin analyzers
     List(
       fromOdinAstAnalyzer("mutual-recursion")(
         EOOdinAnalyzer.advancedMutualRecursionAnalyzer

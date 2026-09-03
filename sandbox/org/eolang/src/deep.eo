@@ -1,2 +1,4 @@
+# SPDX-FileCopyrightText: Copyright (c) 2022 Polystat
+# SPDX-License-Identifier: MIT
 [] > deep
   4.div 0 > @
